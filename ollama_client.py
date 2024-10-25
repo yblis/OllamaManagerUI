@@ -32,16 +32,20 @@ class OllamaClient:
         )
 
     def list_models(self):
-        """Get list of locally available models"""
-        return self._handle_request(requests.get, '/api/tags')
+        try:
+            response = self._handle_request(requests.get, '/api/tags')
+            return response.get('models', [])
+        except Exception as e:
+            print(f"Error listing models: {str(e)}")
+            return []
 
     def list_running(self):
         """Get list of currently loaded models by sending an empty prompt to check"""
         try:
-            models = self._handle_request(requests.get, '/api/tags')
+            models = self.list_models()
             running_models = []
             
-            for model in models.get('models', []):
+            for model in models:
                 try:
                     response = requests.post(f'{self.base_url}/api/generate', 
                                           json={'model': model['name'], 'prompt': ''}, 
@@ -53,7 +57,8 @@ class OllamaClient:
                     
             return {'models': running_models}
         except Exception as e:
-            raise Exception(f"Error checking running models: {str(e)}")
+            print(f"Error checking running models: {str(e)}")
+            return {'models': []}
 
     def pull_model(self, model_name):
         """Pull a model from the registry"""
