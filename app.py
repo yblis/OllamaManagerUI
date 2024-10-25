@@ -78,16 +78,16 @@ def search_models():
         # Filter models based on keyword
         filtered_models = [model for model in models if keyword.lower() in model.lower()]
         
-        # For each model, get available tags
+        # Common model size tags
+        size_tags = ['1b', '1.5b', '2b', '3b', '7b', '8b', '9b', '13b', '34b', '70b']
+        
+        # For each model, add the standard size tags
         models_with_tags = []
         for model in filtered_models:
-            tag_result = subprocess.run(['curl', '-s', f'https://ollama.com/library/{model}'], capture_output=True, text=True)
-            if tag_result.returncode == 0:
-                tags = re.findall(r'(?<=:)[a-zA-Z0-9.-]+(?=\s|$)', tag_result.stdout)
-                models_with_tags.append({
-                    'name': model,
-                    'tags': tags
-                })
+            models_with_tags.append({
+                'name': model,
+                'tags': size_tags
+            })
         
         return jsonify({'models': models_with_tags})
     except Exception as e:
