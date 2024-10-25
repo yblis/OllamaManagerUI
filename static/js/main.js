@@ -6,26 +6,16 @@ let serverIsKnownOffline = false;
 let lastKnownServerStatus = null;
 let lastErrorTimestamp = 0;
 const ERROR_DEBOUNCE_TIME = 5000; // 5 seconds
-let headers = {}; // Global headers object
 
 // Initialize UI elements
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize headers from localStorage if available
-    const savedUrl = localStorage.getItem('ollamaUrl');
-    if (savedUrl) {
-        headers = { 'X-Ollama-URL': savedUrl };
-    }
-    
     refreshAll();
     $('.ui.checkbox').checkbox();
     $('.ui.dropdown').dropdown();
     $('.ui.modal').modal();
     
-    // Fix the event listener syntax
-    const modelInput = document.getElementById('modelNameInput');
-    if (modelInput) {
-        modelInput.addEventListener('input', debounce(searchAndPullModel, 500));
-    }
+    // Add search listener
+    document.getElementById('modelNameInput')?.addEventListener('input', debounce(searchAndPullModel, 500));
     
     // Set up periodic refresh for running models
     setInterval(refreshRunningModels, REFRESH_INTERVAL);
@@ -48,7 +38,7 @@ async function refreshAll() {
 
 async function checkServerStatus() {
     try {
-        const response = await fetch('/api/server/status', { headers });
+        const response = await fetch('/api/server/status');
         if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
         const data = await response.json();
         
@@ -68,39 +58,79 @@ async function checkServerStatus() {
     }
 }
 
+function handleServerError(error, context = '') {
+    const currentTime = Date.now();
+    if (currentTime - lastErrorTimestamp > ERROR_DEBOUNCE_TIME) {
+        console.error(`${context} Erreur :`, error.message);
+        lastErrorTimestamp = currentTime;
+        
+        if (error.message.includes('503') || error.message.includes('Failed to fetch')) {
+            if (!serverIsKnownOffline) {
+                serverIsKnownOffline = true;
+                updateServerStatus(false);
+            }
+        }
+    }
+
+    if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        setTimeout(checkServerStatus, 2000 * retryCount);
+    }
+}
+
+function updateServerStatus(isRunning) {
+    const statusDiv = document.getElementById('serverStatus');
+    statusDiv.className = `ui tiny message ${isRunning ? 'positive' : 'negative'}`;
+    statusDiv.innerHTML = `
+        <i class="icon ${isRunning ? 'check circle' : 'times circle'}"></i>
+        <span>Le serveur Ollama est ${isRunning ? 'en cours d\'exécution' : 'arrêté'}</span>
+    `;
+
+    // Update button states
+    document.querySelectorAll('.ui.button:not(.modal .button)').forEach(btn => {
+        if (isRunning) {
+            btn.classList.remove('disabled');
+            btn.disabled = false;
+        } else {
+            btn.classList.add('disabled');
+            btn.disabled = true;
+        }
+    });
+}
+
 // Settings modal functions
-function showSettings() {
+window.showSettings = function() {
     const url = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
     document.getElementById('ollamaUrl').value = url;
     $('#settingsModal').modal('show');
-}
+};
 
-async function saveSettings() {
+window.saveSettings = async function() {
     const ollamaUrl = document.getElementById('ollamaUrl').value;
     if (ollamaUrl) {
         localStorage.setItem('ollamaUrl', ollamaUrl);
-        // Use headers in the global scope to ensure it's properly set
         headers = { 'X-Ollama-URL': ollamaUrl };
-        // Add headers to all future requests
-        await refreshAll();
     }
     $('#settingsModal').modal('hide');
-}
+    await refreshAll();
+};
 
 // Model operations
 async function refreshLocalModels() {
+    if (serverIsKnownOffline) return;
+    
     try {
-        const response = await fetch('/api/models', { headers });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const response = await fetch('/api/models');
+        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
         const data = await response.json();
         displayModels(data.models || [], 'localModels');
     } catch (error) {
-        console.error('Error:', error);
+        handleServerError(error, 'Modèles Locaux');
         displayModels([], 'localModels', error.message);
     }
 }
 
-async function refreshRunningModels() {
+window.refreshRunningModels = async function() {
     if (serverIsKnownOffline) {
         displayModels([], 'runningModels', 'Le serveur est hors ligne');
         return;
@@ -112,12 +142,12 @@ async function refreshRunningModels() {
             button.classList.add('loading');
         }
         
-        const response = await fetch('/api/models/running', { headers });
+        const response = await fetch('/api/models/running');
         if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
         const data = await response.json();
         displayModels(data.models || [], 'runningModels');
     } catch (error) {
-        console.error('Error:', error);
+        handleServerError(error, 'Modèles en Cours d\'Exécution');
         displayModels([], 'runningModels', error.message);
     } finally {
         const button = document.querySelector('button[onclick="refreshRunningModels()"]');
@@ -125,15 +155,13 @@ async function refreshRunningModels() {
             button.classList.remove('loading');
         }
     }
-}
+};
 
 async function refreshStats() {
-    if (serverIsKnownOffline) {
-        return;
-    }
+    if (serverIsKnownOffline) return;
     
     try {
-        const response = await fetch('/api/models/stats', { headers });
+        const response = await fetch('/api/models/stats');
         if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
         const data = await response.json();
         
@@ -161,6 +189,7 @@ async function refreshStats() {
     }
 }
 
+// Search and pull model functions
 async function searchAndPullModel() {
     const modelName = document.getElementById('modelNameInput').value;
     if (!modelName) return;
@@ -168,10 +197,7 @@ async function searchAndPullModel() {
     try {
         const searchResponse = await fetch('/api/models/search', {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                ...headers 
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ keyword: modelName })
         });
         
@@ -213,31 +239,44 @@ async function searchAndPullModel() {
     }
 }
 
-function handleServerError(error, context = '') {
-    const currentTime = Date.now();
-    if (currentTime - lastErrorTimestamp > ERROR_DEBOUNCE_TIME) {
-        console.error(error);
-        showMessage('Erreur Serveur', 
-            `${context ? context + ': ' : ''}${error.message}. Veuillez vérifier que le serveur Ollama est en cours d'exécution.`, 
-            true
-        );
-        lastErrorTimestamp = currentTime;
+async function pullModel(modelName) {
+    if (!modelName) {
+        modelName = document.getElementById('modelNameInput').value;
     }
-    serverIsKnownOffline = true;
-    updateServerStatus(false);
+    
+    if (!modelName) {
+        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
+        return;
+    }
+
+    try {
+        const progressBar = document.getElementById('pullProgress');
+        progressBar.style.display = 'block';
+        progressBar.querySelector('.bar').style.width = '0%';
+        progressBar.querySelector('.label').textContent = 'Démarrage du téléchargement...';
+
+        const response = await fetch('/api/models/pull', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Échec du téléchargement du modèle');
+        }
+        
+        showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
+        refreshAll();
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    } finally {
+        document.getElementById('pullProgress').style.display = 'none';
+        document.querySelector('.search-results').style.display = 'none';
+    }
 }
 
-function updateServerStatus(isOnline) {
-    const statusDiv = document.getElementById('serverStatus');
-    if (!statusDiv) return;
-
-    statusDiv.className = `ui tiny message ${isOnline ? 'positive' : 'negative'}`;
-    statusDiv.innerHTML = `
-        <i class="icon ${isOnline ? 'check circle' : 'times circle'}"></i>
-        <span>Le serveur Ollama est ${isOnline ? 'en cours d'exécution' : 'arrêté'}</span>
-    `;
-}
-
+// Helper functions
 function showMessage(title, message, isError = false) {
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalMessage').textContent = message;
@@ -257,15 +296,88 @@ function debounce(func, wait) {
     };
 }
 
-// Initialize periodic server status check
-setInterval(checkServerStatus, REFRESH_INTERVAL);
+// Display functions
+function displayModels(models, containerId, errorMessage = null) {
+    const container = document.getElementById(containerId);
+    const tbody = container.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    if (errorMessage) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    <div class="ui warning message">
+                        <div class="header">Erreur de Connexion au Serveur</div>
+                        <p>Impossible de se connecter au serveur Ollama. Veuillez vérifier qu'il est en cours d'exécution et réessayer.</p>
+                        <p>Assurez-vous qu'Ollama est installé et en cours d'exécution sur votre système.</p>
+                    </div>
+                </td>
+            </tr>`;
+        return;
+    }
+    
+    if (!models || models.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="ui message">Aucun modèle trouvé</div></td></tr>';
+        return;
+    }
+    
+    for (const model of models) {
+        const tr = document.createElement('tr');
+        
+        if (containerId === 'localModels') {
+            tr.innerHTML = `
+                <td class="collapsing">
+                    <div class="ui fitted checkbox">
+                        <input type="checkbox" data-model="${model.name}">
+                        <label></label>
+                    </div>
+                </td>
+            `;
+        }
+        
+        tr.innerHTML += `
+            <td>${model.name}</td>
+            <td>${model.modified_at}</td>
+            <td>${formatSize(model.size)}</td>
+            <td>${model.details?.format || ''}</td>
+            <td>${model.details?.family || ''}</td>
+            <td>${model.details?.parameter_size || ''}</td>
+            <td class="center aligned">
+                <div class="ui tiny buttons">
+                    <button class="ui primary button model-action-btn" onclick="showModelStats('${model.name}')">
+                        <i class="chart bar icon"></i> Stats
+                    </button>
+                    <button class="ui teal button model-action-btn" onclick="showModelConfig('${model.name}')">
+                        <i class="cog icon"></i> Config
+                    </button>
+                    ${containerId === 'localModels' ? `
+                        <button class="ui negative button model-action-btn" onclick="deleteModel('${model.name}')">
+                            <i class="trash icon"></i> Supprimer
+                        </button>
+                    ` : `
+                        <button class="ui negative button model-action-btn" onclick="stopModel('${model.name}')">
+                            <i class="stop icon"></i> Arrêter
+                        </button>
+                    `}
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    }
 
-// Make functions available globally
-window.showSettings = showSettings;
-window.saveSettings = saveSettings;
-window.refreshRunningModels = refreshRunningModels;
-window.pullModel = pullModel;
-window.deleteModel = deleteModel;
-window.showModelConfig = showModelConfig;
-window.showModelStats = showModelStats;
-window.stopModel = stopModel;
+    $('.ui.checkbox').checkbox();
+}
+
+function formatSize(bytes) {
+    const units = ['o', 'Ko', 'Mo', 'Go'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+    }
+    
+    return `${size.toFixed(2)} ${units[unitIndex]}`;
+}
