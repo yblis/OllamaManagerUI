@@ -8,12 +8,15 @@ import json
 class OllamaClient:
     def __init__(self, base_url=None):
         self.base_url = base_url or os.environ.get('OLLAMA_SERVER_URL', 'http://localhost:11434')
+        if self.base_url.endswith('/'):
+            self.base_url = self.base_url[:-1]
         self.api_key = os.environ.get('OLLAMA_API_KEY')
         self.max_retries = 3
-        self.retry_delay = 1  # Initial delay in seconds
+        self.retry_delay = 1
         self._server_status = None
         self._last_check = 0
-        self._check_interval = 5  # Check server every 5 seconds
+        self._check_interval = 5
+        print(f"Initialized OllamaClient with base URL: {self.base_url}")
 
     def _get_headers(self):
         headers = {'Content-Type': 'application/json'}
@@ -23,50 +26,42 @@ class OllamaClient:
 
     def _handle_request(self, method, endpoint, **kwargs):
         """Generic method to handle requests with retry mechanism"""
-        if not self.check_server():
-            raise Exception("Ollama server is not running. Please start the server and try again.")
-
+        if endpoint.startswith('/'):
+            endpoint = endpoint[1:]
+        
+        url = f'{self.base_url}/{endpoint}'
         retries = 0
         last_error = None
         current_delay = self.retry_delay
 
         while retries < self.max_retries:
             try:
-                kwargs['timeout'] = kwargs.get('timeout', 5)
+                kwargs['timeout'] = kwargs.get('timeout', 30)
                 kwargs['headers'] = {**self._get_headers(), **kwargs.get('headers', {})}
-                response = method(f'{self.base_url}{endpoint}', **kwargs)
+                
+                response = method(url, **kwargs)
+                if response.status_code == 404:
+                    return {'models': []} if 'tags' in endpoint or 'ps' in endpoint else {}
+                    
                 response.raise_for_status()
-                return response.json()
+                return response.json() if response.content else {}
+
             except ConnectionError:
-                last_error = "Unable to connect to Ollama server"
+                last_error = "Impossible de se connecter au serveur Ollama"
             except Timeout:
-                last_error = "Connection to Ollama server timed out"
+                last_error = "Le délai de connexion au serveur Ollama a expiré"
             except RequestException as e:
-                if e.response is not None and e.response.status_code == 503:
-                    last_error = "Ollama server is not running"
+                if hasattr(e, 'response') and e.response and e.response.status_code == 503:
+                    last_error = "Le serveur Ollama n'est pas en cours d'exécution"
                 else:
-                    last_error = f"Server error: {str(e)}"
+                    last_error = f"Erreur serveur: {str(e)}"
 
             retries += 1
             if retries < self.max_retries:
                 time.sleep(current_delay)
-                current_delay *= 2  # Exponential backoff
+                current_delay *= 2
 
-        raise Exception(f"{last_error}. Please ensure Ollama is installed and running.")
-
-    def _log_usage(self, model_name, operation, response_data):
-        """Log model usage statistics"""
-        prompt_tokens = response_data.get('prompt_eval_count', 0)
-        completion_tokens = response_data.get('eval_count', 0)
-        total_duration = response_data.get('total_duration', 0) / 1e9  # Convert nanoseconds to seconds
-        
-        ModelUsage.log_usage(
-            model_name=model_name,
-            operation=operation,
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            total_duration=total_duration
-        )
+        return {'error': last_error}
 
     def check_server(self):
         """Check if Ollama server is running with caching"""
@@ -75,64 +70,82 @@ class OllamaClient:
             return self._server_status
 
         try:
-            response = requests.get(f'{self.base_url}/api/tags', headers=self._get_headers(), timeout=2)
+            if not self.base_url:
+                self._server_status = False
+                return False
+                
+            response = requests.get(
+                f'{self.base_url}/api/tags',
+                headers=self._get_headers(),
+                timeout=5
+            )
             self._server_status = response.status_code == 200
-        except (ConnectionError, Timeout, RequestException):
+        except Exception as e:
+            print(f"Server check failed with error: {str(e)}")
             self._server_status = False
 
         self._last_check = current_time
         return self._server_status
 
     def list_models(self):
-        try:
-            response = self._handle_request(requests.get, '/api/tags')
-            return response.get('models', [])
-        except Exception as e:
-            print(f"Error listing models: {str(e)}")
-            return []
+        """List all available models"""
+        response = self._handle_request(requests.get, 'api/tags')
+        if 'error' in response:
+            return {'models': [], 'error': response['error']}
+        return response
 
     def list_running(self):
-        try:
-            response = self._handle_request(requests.get, '/api/ps')
-            return {'models': response.get('models', [])}
-        except Exception as e:
-            print(f"Error checking running models: {str(e)}")
-            return {'models': []}
-
-    def pull_model(self, model_name):
-        try:
-            url = f'{self.base_url}/api/pull'
-            response = requests.post(url, 
-                headers=self._get_headers(),
-                json={'name': model_name},
-                stream=True)
-            
-            response.raise_for_status()
-            
-            # Process the streaming response
-            for line in response.iter_lines():
-                if line:
-                    try:
-                        data = json.loads(line)
-                        # If we get a success status, break the loop
-                        if data.get('status') == 'success':
-                            break
-                    except json.JSONDecodeError:
-                        continue
-                    
-            return {'success': True, 'message': f'Successfully pulled model {model_name}'}
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Error pulling model: {str(e)}")
-
-    def delete_model(self, model_name):
-        self._handle_request(requests.post, '/api/delete', 
-            json={'name': model_name})
-        return {'success': True, 'message': f'Successfully deleted model {model_name}'}
+        """List all running models"""
+        response = self._handle_request(requests.get, 'api/ps')
+        if 'error' in response:
+            return {'models': [], 'error': response['error']}
+        return response
 
     def stop_model(self, model_name):
-        self._handle_request(requests.post, '/api/generate', 
-            json={'model': model_name, 'prompt': '', 'keep_alive': 0})
-        return {'success': True, 'message': f'Successfully stopped model {model_name}'}
+        """Stop a running model"""
+        try:
+            # First verify if the model is running
+            running_models = self.list_running()
+            if 'error' in running_models:
+                return {'success': False, 'error': running_models['error']}
+                
+            if not any(model['name'] == model_name for model in running_models.get('models', [])):
+                return {'success': True, 'message': f'Le modèle {model_name} n\'est pas en cours d\'exécution'}
+
+            # Send stop command
+            response = self._handle_request(
+                requests.post,
+                'api/generate',
+                json={'model': model_name, 'prompt': '', 'keep_alive': '0s'}
+            )
+            
+            if 'error' in response:
+                return {'success': False, 'error': response['error']}
+
+            # Verify the model was stopped
+            time.sleep(1)  # Give server time to process
+            running_models = self.list_running()
+            if 'error' in running_models:
+                return {'success': False, 'error': running_models['error']}
+                
+            if not any(model['name'] == model_name for model in running_models.get('models', [])):
+                return {'success': True, 'message': f'Le modèle {model_name} a été arrêté avec succès'}
+            else:
+                return {'success': False, 'error': 'Impossible d\'arrêter le modèle'}
+
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def delete_model(self, model_name):
+        """Delete a model"""
+        response = self._handle_request(
+            requests.delete,
+            'api/delete',
+            json={'name': model_name}
+        )
+        if 'error' in response:
+            return {'success': False, 'error': response['error']}
+        return {'success': True, 'message': f'Le modèle {model_name} a été supprimé avec succès'}
 
     def get_model_stats(self, model_name=None):
         """Get usage statistics for a specific model or all models"""
@@ -141,7 +154,14 @@ class OllamaClient:
     def get_model_config(self, model_name):
         """Get model configuration details"""
         try:
-            response = self._handle_request(requests.post, '/api/show', json={'name': model_name})
+            response = self._handle_request(
+                requests.post,
+                'api/show',
+                json={'name': model_name}
+            )
+            if 'error' in response:
+                return {'error': response['error']}
+
             return {
                 'modelfile': response.get('modelfile', ''),
                 'parameters': self._extract_parameters(response.get('modelfile', '')),
@@ -149,22 +169,9 @@ class OllamaClient:
                 'system': self._extract_system(response.get('modelfile', ''))
             }
         except Exception as e:
-            raise Exception(f"Error getting model configuration: {str(e)}")
-
-    def update_model_config(self, model_name, config):
-        """Update model configuration"""
-        try:
-            modelfile = self._generate_modelfile(model_name, config)
-            response = self._handle_request(requests.post, '/api/create', json={
-                'name': model_name,
-                'modelfile': modelfile
-            })
-            return {'success': True, 'message': f'Successfully updated model configuration for {model_name}'}
-        except Exception as e:
-            raise Exception(f"Error updating model configuration: {str(e)}")
+            return {'error': str(e)}
 
     def _extract_parameters(self, modelfile):
-        """Extract parameters from modelfile"""
         parameters = {}
         for line in modelfile.split('\n'):
             if line.startswith('PARAMETER'):
@@ -176,7 +183,6 @@ class OllamaClient:
         return parameters
 
     def _extract_template(self, modelfile):
-        """Extract template from modelfile"""
         start = modelfile.find('TEMPLATE')
         if start == -1:
             return ""
@@ -186,7 +192,6 @@ class OllamaClient:
         return template
 
     def _extract_system(self, modelfile):
-        """Extract system prompt from modelfile"""
         start = modelfile.find('SYSTEM')
         if start == -1:
             return ""
@@ -194,18 +199,3 @@ class OllamaClient:
         system_line = modelfile[start:].split('\n')[0]
         system = system_line.split('SYSTEM', 1)[1].strip()
         return system
-
-    def _generate_modelfile(self, model_name, config):
-        """Generate modelfile content from configuration"""
-        lines = [f"FROM {model_name}"]
-        
-        if config.get('system'):
-            lines.append(f'SYSTEM {config["system"]}')
-        
-        if config.get('template'):
-            lines.append(f'TEMPLATE "{config["template"]}"')
-        
-        for key, value in config.get('parameters', {}).items():
-            lines.append(f'PARAMETER {key} {value}')
-        
-        return '\n'.join(lines)
