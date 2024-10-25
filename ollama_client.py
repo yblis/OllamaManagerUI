@@ -21,8 +21,25 @@ class OllamaClient:
         return self._handle_request(requests.get, '/api/tags')
 
     def list_running(self):
-        """Get list of currently running models"""
-        return self._handle_request(requests.get, '/api/running')
+        """Get list of currently loaded models by sending an empty prompt to check"""
+        try:
+            models = self._handle_request(requests.get, '/api/tags')
+            running_models = []
+            
+            # For each model, send an empty prompt to check if it's loaded
+            for model in models.get('models', []):
+                try:
+                    response = requests.post(f'{self.base_url}/api/generate', 
+                                          json={'model': model['name'], 'prompt': ''}, 
+                                          timeout=1)
+                    if response.status_code == 200:
+                        running_models.append(model)
+                except:
+                    continue
+                    
+            return {'models': running_models}
+        except Exception as e:
+            raise Exception(f"Error checking running models: {str(e)}")
 
     def pull_model(self, model_name):
         """Pull a model from the registry"""
