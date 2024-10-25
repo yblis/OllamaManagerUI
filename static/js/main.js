@@ -189,4 +189,195 @@ async function refreshStats() {
     }
 }
 
-[...remaining JavaScript code remains unchanged...]
+// Search and pull model functions
+async function searchAndPullModel() {
+    const modelName = document.getElementById('modelNameInput').value;
+    if (!modelName) return;
+
+    try {
+        const searchResponse = await fetch('/api/models/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword: modelName })
+        });
+        
+        if (!searchResponse.ok) throw new Error('Erreur lors de la recherche');
+        const searchData = await searchResponse.json();
+        
+        const searchResults = document.getElementById('searchResults');
+        const searchResultsContainer = document.querySelector('.search-results');
+        
+        if (searchData.models && searchData.models.length > 0) {
+            searchResults.innerHTML = searchData.models.map(model => `
+                <div class="item">
+                    <div class="content">
+                        <div class="header">${model.name}</div>
+                        <div class="description">
+                            <div class="ui labels">
+                                ${model.tags.map(tag => `
+                                    <div class="ui label">
+                                        ${tag}
+                                        <button class="ui mini primary button" onclick="pullModel('${model.name}:${tag}')">
+                                            <i class="download icon"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            searchResultsContainer.style.display = 'block';
+        } else {
+            searchResults.innerHTML = '<div class="ui message">Aucun modèle trouvé</div>';
+            searchResultsContainer.style.display = 'block';
+        }
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+        const searchResultsContainer = document.querySelector('.search-results');
+        searchResultsContainer.style.display = 'none';
+    }
+}
+
+async function pullModel(modelName) {
+    if (!modelName) {
+        modelName = document.getElementById('modelNameInput').value;
+    }
+    
+    if (!modelName) {
+        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
+        return;
+    }
+
+    try {
+        const progressBar = document.getElementById('pullProgress');
+        progressBar.style.display = 'block';
+        progressBar.querySelector('.bar').style.width = '0%';
+        progressBar.querySelector('.label').textContent = 'Démarrage du téléchargement...';
+
+        const response = await fetch('/api/models/pull', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Échec du téléchargement du modèle');
+        }
+        
+        showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
+        refreshAll();
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    } finally {
+        document.getElementById('pullProgress').style.display = 'none';
+        document.querySelector('.search-results').style.display = 'none';
+    }
+}
+
+// Helper functions
+function showMessage(title, message, isError = false) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').textContent = message;
+    document.getElementById('modalMessage').className = isError ? 'error-message' : 'success-message';
+    $('#messageModal').modal('show');
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Display functions
+function displayModels(models, containerId, errorMessage = null) {
+    const container = document.getElementById(containerId);
+    const tbody = container.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    if (errorMessage) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    <div class="ui warning message">
+                        <div class="header">Erreur de Connexion au Serveur</div>
+                        <p>Impossible de se connecter au serveur Ollama. Veuillez vérifier qu'il est en cours d'exécution et réessayer.</p>
+                        <p>Assurez-vous qu'Ollama est installé et en cours d'exécution sur votre système.</p>
+                    </div>
+                </td>
+            </tr>`;
+        return;
+    }
+    
+    if (!models || models.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8"><div class="ui message">Aucun modèle trouvé</div></td></tr>';
+        return;
+    }
+    
+    for (const model of models) {
+        const tr = document.createElement('tr');
+        
+        if (containerId === 'localModels') {
+            tr.innerHTML = `
+                <td class="collapsing">
+                    <div class="ui fitted checkbox">
+                        <input type="checkbox" data-model="${model.name}">
+                        <label></label>
+                    </div>
+                </td>
+            `;
+        }
+        
+        tr.innerHTML += `
+            <td>${model.name}</td>
+            <td>${model.modified_at}</td>
+            <td>${formatSize(model.size)}</td>
+            <td>${model.details?.format || ''}</td>
+            <td>${model.details?.family || ''}</td>
+            <td>${model.details?.parameter_size || ''}</td>
+            <td class="center aligned">
+                <div class="ui tiny buttons">
+                    <button class="ui primary button model-action-btn" onclick="showModelStats('${model.name}')">
+                        <i class="chart bar icon"></i> Stats
+                    </button>
+                    <button class="ui teal button model-action-btn" onclick="showModelConfig('${model.name}')">
+                        <i class="cog icon"></i> Config
+                    </button>
+                    ${containerId === 'localModels' ? `
+                        <button class="ui negative button model-action-btn" onclick="deleteModel('${model.name}')">
+                            <i class="trash icon"></i> Supprimer
+                        </button>
+                    ` : `
+                        <button class="ui negative button model-action-btn" onclick="stopModel('${model.name}')">
+                            <i class="stop icon"></i> Arrêter
+                        </button>
+                    `}
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    }
+
+    $('.ui.checkbox').checkbox();
+}
+
+function formatSize(bytes) {
+    const units = ['o', 'Ko', 'Mo', 'Go'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+    }
+    
+    return `${size.toFixed(2)} ${units[unitIndex]}`;
+}
