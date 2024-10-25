@@ -14,8 +14,11 @@ document.addEventListener('DOMContentLoaded', function() {
     $('.ui.dropdown').dropdown();
     $('.ui.modal').modal();
     
-    // Add search listener
-    document.getElementById('modelNameInput')?.addEventListener('input', debounce(searchAndPullModel, 500));
+    // Fix the event listener syntax
+    const modelInput = document.getElementById('modelNameInput');
+    if (modelInput) {
+        modelInput.addEventListener('input', debounce(searchAndPullModel, 500));
+    }
     
     // Set up periodic refresh for running models
     setInterval(refreshRunningModels, REFRESH_INTERVAL);
@@ -99,38 +102,36 @@ function updateServerStatus(isRunning) {
 }
 
 // Settings modal functions
-window.showSettings = function() {
+function showSettings() {
     const url = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
     document.getElementById('ollamaUrl').value = url;
     $('#settingsModal').modal('show');
-};
+}
 
-window.saveSettings = async function() {
+async function saveSettings() {
     const ollamaUrl = document.getElementById('ollamaUrl').value;
     if (ollamaUrl) {
         localStorage.setItem('ollamaUrl', ollamaUrl);
-        headers = { 'X-Ollama-URL': ollamaUrl };
+        const headers = { 'X-Ollama-URL': ollamaUrl };
     }
     $('#settingsModal').modal('hide');
     await refreshAll();
-};
+}
 
 // Model operations
 async function refreshLocalModels() {
-    if (serverIsKnownOffline) return;
-    
     try {
         const response = await fetch('/api/models');
-        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         displayModels(data.models || [], 'localModels');
     } catch (error) {
-        handleServerError(error, 'Modèles Locaux');
+        console.error('Error:', error);
         displayModels([], 'localModels', error.message);
     }
 }
 
-window.refreshRunningModels = async function() {
+async function refreshRunningModels() {
     if (serverIsKnownOffline) {
         displayModels([], 'runningModels', 'Le serveur est hors ligne');
         return;
@@ -147,7 +148,7 @@ window.refreshRunningModels = async function() {
         const data = await response.json();
         displayModels(data.models || [], 'runningModels');
     } catch (error) {
-        handleServerError(error, 'Modèles en Cours d\'Exécution');
+        console.error('Error:', error);
         displayModels([], 'runningModels', error.message);
     } finally {
         const button = document.querySelector('button[onclick="refreshRunningModels()"]');
@@ -155,7 +156,7 @@ window.refreshRunningModels = async function() {
             button.classList.remove('loading');
         }
     }
-};
+}
 
 async function refreshStats() {
     if (serverIsKnownOffline) return;
@@ -500,3 +501,13 @@ async function stopModel(modelName) {
         showMessage('Erreur', error.message, true);
     }
 }
+
+// Make functions available globally
+window.showSettings = showSettings;
+window.saveSettings = saveSettings;
+window.refreshRunningModels = refreshRunningModels;
+window.pullModel = pullModel;
+window.deleteModel = deleteModel;
+window.showModelConfig = showModelConfig;
+window.showModelStats = showModelStats;
+window.stopModel = stopModel;
