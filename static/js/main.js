@@ -145,68 +145,75 @@ async function showModelStats(modelName) {
     }
 }
 
-// Show model configuration
-let currentModel = null;
+// Get selected model names
+function getSelectedModels() {
+    return Array.from(document.querySelectorAll('.model-checkbox input:checked'))
+        .map(checkbox => checkbox.getAttribute('data-model'));
+}
 
-async function showModelConfig(modelName) {
+// Toggle all model checkboxes
+function toggleAllModels() {
+    const checkboxes = document.querySelectorAll('.model-checkbox input');
+    const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+    checkboxes.forEach(cb => cb.checked = anyUnchecked);
+}
+
+// Batch delete models
+async function batchDeleteModels() {
+    const selectedModels = getSelectedModels();
+    if (selectedModels.length === 0) {
+        showMessage('Error', 'Please select at least one model to delete', true);
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${selectedModels.length} selected models?`)) {
+        return;
+    }
+
     try {
-        currentModel = modelName;
-        const response = await fetch(`/api/models/config?name=${encodeURIComponent(modelName)}`);
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error || 'Failed to fetch model configuration');
-        
-        document.getElementById('systemPrompt').value = data.system || '';
-        document.getElementById('template').value = data.template || '';
-        
-        const parametersDiv = document.getElementById('parameters');
-        parametersDiv.innerHTML = '';
-        
-        Object.entries(data.parameters || {}).forEach(([key, value]) => {
-            parametersDiv.appendChild(createParameterSegment(key, value));
+        const response = await fetch('/api/models/batch/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ names: selectedModels })
         });
-        
-        $('#configModal').modal('show');
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to delete models');
+
+        displayBatchResults(data.results);
+        refreshModels();
     } catch (error) {
         showMessage('Error', error.message, true);
     }
 }
 
-function createParameterSegment(key = '', value = '') {
-    const segment = document.createElement('div');
-    segment.className = 'ui segment parameter-segment';
-    
-    segment.innerHTML = `
-        <div class="two fields">
-            <div class="field">
-                <input type="text" class="parameter-key" placeholder="Parameter name" value="${key}">
-            </div>
-            <div class="field">
-                <div class="ui action input">
-                    <input type="text" class="parameter-value" placeholder="Parameter value" value="${value}">
-                    <button class="ui negative icon button" onclick="removeParameter(this)">
-                        <i class="trash icon"></i>
-                    </button>
-                </div>
-            </div>
+// Batch configure models
+async function batchConfigureModels() {
+    const selectedModels = getSelectedModels();
+    if (selectedModels.length === 0) {
+        showMessage('Error', 'Please select at least one model to configure', true);
+        return;
+    }
+
+    currentModel = null; // Clear single model selection
+    document.getElementById('selectedModels').innerHTML = selectedModels.map(model => `
+        <div class="item">
+            <i class="cog icon"></i>
+            <div class="content">${model}</div>
         </div>
-    `;
-    
-    return segment;
+    `).join('');
+
+    document.getElementById('systemPrompt').value = '';
+    document.getElementById('template').value = '';
+    document.getElementById('parameters').innerHTML = '';
+
+    $('#configModal').modal('show');
 }
 
-function addParameter() {
-    const parametersDiv = document.getElementById('parameters');
-    parametersDiv.appendChild(createParameterSegment());
-}
-
-function removeParameter(button) {
-    button.closest('.parameter-segment').remove();
-}
-
+// Save batch model configuration
 async function saveModelConfig() {
-    if (!currentModel) return;
-    
     try {
         const parameters = {};
         document.querySelectorAll('.parameter-segment').forEach(segment => {
@@ -216,63 +223,55 @@ async function saveModelConfig() {
                 parameters[key] = value;
             }
         });
-        
+
         const config = {
             system: document.getElementById('systemPrompt').value.trim(),
             template: document.getElementById('template').value.trim(),
             parameters: parameters
         };
+
+        const selectedModels = currentModel ? [currentModel] : getSelectedModels();
         
-        const response = await fetch('/api/models/config', {
+        if (selectedModels.length === 0) {
+            throw new Error('No models selected');
+        }
+
+        const response = await fetch('/api/models/batch/update_config', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                name: currentModel,
+                models: selectedModels,
                 config: config
             })
         });
-        
+
         const data = await response.json();
-        
         if (!response.ok) throw new Error(data.error || 'Failed to update model configuration');
-        
-        showMessage('Success', `Configuration updated for model: ${currentModel}`);
+
         $('#configModal').modal('hide');
+        displayBatchResults(data.results);
         refreshModels();
     } catch (error) {
         showMessage('Error', error.message, true);
     }
 }
 
-// Refresh models
-async function refreshModels() {
-    try {
-        // Get local models
-        const localResponse = await fetch('/api/models');
-        const localData = await localResponse.json();
-        
-        if (!localResponse.ok) {
-            if (localResponse.status === 503) {
-                displayModels([], 'localModels', 'Server not running');
-                displayModels([], 'runningModels', 'Server not running');
-                return;
-            }
-            throw new Error(localData.error || 'Failed to fetch local models');
-        }
-        
-        // Get running models
-        const runningResponse = await fetch('/api/models/running');
-        const runningData = await runningResponse.json();
-        
-        if (!runningResponse.ok) throw new Error(runningData.error || 'Failed to fetch running models');
-        
-        displayModels(localData.models || [], 'localModels');
-        displayModels(runningData.models || [], 'runningModels');
-    } catch (error) {
-        showMessage('Error', error.message, true);
-    }
+// Display batch operation results
+function displayBatchResults(results) {
+    const resultsDiv = document.getElementById('batchResults');
+    resultsDiv.innerHTML = results.map(result => `
+        <div class="batch-results-item ${result.success ? 'success' : 'error'}">
+            <i class="icon ${result.success ? 'check circle' : 'times circle'}"></i>
+            <div class="content">
+                <div class="header">${result.name}</div>
+                <div class="description">${result.message}</div>
+            </div>
+        </div>
+    `).join('');
+
+    $('#batchResultsModal').modal('show');
 }
 
 // Display models
@@ -294,7 +293,18 @@ function displayModels(models, containerId, errorMessage = null) {
         const card = document.createElement('div');
         card.className = 'ui card model-card';
         
+        // Add checkbox for model selection in local models
+        const checkbox = containerId === 'localModels' ? `
+            <div class="model-checkbox">
+                <div class="ui checkbox">
+                    <input type="checkbox" data-model="${model.name}">
+                    <label></label>
+                </div>
+            </div>
+        ` : '';
+        
         card.innerHTML = `
+            ${checkbox}
             <div class="content">
                 <div class="header">${model.name}</div>
                 <div class="meta">${model.modified_at}</div>

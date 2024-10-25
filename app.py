@@ -68,6 +68,53 @@ def delete_model():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/models/batch/delete', methods=['POST'])
+def batch_delete_models():
+    try:
+        if not ollama_client.check_server():
+            return jsonify({'error': 'Ollama server is not running. Please start the server and try again.'}), 503
+        
+        model_names = request.json.get('names', [])
+        if not model_names:
+            return jsonify({'error': 'At least one model name is required'}), 400
+        
+        results = []
+        for name in model_names:
+            try:
+                result = ollama_client.delete_model(name)
+                results.append({'name': name, 'success': True, 'message': result.get('message', 'Success')})
+            except Exception as e:
+                results.append({'name': name, 'success': False, 'message': str(e)})
+        
+        return jsonify({'results': results})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/models/batch/update_config', methods=['POST'])
+def batch_update_config():
+    try:
+        if not ollama_client.check_server():
+            return jsonify({'error': 'Ollama server is not running. Please start the server and try again.'}), 503
+        
+        data = request.json
+        if not data or 'models' not in data or 'config' not in data:
+            return jsonify({'error': 'Model names and configuration are required'}), 400
+        
+        model_names = data['models']
+        config = data['config']
+        
+        results = []
+        for name in model_names:
+            try:
+                result = ollama_client.update_model_config(name, config)
+                results.append({'name': name, 'success': True, 'message': result.get('message', 'Success')})
+            except Exception as e:
+                results.append({'name': name, 'success': False, 'message': str(e)})
+        
+        return jsonify({'results': results})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/models/stats', methods=['GET'])
 def get_model_stats():
     try:
