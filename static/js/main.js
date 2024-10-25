@@ -381,3 +381,122 @@ function formatSize(bytes) {
     
     return `${size.toFixed(2)} ${units[unitIndex]}`;
 }
+
+// Model operation functions
+async function deleteModel(modelName) {
+    try {
+        const response = await fetch('/api/models/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Échec de la suppression du modèle');
+        }
+        
+        showMessage('Succès', `Modèle ${modelName} supprimé avec succès`);
+        refreshAll();
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+}
+
+async function showModelConfig(modelName) {
+    try {
+        const response = await fetch(`/api/models/${modelName}/config`);
+        if (!response.ok) throw new Error('Erreur lors du chargement de la configuration');
+        const config = await response.json();
+        
+        document.getElementById('selectedModels').innerHTML = `
+            <div class="item">
+                <i class="cube icon"></i>
+                ${modelName}
+            </div>
+        `;
+        
+        document.getElementById('systemPrompt').value = config.system || '';
+        document.getElementById('template').value = config.template || '';
+        
+        const parametersDiv = document.getElementById('parameters');
+        parametersDiv.innerHTML = '';
+        for (const [key, value] of Object.entries(config.parameters || {})) {
+            parametersDiv.innerHTML += `
+                <div class="ui segment">
+                    <div class="two fields">
+                        <div class="field">
+                            <input type="text" value="${key}" readonly>
+                        </div>
+                        <div class="field">
+                            <input type="text" value="${value}">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        $('#configModal').modal('show');
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+}
+
+async function showModelStats(modelName) {
+    try {
+        const response = await fetch(`/api/models/${modelName}/stats`);
+        if (!response.ok) throw new Error('Erreur lors du chargement des statistiques');
+        const stats = await response.json();
+        
+        document.getElementById('modelStats').innerHTML = `
+            <div class="ui statistics">
+                <div class="statistic">
+                    <div class="value">${stats.total_operations || 0}</div>
+                    <div class="label">Opérations Totales</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${stats.total_prompt_tokens || 0}</div>
+                    <div class="label">Tokens de Prompt</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${stats.total_completion_tokens || 0}</div>
+                    <div class="label">Tokens de Complétion</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
+                    <div class="label">Durée Totale</div>
+                </div>
+            </div>
+            ${Object.entries(stats.operations_by_type || {}).map(([type, count]) => `
+                <div class="ui segment">
+                    <h4>${type}</h4>
+                    <p>${count} opération(s)</p>
+                </div>
+            `).join('')}
+        `;
+        
+        $('#statsModal').modal('show');
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+}
+
+async function stopModel(modelName) {
+    try {
+        const response = await fetch('/api/models/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Échec de l'arrêt du modèle');
+        }
+        
+        showMessage('Succès', `Modèle ${modelName} arrêté avec succès`);
+        refreshRunningModels();
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+}
