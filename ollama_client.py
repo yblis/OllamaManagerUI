@@ -8,9 +8,15 @@ class OllamaClient:
         self.base_url = base_url or 'http://localhost:11434'
         self.max_retries = 3
         self.retry_delay = 1  # Initial delay in seconds
+        self._server_status = None
+        self._last_check = 0
+        self._check_interval = 5  # Check server every 5 seconds
 
     def _handle_request(self, method, endpoint, **kwargs):
         """Generic method to handle requests with retry mechanism"""
+        if not self.check_server():
+            raise Exception("Ollama server is not running. Please start the server and try again.")
+
         retries = 0
         last_error = None
         current_delay = self.retry_delay
@@ -22,24 +28,21 @@ class OllamaClient:
                 response.raise_for_status()
                 return response.json()
             except ConnectionError:
-                last_error = "Unable to connect to Ollama server. Please ensure Ollama is installed and running."
+                last_error = "Unable to connect to Ollama server"
             except Timeout:
-                last_error = "Connection to Ollama server timed out. Please check if the server is responsive."
+                last_error = "Connection to Ollama server timed out"
             except RequestException as e:
-                if hasattr(e.response, 'status_code'):
-                    if e.response.status_code == 503:
-                        last_error = "Ollama server is not running. Please start the server and try again."
-                    else:
-                        last_error = f"Server error (HTTP {e.response.status_code})"
+                if e.response is not None and e.response.status_code == 503:
+                    last_error = "Ollama server is not running"
                 else:
-                    last_error = str(e)
+                    last_error = f"Server error: {str(e)}"
 
             retries += 1
             if retries < self.max_retries:
                 time.sleep(current_delay)
                 current_delay *= 2  # Exponential backoff
 
-        raise Exception(last_error)
+        raise Exception(f"{last_error}. Please ensure Ollama is installed and running.")
 
     def _log_usage(self, model_name, operation, response_data):
         """Log model usage statistics"""
@@ -56,24 +59,19 @@ class OllamaClient:
         )
 
     def check_server(self):
-        """Check if Ollama server is running with retry mechanism"""
-        retries = 0
-        current_delay = self.retry_delay
+        """Check if Ollama server is running with caching"""
+        current_time = time.time()
+        if self._server_status is not None and (current_time - self._last_check) < self._check_interval:
+            return self._server_status
 
-        while retries < self.max_retries:
-            try:
-                response = requests.get(f'{self.base_url}/api/tags', timeout=2)
-                if response.status_code == 200:
-                    return True
-            except (ConnectionError, Timeout, RequestException):
-                pass
+        try:
+            response = requests.get(f'{self.base_url}/api/tags', timeout=2)
+            self._server_status = response.status_code == 200
+        except (ConnectionError, Timeout, RequestException):
+            self._server_status = False
 
-            retries += 1
-            if retries < self.max_retries:
-                time.sleep(current_delay)
-                current_delay *= 2
-
-        return False
+        self._last_check = current_time
+        return self._server_status
 
     def list_models(self):
         try:
@@ -112,7 +110,7 @@ class OllamaClient:
         return ModelUsage.get_model_stats(model_name)
 
     def get_model_config(self, model_name):
-        """Get model configuration details with retry mechanism"""
+        """Get model configuration details"""
         try:
             response = self._handle_request(requests.post, '/api/show', json={'name': model_name})
             return {
@@ -125,7 +123,7 @@ class OllamaClient:
             raise Exception(f"Error getting model configuration: {str(e)}")
 
     def update_model_config(self, model_name, config):
-        """Update model configuration with retry mechanism"""
+        """Update model configuration"""
         try:
             modelfile = self._generate_modelfile(model_name, config)
             response = self._handle_request(requests.post, '/api/create', json={
