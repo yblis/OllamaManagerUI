@@ -98,6 +98,41 @@
     margin-right: 0.3em;
 }
 
+/* Model comparison specific styles */
+#modelComparison {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+#modelComparison .column {
+    min-width: 300px;
+}
+
+#modelComparison .ui.segment {
+    height: 100%;
+}
+
+#modelComparison .ui.tiny.statistics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+#modelComparison .ui.tiny.statistics .statistic {
+    margin: 0 !important;
+}
+
+#modelComparison .ui.tiny.statistics .statistic > .value {
+    font-size: 1.5rem !important;
+}
+
+#modelComparison .ui.tiny.statistics .statistic > .label {
+    font-size: 0.8rem !important;
+}
+
 /* Make the table responsive */
 @media only screen and (max-width: 991px) {
     .ui.table {

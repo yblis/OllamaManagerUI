@@ -165,6 +165,37 @@ def update_model_config():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/models/compare', methods=['POST'])
+def compare_models():
+    try:
+        if not ollama_client.check_server():
+            return jsonify({'error': 'Ollama server is not running. Please start the server and try again.'}), 503
+        
+        model_names = request.json.get('models', [])
+        if not model_names or len(model_names) < 2:
+            return jsonify({'error': 'At least two model names are required for comparison'}), 400
+        
+        comparison_data = []
+        for name in model_names:
+            try:
+                config = ollama_client.get_model_config(name)
+                stats = ollama_client.get_model_stats(name)
+                model_info = next((m for m in ollama_client.list_models() if m['name'] == name), {})
+                
+                comparison_data.append({
+                    'name': name,
+                    'config': config,
+                    'stats': stats,
+                    'details': model_info.get('details', {}),
+                    'size': model_info.get('size', 0)
+                })
+            except Exception as e:
+                return jsonify({'error': f'Error getting data for model {name}: {str(e)}'}), 500
+        
+        return jsonify({'comparison': comparison_data})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.errorhandler(Exception)
 def handle_error(error):
     print(traceback.format_exc())

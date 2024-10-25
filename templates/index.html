@@ -51,6 +51,9 @@
             <button class="ui teal button" onclick="batchConfigureModels()">
                 <i class="cog icon"></i> Configure Selected
             </button>
+            <button class="ui olive button" onclick="compareSelectedModels()">
+                <i class="exchange icon"></i> Compare Selected
+            </button>
             <button class="ui button" onclick="toggleAllModels()">
                 <i class="check square outline icon"></i> Toggle All
             </button>
@@ -101,94 +104,27 @@
     </div>
 </div>
 
-<!-- Settings Modal -->
-<div class="ui modal" id="settingsModal">
+<!-- Existing Modals -->
+{% include "modals/settings.html" %}
+{% include "modals/message.html" %}
+{% include "modals/stats.html" %}
+{% include "modals/config.html" %}
+{% include "modals/batch_results.html" %}
+
+<!-- Model Comparison Modal -->
+<div class="ui fullscreen modal" id="comparisonModal">
     <div class="header">
-        <i class="cog icon"></i>
-        Settings
+        <i class="exchange icon"></i>
+        Model Comparison
     </div>
     <div class="content">
-        <form class="ui form">
-            <div class="field">
-                <label>Ollama Server URL</label>
-                <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
-            </div>
-        </form>
-    </div>
-    <div class="actions">
-        <div class="ui cancel button">Cancel</div>
-        <div class="ui positive button" onclick="saveSettings()">Save</div>
-    </div>
-</div>
-
-<!-- Message Modal -->
-<div class="ui modal" id="messageModal">
-    <div class="header">
-        <i class="info circle icon"></i>
-        <span id="modalTitle">Message</span>
-    </div>
-    <div class="content">
-        <p id="modalMessage"></p>
-    </div>
-    <div class="actions">
-        <div class="ui positive button">OK</div>
-    </div>
-</div>
-
-<!-- Model Stats Modal -->
-<div class="ui modal" id="statsModal">
-    <div class="header">Model Statistics</div>
-    <div class="content">
-        <div id="modelStats"></div>
-    </div>
-    <div class="actions">
-        <div class="ui positive button">Close</div>
-    </div>
-</div>
-
-<!-- Model Config Modal -->
-<div class="ui modal" id="configModal">
-    <div class="header">Model Configuration</div>
-    <div class="content">
-        <div id="selectedModels" class="ui list">
-            <!-- Selected models will be listed here -->
-        </div>
-        <form class="ui form">
-            <div class="field">
-                <label>System Prompt</label>
-                <textarea id="systemPrompt" rows="3"></textarea>
-            </div>
-            <div class="field">
-                <label>Template</label>
-                <textarea id="template" rows="3"></textarea>
-            </div>
-            <div class="field">
-                <label>Parameters</label>
-                <div id="parameters" class="ui segments">
-                    <!-- Parameters will be populated here -->
-                </div>
-                <button type="button" class="ui small primary button" onclick="addParameter()">
-                    <i class="plus icon"></i> Add Parameter
-                </button>
-            </div>
-        </form>
-    </div>
-    <div class="actions">
-        <div class="ui negative button">Cancel</div>
-        <div class="ui positive button" onclick="saveModelConfig()">Save</div>
-    </div>
-</div>
-
-<!-- Batch Results Modal -->
-<div class="ui modal" id="batchResultsModal">
-    <div class="header">Batch Operation Results</div>
-    <div class="content">
-        <div class="ui relaxed divided list" id="batchResults">
-            <!-- Results will be populated here -->
+        <div id="modelComparison" class="ui grid">
+            <!-- Comparison data will be populated here -->
         </div>
     </div>
     <div class="actions">
         <div class="ui positive button">Close</div>
     </div>
 </div>
+
 {% endblock %}

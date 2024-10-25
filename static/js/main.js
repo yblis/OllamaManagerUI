@@ -470,5 +470,121 @@ function displayBatchResults(results) {
     $('#batchResultsModal').modal('show');
 }
 
+async function compareSelectedModels() {
+    const selectedModels = getSelectedModels();
+    if (selectedModels.length < 2) {
+        showMessage('Error', 'Please select at least two models to compare', true);
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/models/compare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ models: selectedModels })
+        });
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.error || 'Failed to compare models');
+        
+        displayModelComparison(data.comparison);
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
+}
+
+function displayModelComparison(comparisonData) {
+    const comparisonDiv = document.getElementById('modelComparison');
+    const columnWidth = Math.floor(16 / comparisonData.length);  // Semantic UI uses a 16-column grid
+
+    // Create comparison table
+    let html = '';
+    comparisonData.forEach((model, index) => {
+        html += `
+            <div class="column" style="width: ${columnWidth * 100 / 16}%">
+                <div class="ui segment">
+                    <h3 class="ui header">${model.name}</h3>
+                    
+                    <h4 class="ui header">Basic Information</h4>
+                    <div class="ui list">
+                        <div class="item">
+                            <div class="header">Size</div>
+                            <div class="description">${formatSize(model.size)}</div>
+                        </div>
+                        <div class="item">
+                            <div class="header">Format</div>
+                            <div class="description">${model.details.format || 'N/A'}</div>
+                        </div>
+                        <div class="item">
+                            <div class="header">Family</div>
+                            <div class="description">${model.details.family || 'N/A'}</div>
+                        </div>
+                        <div class="item">
+                            <div class="header">Parameters</div>
+                            <div class="description">${model.details.parameter_size || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    <h4 class="ui header">Configuration</h4>
+                    <div class="ui list">
+                        <div class="item">
+                            <div class="header">System Prompt</div>
+                            <div class="description">${model.config.system || 'None'}</div>
+                        </div>
+                        <div class="item">
+                            <div class="header">Template</div>
+                            <div class="description">${model.config.template || 'None'}</div>
+                        </div>
+                        <div class="item">
+                            <div class="header">Parameters</div>
+                            <div class="description">
+                                ${Object.entries(model.config.parameters || {}).map(([key, value]) => 
+                                    `<div>${key}: ${value}</div>`
+                                ).join('') || 'None'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="ui header">Usage Statistics</h4>
+                    <div class="ui tiny statistics">
+                        <div class="statistic">
+                            <div class="value">${model.stats.total_operations}</div>
+                            <div class="label">Operations</div>
+                        </div>
+                        <div class="statistic">
+                            <div class="value">${model.stats.total_prompt_tokens}</div>
+                            <div class="label">Prompt Tokens</div>
+                        </div>
+                        <div class="statistic">
+                            <div class="value">${model.stats.total_completion_tokens}</div>
+                            <div class="label">Completion Tokens</div>
+                        </div>
+                        <div class="statistic">
+                            <div class="value">${formatDuration(model.stats.total_duration)}</div>
+                            <div class="label">Duration</div>
+                        </div>
+                    </div>
+
+                    <h5 class="ui header">Operations by Type</h5>
+                    <div class="ui list">
+                        ${Object.entries(model.stats.operations_by_type || {}).map(([type, count]) => `
+                            <div class="item">
+                                <i class="right triangle icon"></i>
+                                <div class="content">
+                                    <div class="header">${type}</div>
+                                    <div class="description">${count} operations</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    comparisonDiv.innerHTML = html;
+    $('#comparisonModal').modal('show');
+}
+
 // Initialize modals
 $('.ui.modal').modal();

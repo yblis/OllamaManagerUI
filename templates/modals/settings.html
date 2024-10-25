@@ -1,0 +1,19 @@
+<!-- Settings Modal -->
+<div class="ui modal" id="settingsModal">
+    <div class="header">
+        <i class="cog icon"></i>
+        Settings
+    </div>
+    <div class="content">
+        <form class="ui form">
+            <div class="field">
+                <label>Ollama Server URL</label>
+                <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui cancel button">Cancel</div>
+        <div class="ui positive button" onclick="saveSettings()">Save</div>
+    </div>
+</div>
