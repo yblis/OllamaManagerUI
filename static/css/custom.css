@@ -1,13 +1,156 @@
-.ui.container {
-    margin-top: 2rem;
+/* Theme variables */
+:root {
+    --bg-primary: #ffffff;
+    --text-primary: #000000;
+    --card-bg: #ffffff;
+    --border-color: #ddd;
+    --header-bg: #f8f9fa;
+    --button-bg: #e0e1e2;
+    --button-hover: #cacbcd;
+    --button-text: #000000;
+    --nav-bg: #f8f9fa;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --text-primary: #ffffff;
+    --card-bg: #2d2d2d;
+    --border-color: #444;
+    --header-bg: #2d2d2d;
+    --button-bg: #3d3d3d;
+    --button-hover: #4d4d4d;
+    --button-text: #ffffff;
+    --nav-bg: #2d2d2d;
+}
+
+/* Apply theme colors */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.ui.segment {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 .ui.table {
-    margin-top: 1rem;
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
 }
 
-.ui.action.input {
-    margin-bottom: 1rem;
+.ui.table thead th {
+    background-color: var(--header-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.ui.button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+}
+
+.ui.button:hover {
+    background-color: var(--button-hover);
+    color: var(--button-text);
+}
+
+.ui.modal {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.ui.modal .header {
+    background-color: var(--header-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.ui.modal .content {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.ui.statistics .statistic {
+    background-color: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ui.statistics .statistic .value,
+.ui.statistics .statistic .label {
+    color: var(--text-primary) !important;
+}
+
+/* Theme toggle button enhancements */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1001;
+}
+
+.theme-toggle .button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.theme-toggle .button:hover {
+    transform: scale(1.1);
+    background-color: var(--button-hover);
+}
+
+.theme-toggle .button i {
+    font-size: 1.2em;
+}
+
+/* Animation for theme transition */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 768px) {
+    .ui.container {
+        margin: 1rem !important;
+        width: auto !important;
+        padding: 0 1rem;
+    }
+    
+    .ui.statistics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .ui.table td.center.aligned .ui.tiny.buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .theme-toggle {
+        top: auto;
+        bottom: 1rem;
+        right: 1rem;
+    }
+}
+
+/* Existing styles */
+.ui.container {
+    margin-top: 2rem;
 }
 
 .error-message {
@@ -41,26 +184,6 @@
     margin: 0;
 }
 
-.ui.statistics {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2rem;
-    margin: 1rem 0;
-}
-
-.ui.statistic {
-    margin: 0 !important;
-}
-
-.ui.statistics .statistic > .value {
-    font-size: 2rem !important;
-}
-
-.ui.statistics .statistic > .label {
-    font-size: 1rem !important;
-}
-
 #modelStats .ui.segment {
     margin-top: 2rem;
 }
@@ -90,7 +213,7 @@
 #selectedModels {
     margin-bottom: 1rem;
     padding: 1rem;
-    background: #f8f9fa;
+    background: var(--card-bg);
     border-radius: 4px;
 }
 
@@ -102,19 +225,6 @@
 
 #selectedModels .item i {
     margin-right: 0.5rem;
-}
-
-/* Table specific styles */
-.ui.table td.center.aligned .ui.tiny.buttons {
-    white-space: nowrap;
-}
-
-.ui.table td.center.aligned .ui.button {
-    padding: 0.5em 0.8em;
-}
-
-.ui.table td.center.aligned .ui.button i.icon {
-    margin-right: 0.3em;
 }
 
 /* Model comparison specific styles */
@@ -150,12 +260,4 @@
 
 #modelComparison .ui.tiny.statistics .statistic > .label {
     font-size: 0.8rem !important;
-}
-
-/* Make the table responsive */
-@media only screen and (max-width: 991px) {
-    .ui.table {
-        overflow-x: auto;
-        display: block;
-    }
 }
