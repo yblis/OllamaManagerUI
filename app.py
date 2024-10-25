@@ -4,7 +4,8 @@ import traceback
 import requests
 from functools import wraps
 import time
-from bs4 import BeautifulSoup
+import subprocess
+import re
 
 app = Flask(__name__)
 ollama_client = OllamaClient()
@@ -64,20 +65,31 @@ def get_models():
 @with_error_handling
 def search_models():
     keyword = request.json.get('keyword', '')
-    url = "https://ollama.com/library/"
     try:
-        response = requests.get(url)
-        if response.status_code != 200:
+        # Use curl to get models directly from Ollama library
+        result = subprocess.run(['curl', '-s', 'https://ollama.com/library'], capture_output=True, text=True)
+        if result.returncode != 0:
             return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
+            
+        # Extract model names using regex
+        pattern = r'(?<=<span>).*?(?=</span>)'
+        models = re.findall(pattern, result.stdout)
         
-        soup = BeautifulSoup(response.text, 'html.parser')
-        models = []
-        for model in soup.find_all('a', class_='model-link'):
-            model_name = model.text.strip()
-            if keyword.lower() in model_name.lower():
-                models.append(model_name)
+        # Filter models based on keyword
+        filtered_models = [model for model in models if keyword.lower() in model.lower()]
         
-        return jsonify({'models': models})
+        # For each model, get available tags
+        models_with_tags = []
+        for model in filtered_models:
+            tag_result = subprocess.run(['curl', '-s', f'https://ollama.com/library/{model}'], capture_output=True, text=True)
+            if tag_result.returncode == 0:
+                tags = re.findall(r'(?<=:)[a-zA-Z0-9.-]+(?=\s|$)', tag_result.stdout)
+                models_with_tags.append({
+                    'name': model,
+                    'tags': tags
+                })
+        
+        return jsonify({'models': models_with_tags})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
