@@ -68,6 +68,15 @@ def delete_model():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/models/stats', methods=['GET'])
+def get_model_stats():
+    try:
+        model_name = request.args.get('name')
+        stats = ollama_client.get_model_stats(model_name)
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.errorhandler(Exception)
 def handle_error(error):
     print(traceback.format_exc())

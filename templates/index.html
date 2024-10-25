@@ -29,6 +29,14 @@
         </div>
     </div>
 
+    <!-- Overall Usage Statistics -->
+    <div class="ui segment">
+        <h3 class="ui header">Overall Usage Statistics</h3>
+        <div id="overallStats" class="ui statistics">
+            <!-- Statistics will be populated here -->
+        </div>
+    </div>
+
     <!-- Local Models -->
     <div class="ui segment">
         <h3 class="ui header">Local Models</h3>
@@ -57,6 +65,17 @@
     </div>
     <div class="actions">
         <div class="ui positive button">OK</div>
+    </div>
+</div>
+
+<!-- Model Stats Modal -->
+<div class="ui modal" id="statsModal">
+    <div class="header">Model Statistics</div>
+    <div class="content">
+        <div id="modelStats"></div>
+    </div>
+    <div class="actions">
+        <div class="ui positive button">Close</div>
     </div>
 </div>
 {% endblock %}

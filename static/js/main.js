@@ -23,10 +23,19 @@ function formatSize(bytes) {
     return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
 }
 
+// Format duration
+function formatDuration(seconds) {
+    if (seconds < 60) return `${seconds.toFixed(2)}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = (seconds % 60).toFixed(2);
+    return `${minutes}m ${remainingSeconds}s`;
+}
+
 // Refresh everything
 async function refreshAll() {
     await checkServerStatus();
     await refreshModels();
+    await refreshOverallStats();
 }
 
 // Check server status
@@ -50,6 +59,89 @@ async function checkServerStatus() {
         }
     } catch (error) {
         console.error('Error checking server status:', error);
+    }
+}
+
+// Refresh overall stats
+async function refreshOverallStats() {
+    try {
+        const response = await fetch('/api/models/stats');
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch statistics');
+        
+        const statsContainer = document.getElementById('overallStats');
+        statsContainer.innerHTML = `
+            <div class="ui statistic">
+                <div class="value">${data.total_operations}</div>
+                <div class="label">Total Operations</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${data.total_prompt_tokens}</div>
+                <div class="label">Prompt Tokens</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${data.total_completion_tokens}</div>
+                <div class="label">Completion Tokens</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${formatDuration(data.total_duration)}</div>
+                <div class="label">Total Duration</div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error fetching overall stats:', error);
+    }
+}
+
+// Show model stats
+async function showModelStats(modelName) {
+    try {
+        const response = await fetch(`/api/models/stats?name=${encodeURIComponent(modelName)}`);
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch model statistics');
+        
+        const statsDiv = document.getElementById('modelStats');
+        statsDiv.innerHTML = `
+            <div class="ui statistics">
+                <div class="statistic">
+                    <div class="value">${data.total_operations}</div>
+                    <div class="label">Total Operations</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${data.total_prompt_tokens}</div>
+                    <div class="label">Prompt Tokens</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${data.total_completion_tokens}</div>
+                    <div class="label">Completion Tokens</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${formatDuration(data.total_duration)}</div>
+                    <div class="label">Total Duration</div>
+                </div>
+            </div>
+            <div class="ui segment">
+                <h4 class="ui header">Operations by Type</h4>
+                <div class="ui list">
+                    ${Object.entries(data.operations_by_type)
+                        .map(([type, count]) => `
+                            <div class="item">
+                                <i class="right triangle icon"></i>
+                                <div class="content">
+                                    <div class="header">${type}</div>
+                                    <div class="description">${count} operations</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                </div>
+            </div>
+        `;
+        
+        $('#statsModal').modal('show');
+    } catch (error) {
+        showMessage('Error', error.message, true);
     }
 }
 
@@ -115,9 +207,14 @@ function displayModels(models, containerId, errorMessage = null) {
                 </div>
             </div>
             <div class="extra content">
-                <button class="ui negative button" onclick="deleteModel('${model.name}')">
-                    <i class="trash icon"></i> Delete
-                </button>
+                <div class="ui two buttons">
+                    <button class="ui primary button" onclick="showModelStats('${model.name}')">
+                        <i class="chart bar icon"></i> Stats
+                    </button>
+                    <button class="ui negative button" onclick="deleteModel('${model.name}')">
+                        <i class="trash icon"></i> Delete
+                    </button>
+                </div>
             </div>
         `;
         

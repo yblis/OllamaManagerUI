@@ -31,3 +31,31 @@
 .model-size {
     font-weight: bold;
 }
+
+.ui.statistics {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+    margin: 1rem 0;
+}
+
+.ui.statistic {
+    margin: 0 !important;
+}
+
+.ui.statistics .statistic > .value {
+    font-size: 2rem !important;
+}
+
+.ui.statistics .statistic > .label {
+    font-size: 1rem !important;
+}
+
+#modelStats .ui.segment {
+    margin-top: 2rem;
+}
+
+.ui.list .item {
+    padding: 0.5rem 0;
+}
