@@ -1,0 +1,33 @@
+.ui.container {
+    margin-top: 2rem;
+}
+
+.model-card {
+    margin-bottom: 1rem !important;
+}
+
+.ui.cards {
+    margin-top: 1rem;
+}
+
+.ui.action.input {
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    color: #db2828;
+}
+
+.success-message {
+    color: #21ba45;
+}
+
+.model-details {
+    margin-top: 0.5rem;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.model-size {
+    font-weight: bold;
+}

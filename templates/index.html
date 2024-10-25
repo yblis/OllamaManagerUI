@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="ui basic segment">
+    <h1 class="ui header">Ollama Model Manager</h1>
+    
+    <!-- Server Status -->
+    <div class="ui segment">
+        <h3 class="ui header">Server Status</h3>
+        <div id="serverStatus" class="ui message {% if server_status %}positive{% else %}negative{% endif %}">
+            <i class="icon {% if server_status %}check circle{% else %}times circle{% endif %}"></i>
+            <span>Ollama server is {% if server_status %}running{% else %}not running{% endif %}</span>
+        </div>
+        {% if not server_status %}
+        <div class="ui warning message">
+            <div class="header">Server Not Running</div>
+            <p>Please ensure Ollama is installed and running on your system. You can download it from <a href="https://ollama.ai" target="_blank">ollama.ai</a>.</p>
+            <p>Once installed, start the Ollama server before using this interface.</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Pull Model Form -->
+    <div class="ui segment">
+        <h3 class="ui header">Pull New Model</h3>
+        <div class="ui action input fluid">
+            <input type="text" id="modelNameInput" placeholder="Enter model name (e.g., llama2:7b)">
+            <button class="ui primary button" onclick="pullModel()">Pull Model</button>
+        </div>
+    </div>
+
+    <!-- Local Models -->
+    <div class="ui segment">
+        <h3 class="ui header">Local Models</h3>
+        <div class="ui cards" id="localModels">
+            <!-- Models will be populated here -->
+        </div>
+    </div>
+
+    <!-- Running Models -->
+    <div class="ui segment">
+        <h3 class="ui header">Running Models</h3>
+        <div class="ui cards" id="runningModels">
+            <!-- Running models will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Message Modal -->
+<div class="ui modal" id="messageModal">
+    <div class="header">
+        <i class="info circle icon"></i>
+        <span id="modalTitle">Message</span>
+    </div>
+    <div class="content">
+        <p id="modalMessage"></p>
+    </div>
+    <div class="actions">
+        <div class="ui positive button">OK</div>
+    </div>
+</div>
+{% endblock %}
