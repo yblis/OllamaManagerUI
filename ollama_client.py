@@ -3,8 +3,8 @@ from requests.exceptions import ConnectionError, RequestException
 from models import ModelUsage
 
 class OllamaClient:
-    def __init__(self, base_url='http://localhost:11434'):
-        self.base_url = base_url
+    def __init__(self, base_url=None):
+        self.base_url = base_url or 'http://localhost:11434'
 
     def _handle_request(self, method, endpoint, **kwargs):
         """Generic method to handle requests and provide meaningful error messages"""
@@ -13,7 +13,7 @@ class OllamaClient:
             response.raise_for_status()
             return response.json()
         except ConnectionError:
-            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is installed and running on port 11434.")
+            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is installed and running.")
         except RequestException as e:
             raise Exception(f"Error communicating with Ollama server: {str(e)}")
 
@@ -33,7 +33,7 @@ class OllamaClient:
 
     def list_models(self):
         try:
-            response = self._handle_request(requests.get, '/api/models')
+            response = self._handle_request(requests.get, '/api/tags')
             return response.get('models', [])
         except Exception as e:
             print(f"Error listing models: {str(e)}")
@@ -41,32 +41,31 @@ class OllamaClient:
 
     def list_running(self):
         try:
-            response = self._handle_request(requests.get, '/api/running')
-            return response
+            response = self._handle_request(requests.get, '/api/tags')
+            models = []
+            for model in response.get('models', []):
+                if model.get('status') == 'running':
+                    models.append(model)
+            return {'models': models}
         except Exception as e:
             print(f"Error checking running models: {str(e)}")
             return {'models': []}
 
     def pull_model(self, model_name):
         response = self._handle_request(requests.post, '/api/pull', 
-            json={'model': model_name})
+            json={'name': model_name, 'stream': False})
         self._log_usage(model_name, 'pull', response)
         return {'success': True, 'message': f'Successfully pulled model {model_name}'}
 
     def delete_model(self, model_name):
-        self._handle_request(requests.delete, '/api/models', 
-            json={'model': model_name})
+        self._handle_request(requests.delete, '/api/delete', 
+            json={'name': model_name})
         return {'success': True, 'message': f'Successfully deleted model {model_name}'}
-
-    def stop_model(self, model_name):
-        self._handle_request(requests.post, '/api/stop', 
-            json={'model': model_name})
-        return {'success': True, 'message': f'Successfully stopped model {model_name}'}
 
     def check_server(self):
         """Check if Ollama server is running"""
         try:
-            requests.get(f'{self.base_url}/api/models', timeout=2)
+            requests.get(f'{self.base_url}/api/tags', timeout=2)
             return True
         except:
             return False

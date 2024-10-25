@@ -5,6 +5,13 @@ import traceback
 app = Flask(__name__)
 ollama_client = OllamaClient()
 
+@app.before_request
+def before_request():
+    global ollama_client
+    base_url = request.headers.get('X-Ollama-URL')
+    if base_url:
+        ollama_client = OllamaClient(base_url=base_url)
+
 @app.route('/favicon.ico')
 def favicon():
     return '', 204
@@ -28,7 +35,7 @@ def get_models():
         if not ollama_client.check_server():
             return jsonify({'error': 'Ollama server is not running. Please start the server and try again.'}), 503
         models = ollama_client.list_models()
-        return jsonify(models)
+        return jsonify({'models': models})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -37,8 +44,8 @@ def get_running_models():
     try:
         if not ollama_client.check_server():
             return jsonify({'error': 'Ollama server is not running. Please start the server and try again.'}), 503
-        models = ollama_client.list_running()
-        return jsonify(models)
+        response = ollama_client.list_running()
+        return jsonify(response)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

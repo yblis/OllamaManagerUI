@@ -31,6 +31,40 @@ function formatDuration(seconds) {
     return `${minutes}m ${remainingSeconds}s`;
 }
 
+// Show settings modal
+function showSettings() {
+    const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+    document.getElementById('ollamaUrl').value = ollamaUrl;
+    $('#settingsModal').modal('show');
+}
+
+// Save settings
+async function saveSettings() {
+    const ollamaUrl = document.getElementById('ollamaUrl').value.trim();
+    if (!ollamaUrl) {
+        showMessage('Error', 'Please enter the Ollama server URL', true);
+        return;
+    }
+    
+    try {
+        // Test connection to new URL
+        const response = await makeApiRequest('/models');
+        if (!response.models) throw new Error('Could not connect to Ollama server');
+        
+        localStorage.setItem('ollamaUrl', ollamaUrl);
+        $('#settingsModal').modal('hide');
+        showMessage('Success', 'Settings saved successfully');
+        refreshAll(); // Refresh with new URL
+    } catch (error) {
+        showMessage('Error', `Failed to connect to Ollama server: ${error.message}`, true);
+    }
+}
+
+// Get Ollama URL
+function getOllamaUrl() {
+    return localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+}
+
 // Handle server error
 function handleServerError() {
     const statusDiv = document.getElementById('serverStatus');
@@ -44,6 +78,22 @@ function handleServerError() {
             <p>Once installed, start the Ollama server before using this interface.</p>
         </div>
     `;
+}
+
+// Make API request with Ollama URL header
+async function makeApiRequest(endpoint, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : `/api${endpoint}`;
+    const headers = {
+        ...options.headers,
+        'X-Ollama-URL': getOllamaUrl()
+    };
+    
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    }
+    return response.json();
 }
 
 // Refresh everything
@@ -65,9 +115,7 @@ async function refreshAll() {
 // Check server status
 async function checkServerStatus() {
     try {
-        const response = await fetch('/api/server/status');
-        const data = await response.json();
-        
+        const data = await makeApiRequest('/server/status');
         const statusDiv = document.getElementById('serverStatus');
         const icon = statusDiv.querySelector('i');
         const text = statusDiv.querySelector('span');
@@ -85,89 +133,6 @@ async function checkServerStatus() {
         console.error('Error checking server status:', error);
         handleServerError();
         return false;
-    }
-}
-
-// Refresh overall stats
-async function refreshOverallStats() {
-    try {
-        const response = await fetch('/api/models/stats');
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error || 'Failed to fetch statistics');
-        
-        const statsContainer = document.getElementById('overallStats');
-        statsContainer.innerHTML = `
-            <div class="ui statistic">
-                <div class="value">${data.total_operations}</div>
-                <div class="label">Total Operations</div>
-            </div>
-            <div class="ui statistic">
-                <div class="value">${data.total_prompt_tokens}</div>
-                <div class="label">Prompt Tokens</div>
-            </div>
-            <div class="ui statistic">
-                <div class="value">${data.total_completion_tokens}</div>
-                <div class="label">Completion Tokens</div>
-            </div>
-            <div class="ui statistic">
-                <div class="value">${formatDuration(data.total_duration)}</div>
-                <div class="label">Total Duration</div>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error fetching overall stats:', error);
-    }
-}
-
-// Show model stats
-async function showModelStats(modelName) {
-    try {
-        const response = await fetch(`/api/models/stats?name=${encodeURIComponent(modelName)}`);
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error || 'Failed to fetch model statistics');
-        
-        const statsDiv = document.getElementById('modelStats');
-        statsDiv.innerHTML = `
-            <div class="ui statistics">
-                <div class="statistic">
-                    <div class="value">${data.total_operations}</div>
-                    <div class="label">Total Operations</div>
-                </div>
-                <div class="statistic">
-                    <div class="value">${data.total_prompt_tokens}</div>
-                    <div class="label">Prompt Tokens</div>
-                </div>
-                <div class="statistic">
-                    <div class="value">${data.total_completion_tokens}</div>
-                    <div class="label">Completion Tokens</div>
-                </div>
-                <div class="statistic">
-                    <div class="value">${formatDuration(data.total_duration)}</div>
-                    <div class="label">Total Duration</div>
-                </div>
-            </div>
-            <div class="ui segment">
-                <h4 class="ui header">Operations by Type</h4>
-                <div class="ui list">
-                    ${Object.entries(data.operations_by_type)
-                        .map(([type, count]) => `
-                            <div class="item">
-                                <i class="right triangle icon"></i>
-                                <div class="content">
-                                    <div class="header">${type}</div>
-                                    <div class="description">${count} operations</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                </div>
-            </div>
-        `;
-        
-        $('#statsModal').modal('show');
-    } catch (error) {
-        showMessage('Error', error.message, true);
     }
 }
 
@@ -197,16 +162,11 @@ async function batchDeleteModels() {
     }
 
     try {
-        const response = await fetch('/api/models/batch/delete', {
+        const data = await makeApiRequest('/models/batch/delete', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ names: selectedModels })
         });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Failed to delete models');
 
         displayBatchResults(data.results);
         refreshModels();
@@ -238,7 +198,7 @@ async function batchConfigureModels() {
     $('#configModal').modal('show');
 }
 
-// Save batch model configuration
+// Save model configuration
 async function saveModelConfig() {
     try {
         const parameters = {};
@@ -262,19 +222,14 @@ async function saveModelConfig() {
             throw new Error('No models selected');
         }
 
-        const response = await fetch('/api/models/batch/update_config', {
+        const data = await makeApiRequest('/models/batch/update_config', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 models: selectedModels,
                 config: config
             })
         });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Failed to update model configuration');
 
         $('#configModal').modal('hide');
         displayBatchResults(data.results);
@@ -309,17 +264,11 @@ async function refreshModels() {
         }
 
         // Get local models
-        const localResponse = await fetch('/api/models');
-        const localData = await localResponse.json();
-        
-        if (!localResponse.ok) throw new Error(localData.error || 'Failed to fetch local models');
+        const localData = await makeApiRequest('/models');
         displayModels(localData.models || [], 'localModels');
         
         // Get running models
-        const runningResponse = await fetch('/api/models/running');
-        const runningData = await runningResponse.json();
-        
-        if (!runningResponse.ok) throw new Error(runningData.error || 'Failed to fetch running models');
+        const runningData = await makeApiRequest('/models/running');
         displayModels(runningData.models || [], 'runningModels');
     } catch (error) {
         console.error('Error refreshing models:', error);
@@ -397,6 +346,35 @@ function displayModels(models, containerId, errorMessage = null) {
     $('.ui.checkbox').checkbox();
 }
 
+// Refresh overall stats
+async function refreshOverallStats() {
+    try {
+        const data = await makeApiRequest('/models/stats');
+        
+        const statsContainer = document.getElementById('overallStats');
+        statsContainer.innerHTML = `
+            <div class="ui statistic">
+                <div class="value">${data.total_operations}</div>
+                <div class="label">Total Operations</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${data.total_prompt_tokens}</div>
+                <div class="label">Prompt Tokens</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${data.total_completion_tokens}</div>
+                <div class="label">Completion Tokens</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${formatDuration(data.total_duration)}</div>
+                <div class="label">Total Duration</div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error fetching overall stats:', error);
+    }
+}
+
 // Pull model
 async function pullModel() {
     const modelName = document.getElementById('modelNameInput').value.trim();
@@ -407,17 +385,11 @@ async function pullModel() {
     }
     
     try {
-        const response = await fetch('/api/models/pull', {
+        const data = await makeApiRequest('/models/pull', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: modelName })
         });
-        
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error || 'Failed to pull model');
         
         showMessage('Success', `Successfully pulled model: ${modelName}`);
         document.getElementById('modelNameInput').value = '';
@@ -434,17 +406,11 @@ async function deleteModel(modelName) {
     }
     
     try {
-        const response = await fetch('/api/models/delete', {
+        const data = await makeApiRequest('/models/delete', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: modelName })
         });
-        
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error || 'Failed to delete model');
         
         showMessage('Success', `Successfully deleted model: ${modelName}`);
         refreshModels();
@@ -459,10 +425,7 @@ let currentModel = null;
 async function showModelConfig(modelName) {
     try {
         currentModel = modelName;
-        const response = await fetch(`/api/models/config?name=${encodeURIComponent(modelName)}`);
-        const data = await response.json();
-        
-        if (!response.ok) throw new Error(data.error || 'Failed to fetch model configuration');
+        const data = await makeApiRequest(`/models/config?name=${encodeURIComponent(modelName)}`);
         
         document.getElementById('systemPrompt').value = data.system || '';
         document.getElementById('template').value = data.template || '';
@@ -510,4 +473,52 @@ function addParameter() {
 
 function removeParameter(button) {
     button.closest('.parameter-segment').remove();
+}
+
+// Show model statistics
+async function showModelStats(modelName) {
+    try {
+        const data = await makeApiRequest(`/models/stats?name=${encodeURIComponent(modelName)}`);
+        
+        const statsDiv = document.getElementById('modelStats');
+        statsDiv.innerHTML = `
+            <div class="ui statistics">
+                <div class="statistic">
+                    <div class="value">${data.total_operations}</div>
+                    <div class="label">Total Operations</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${data.total_prompt_tokens}</div>
+                    <div class="label">Prompt Tokens</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${data.total_completion_tokens}</div>
+                    <div class="label">Completion Tokens</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${formatDuration(data.total_duration)}</div>
+                    <div class="label">Total Duration</div>
+                </div>
+            </div>
+            <div class="ui segment">
+                <h4 class="ui header">Operations by Type</h4>
+                <div class="ui list">
+                    ${Object.entries(data.operations_by_type)
+                        .map(([type, count]) => `
+                            <div class="item">
+                                <i class="right triangle icon"></i>
+                                <div class="content">
+                                    <div class="header">${type}</div>
+                                    <div class="description">${count} operations</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                </div>
+            </div>
+        `;
+        
+        $('#statsModal').modal('show');
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
 }
