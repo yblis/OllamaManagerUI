@@ -2,15 +2,23 @@ import requests
 from requests.exceptions import ConnectionError, RequestException, Timeout
 from models import ModelUsage
 import time
+import os
 
 class OllamaClient:
     def __init__(self, base_url=None):
-        self.base_url = base_url or 'http://localhost:11434'
+        self.base_url = base_url or os.environ.get('OLLAMA_SERVER_URL', 'http://localhost:11434')
+        self.api_key = os.environ.get('OLLAMA_API_KEY')
         self.max_retries = 3
         self.retry_delay = 1  # Initial delay in seconds
         self._server_status = None
         self._last_check = 0
         self._check_interval = 5  # Check server every 5 seconds
+
+    def _get_headers(self):
+        headers = {'Content-Type': 'application/json'}
+        if self.api_key:
+            headers['Authorization'] = f'Bearer {self.api_key}'
+        return headers
 
     def _handle_request(self, method, endpoint, **kwargs):
         """Generic method to handle requests with retry mechanism"""
@@ -24,6 +32,7 @@ class OllamaClient:
         while retries < self.max_retries:
             try:
                 kwargs['timeout'] = kwargs.get('timeout', 5)
+                kwargs['headers'] = {**self._get_headers(), **kwargs.get('headers', {})}
                 response = method(f'{self.base_url}{endpoint}', **kwargs)
                 response.raise_for_status()
                 return response.json()
@@ -65,7 +74,7 @@ class OllamaClient:
             return self._server_status
 
         try:
-            response = requests.get(f'{self.base_url}/api/tags', timeout=2)
+            response = requests.get(f'{self.base_url}/api/tags', headers=self._get_headers(), timeout=2)
             self._server_status = response.status_code == 200
         except (ConnectionError, Timeout, RequestException):
             self._server_status = False

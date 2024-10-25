@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(checkServerStatus, REFRESH_INTERVAL);
 });
 
-/* Format byte sizes into human-readable format */
 function formatSize(bytes) {
     const units = ['o', 'Ko', 'Mo', 'Go'];
     let size = bytes;
@@ -101,7 +100,8 @@ async function refreshAll() {
     if (!serverIsKnownOffline) {
         try {
             await Promise.all([
-                refreshModels(),
+                refreshLocalModels(),
+                refreshRunningModels(),
                 refreshStats()
             ]);
         } catch (error) {
@@ -214,23 +214,44 @@ function displayModels(models, containerId, errorMessage = null) {
     $('.ui.checkbox').checkbox();
 }
 
-async function refreshModels() {
+async function refreshLocalModels() {
     if (serverIsKnownOffline) return;
     
     try {
-        const localResponse = await fetch('/api/models');
-        if (!localResponse.ok) throw new Error(`Erreur HTTP ! statut : ${localResponse.status}`);
-        const localData = await localResponse.json();
-        displayModels(localData.models || [], 'localModels');
-        
-        const runningResponse = await fetch('/api/models/running');
-        if (!runningResponse.ok) throw new Error(`Erreur HTTP ! statut : ${runningResponse.status}`);
-        const runningData = await runningResponse.json();
-        displayModels(runningData.models || [], 'runningModels');
+        const response = await fetch('/api/models');
+        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        const data = await response.json();
+        displayModels(data.models || [], 'localModels');
     } catch (error) {
-        handleServerError(error, 'Modèles');
+        handleServerError(error, 'Modèles Locaux');
         displayModels([], 'localModels', error.message);
+    }
+}
+
+async function refreshRunningModels() {
+    if (serverIsKnownOffline) {
+        displayModels([], 'runningModels', 'Le serveur est hors ligne');
+        return;
+    }
+    
+    try {
+        const button = document.querySelector('button[onclick="refreshRunningModels()"]');
+        if (button) {
+            button.classList.add('loading');
+        }
+        
+        const response = await fetch('/api/models/running');
+        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        const data = await response.json();
+        displayModels(data.models || [], 'runningModels');
+    } catch (error) {
+        handleServerError(error, 'Modèles en Cours d\'Exécution');
         displayModels([], 'runningModels', error.message);
+    } finally {
+        const button = document.querySelector('button[onclick="refreshRunningModels()"]');
+        if (button) {
+            button.classList.remove('loading');
+        }
     }
 }
 
@@ -340,7 +361,7 @@ async function deleteModel(modelName) {
         const result = await response.json();
         
         showMessage('Succès', result.message);
-        refreshModels();
+        refreshLocalModels();
     } catch (error) {
         showMessage('Erreur', `Échec de la suppression du modèle : ${error.message}`);
     }

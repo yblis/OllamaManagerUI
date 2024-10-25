@@ -80,7 +80,12 @@
 
     <!-- Running Models -->
     <div class="ui segment">
-        <h3 class="ui header">Modèles en Cours d'Exécution</h3>
+        <div class="ui clearing">
+            <h3 class="ui left floated header">Modèles en Cours d'Exécution</h3>
+            <button class="ui right floated button" onclick="refreshRunningModels()">
+                <i class="refresh icon"></i> Actualiser
+            </button>
+        </div>
         <table class="ui celled table" id="runningModels">
             <thead>
                 <tr>
