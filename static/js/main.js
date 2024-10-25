@@ -31,11 +31,35 @@ function formatDuration(seconds) {
     return `${minutes}m ${remainingSeconds}s`;
 }
 
+// Handle server error
+function handleServerError() {
+    const statusDiv = document.getElementById('serverStatus');
+    statusDiv.className = 'ui message negative';
+    statusDiv.innerHTML = `
+        <i class="icon times circle"></i>
+        <span>Ollama server is not running</span>
+        <div class="ui warning message" style="margin-top: 1rem;">
+            <div class="header">Server Not Running</div>
+            <p>Please ensure Ollama is installed and running on your system. You can download it from <a href="https://ollama.ai" target="_blank">ollama.ai</a>.</p>
+            <p>Once installed, start the Ollama server before using this interface.</p>
+        </div>
+    `;
+}
+
 // Refresh everything
 async function refreshAll() {
-    await checkServerStatus();
-    await refreshModels();
-    await refreshOverallStats();
+    try {
+        const serverStatus = await checkServerStatus();
+        if (!serverStatus) {
+            handleServerError();
+            return;
+        }
+        await refreshModels();
+        await refreshOverallStats();
+    } catch (error) {
+        console.error('Error refreshing data:', error);
+        handleServerError();
+    }
 }
 
 // Check server status
@@ -52,13 +76,15 @@ async function checkServerStatus() {
             statusDiv.className = 'ui message positive';
             icon.className = 'icon check circle';
             text.textContent = 'Ollama server is running';
+            return true;
         } else {
-            statusDiv.className = 'ui message negative';
-            icon.className = 'icon times circle';
-            text.textContent = 'Ollama server is not running';
+            handleServerError();
+            return false;
         }
     } catch (error) {
         console.error('Error checking server status:', error);
+        handleServerError();
+        return false;
     }
 }
 
@@ -277,6 +303,11 @@ function displayBatchResults(results) {
 // Refresh models
 async function refreshModels() {
     try {
+        const serverStatus = await checkServerStatus();
+        if (!serverStatus) {
+            return;
+        }
+
         // Get local models
         const localResponse = await fetch('/api/models');
         const localData = await localResponse.json();
@@ -292,8 +323,12 @@ async function refreshModels() {
         displayModels(runningData.models || [], 'runningModels');
     } catch (error) {
         console.error('Error refreshing models:', error);
-        displayModels([], 'localModels', error.message);
-        displayModels([], 'runningModels', error.message);
+        if (error.message.includes('Ollama server is not running')) {
+            handleServerError();
+        } else {
+            displayModels([], 'localModels', error.message);
+            displayModels([], 'runningModels', error.message);
+        }
     }
 }
 
@@ -357,6 +392,9 @@ function displayModels(models, containerId, errorMessage = null) {
         
         container.appendChild(card);
     });
+
+    // Initialize checkboxes
+    $('.ui.checkbox').checkbox();
 }
 
 // Pull model
