@@ -3,6 +3,7 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 from models import ModelUsage
 import time
 import os
+import json
 
 class OllamaClient:
     def __init__(self, base_url=None):
@@ -99,10 +100,29 @@ class OllamaClient:
             return {'models': []}
 
     def pull_model(self, model_name):
-        response = self._handle_request(requests.post, '/api/pull', 
-            json={'name': model_name})
-        self._log_usage(model_name, 'pull', response)
-        return {'success': True, 'message': f'Successfully pulled model {model_name}'}
+        try:
+            url = f'{self.base_url}/api/pull'
+            response = requests.post(url, 
+                headers=self._get_headers(),
+                json={'name': model_name},
+                stream=True)
+            
+            response.raise_for_status()
+            
+            # Process the streaming response
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        # If we get a success status, break the loop
+                        if data.get('status') == 'success':
+                            break
+                    except json.JSONDecodeError:
+                        continue
+                    
+            return {'success': True, 'message': f'Successfully pulled model {model_name}'}
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Error pulling model: {str(e)}")
 
     def delete_model(self, model_name):
         self._handle_request(requests.post, '/api/delete', 
