@@ -280,7 +280,6 @@ async function refreshRunningModels() {
 async function searchAndPullModel() {
     const modelName = document.getElementById('modelNameInput').value;
     if (!modelName) {
-        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
         return;
     }
 
@@ -317,6 +316,8 @@ async function searchAndPullModel() {
         }
     } catch (error) {
         showMessage('Erreur', error.message, true);
+        const searchResultsContainer = document.querySelector('.search-results');
+        searchResultsContainer.style.display = 'none';
     }
 }
 
@@ -479,6 +480,26 @@ async function deleteModel(modelName) {
         refreshLocalModels();
     } catch (error) {
         showMessage('Erreur', `Échec de la suppression du modèle : ${error.message}`);
+    }
+}
+
+async function stopModel(modelName) {
+    try {
+        const response = await fetch('/api/models/stop', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        const result = await response.json();
+        
+        showMessage('Succès', result.message);
+        refreshRunningModels();
+    } catch (error) {
+        showMessage('Erreur', `Échec de l'arrêt du modèle : ${error.message}`);
     }
 }
 
