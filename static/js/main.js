@@ -210,6 +210,20 @@ window.deleteModel = async function(modelName) {
     }
 };
 
+// Theme management
+function setTheme(themeName) {
+    localStorage.setItem('theme', themeName);
+    document.documentElement.setAttribute('data-theme', themeName);
+    const icon = document.querySelector('.theme-toggle i');
+    icon.className = themeName === 'dark' ? 'moon icon' : 'sun icon';
+}
+
+function toggleTheme() {
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+}
+
 // Model search and pull
 let searchTimeout = null;
 
@@ -429,6 +443,9 @@ function formatBytes(bytes, decimals = 2) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+    
     checkServerStatus();
     refreshAll();
     
