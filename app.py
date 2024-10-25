@@ -5,6 +5,10 @@ import traceback
 app = Flask(__name__)
 ollama_client = OllamaClient()
 
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
 @app.route('/')
 def index():
     server_status = ollama_client.check_server()
