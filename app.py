@@ -93,6 +93,24 @@ def stop_model():
         }), 500
     return jsonify(result)
 
+@app.route('/api/models/delete', methods=['POST'])
+@with_error_handling
+def delete_model():
+    model_name = request.json.get('name')
+    if not model_name:
+        return jsonify({
+            'error': 'Le nom du modèle est requis',
+            'status': 'validation_error'
+        }), 400
+    
+    result = ollama_client.delete_model(model_name)
+    if not result.get('success'):
+        return jsonify({
+            'error': result.get('error', 'Erreur inconnue'),
+            'status': 'error'
+        }), 500
+    return jsonify(result)
+
 @app.route('/api/models/search', methods=['POST'])
 @with_error_handling
 def search_models():
