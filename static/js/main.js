@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add search listener
     document.getElementById('modelNameInput')?.addEventListener('input', debounce(searchAndPullModel, 500));
+    
+    // Set up periodic refresh for running models
+    setInterval(refreshRunningModels, REFRESH_INTERVAL);
 });
 
 // Server status check and refresh functions
@@ -248,7 +251,6 @@ async function pullModel(modelName) {
     }
 
     try {
-        // Show progress bar
         const progressBar = document.getElementById('pullProgress');
         progressBar.style.display = 'block';
         progressBar.querySelector('.bar').style.width = '0%';
@@ -265,15 +267,12 @@ async function pullModel(modelName) {
             throw new Error(data.error || 'Échec du téléchargement du modèle');
         }
         
-        const data = await response.json();
         showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
         refreshAll();
     } catch (error) {
         showMessage('Erreur', error.message, true);
     } finally {
-        // Hide progress bar
         document.getElementById('pullProgress').style.display = 'none';
-        // Hide search results
         document.querySelector('.search-results').style.display = 'none';
     }
 }

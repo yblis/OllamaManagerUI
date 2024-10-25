@@ -99,6 +99,25 @@ def get_running_models():
     response = ollama_client.list_running()
     return jsonify(response)
 
+@app.route('/api/models/pull', methods=['POST'])
+@with_error_handling
+def pull_model():
+    model_name = request.json.get('name')
+    if not model_name:
+        return jsonify({
+            'error': 'Le nom du modèle est requis',
+            'status': 'validation_error'
+        }), 400
+        
+    try:
+        result = ollama_client.pull_model(model_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'error'
+        }), 500
+
 @app.route('/api/models/<model_name>/config', methods=['GET'])
 @with_error_handling
 def get_model_config(model_name):
