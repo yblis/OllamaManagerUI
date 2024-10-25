@@ -4,9 +4,12 @@ const MAX_RETRIES = 3;
 let retryCount = 0;
 let serverIsKnownOffline = false;
 let lastKnownServerStatus = null;
+let lastErrorTimestamp = 0;
+const ERROR_DEBOUNCE_TIME = 5000; // 5 seconds
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    $('.ui.modal').modal();
     refreshAll();
     setInterval(checkServerStatus, REFRESH_INTERVAL);
 });
@@ -25,7 +28,7 @@ function formatSize(bytes) {
     return `${size.toFixed(2)} ${units[unitIndex]}`;
 }
 
-// Server status check with retry logic
+// Server status check with improved error handling
 async function checkServerStatus() {
     try {
         const response = await fetch('/api/server/status');
@@ -37,28 +40,40 @@ async function checkServerStatus() {
             serverIsKnownOffline = !currentStatus;
             updateServerStatus(currentStatus);
             lastKnownServerStatus = currentStatus;
+            
+            // If server is back online, refresh data
+            if (currentStatus) {
+                retryCount = 0;
+                refreshAll();
+            }
         }
-        retryCount = 0;
     } catch (error) {
-        // Only log error when status changes or on first attempt
-        if (lastKnownServerStatus !== false) {
-            console.error('Server connection error:', error.message);
-            lastKnownServerStatus = false;
-        }
+        handleServerError(error);
+    }
+}
+
+// Unified error handling
+function handleServerError(error, context = '') {
+    const currentTime = Date.now();
+    if (currentTime - lastErrorTimestamp > ERROR_DEBOUNCE_TIME) {
+        console.error(`${context} Error:`, error.message);
+        lastErrorTimestamp = currentTime;
         
-        if (retryCount < MAX_RETRIES) {
-            retryCount++;
-            setTimeout(checkServerStatus, 2000); // Retry after 2 seconds
-        } else {
+        if (error.message.includes('503') || error.message.includes('Failed to fetch')) {
             if (!serverIsKnownOffline) {
                 serverIsKnownOffline = true;
                 updateServerStatus(false);
             }
         }
     }
+
+    if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        setTimeout(checkServerStatus, 2000 * retryCount); // Progressive backoff
+    }
 }
 
-// Update server status UI
+// Update server status UI and disable/enable elements
 function updateServerStatus(isRunning) {
     const statusDiv = document.getElementById('serverStatus');
     statusDiv.className = `ui tiny message ${isRunning ? 'positive' : 'negative'}`;
@@ -67,49 +82,46 @@ function updateServerStatus(isRunning) {
         <span>Ollama server is ${isRunning ? 'running' : 'not running'}</span>
     `;
 
-    // Update UI elements based on server status
-    const actionButtons = document.querySelectorAll('.model-action-btn');
-    actionButtons.forEach(btn => {
-        btn.disabled = !isRunning;
-        if (!isRunning) {
-            btn.classList.add('disabled');
-        } else {
+    // Update all interactive elements
+    document.querySelectorAll('.ui.button:not(.modal .button)').forEach(btn => {
+        if (isRunning) {
             btn.classList.remove('disabled');
+            btn.disabled = false;
+        } else {
+            btn.classList.add('disabled');
+            btn.disabled = true;
         }
     });
 
-    // Update batch action buttons
-    const batchButtons = document.querySelectorAll('.batch-actions .ui.button');
-    batchButtons.forEach(btn => {
-        btn.disabled = !isRunning;
-        if (!isRunning) {
-            btn.classList.add('disabled');
-        } else {
-            btn.classList.remove('disabled');
-        }
+    // Update input fields
+    document.querySelectorAll('input:not(.modal input)').forEach(input => {
+        input.disabled = !isRunning;
+    });
+
+    // Update checkboxes
+    document.querySelectorAll('.ui.checkbox input').forEach(checkbox => {
+        checkbox.disabled = !isRunning;
     });
 }
 
 // Refresh all data with improved error handling
 async function refreshAll() {
     if (!serverIsKnownOffline) {
-        await Promise.all([
-            refreshModels().catch(error => {
-                if (!serverIsKnownOffline) {
-                    console.error('Error refreshing models:', error.message);
-                }
-            }),
-            refreshStats().catch(error => {
-                if (!serverIsKnownOffline) {
-                    console.error('Error refreshing stats:', error.message);
-                }
-            })
-        ]);
+        try {
+            await Promise.all([
+                refreshModels(),
+                refreshStats()
+            ]);
+        } catch (error) {
+            handleServerError(error, 'Refresh');
+        }
     }
 }
 
 /* Fetch and display statistics */
 async function refreshStats() {
+    if (serverIsKnownOffline) return;
+    
     try {
         const response = await fetch('/api/models/stats');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -136,9 +148,7 @@ async function refreshStats() {
             </div>
         `;
     } catch (error) {
-        if (!serverIsKnownOffline) {
-            console.error('Error refreshing stats:', error);
-        }
+        handleServerError(error, 'Stats');
     }
 }
 
@@ -149,17 +159,13 @@ function displayModels(models, containerId, errorMessage = null) {
     tbody.innerHTML = '';
     
     if (errorMessage) {
-        const errorMsg = errorMessage.includes('503') ? 
-            'Ollama server is not running. Please start the server and try again.' : 
-            errorMessage;
         tbody.innerHTML = `
             <tr>
                 <td colspan="8">
                     <div class="ui warning message">
-                        <div class="header">Error</div>
-                        <p>${errorMsg}</p>
-                        ${errorMessage.includes('503') ? 
-                            '<p>Make sure Ollama is installed and running on your system.</p>' : ''}
+                        <div class="header">Server Connection Error</div>
+                        <p>Unable to connect to the Ollama server. Please ensure it is running and try again.</p>
+                        <p>Make sure Ollama is installed and running on your system.</p>
                     </div>
                 </td>
             </tr>`;
@@ -223,39 +229,24 @@ function displayModels(models, containerId, errorMessage = null) {
 
 /* Refresh models with improved error handling */
 async function refreshModels() {
+    if (serverIsKnownOffline) return;
+    
     try {
-        // Check server status first
-        const statusResponse = await fetch('/api/server/status');
-        const statusData = await statusResponse.json();
-        
-        if (statusData.status !== 'running') {
-            throw new Error('Ollama server is not running');
-        }
-
         // Get local models
         const localResponse = await fetch('/api/models');
-        if (!localResponse.ok) {
-            throw new Error(`HTTP error! status: ${localResponse.status}`);
-        }
+        if (!localResponse.ok) throw new Error(`HTTP error! status: ${localResponse.status}`);
         const localData = await localResponse.json();
         displayModels(localData.models || [], 'localModels');
         
         // Get running models
         const runningResponse = await fetch('/api/models/running');
-        if (!runningResponse.ok) {
-            throw new Error(`HTTP error! status: ${runningResponse.status}`);
-        }
+        if (!runningResponse.ok) throw new Error(`HTTP error! status: ${runningResponse.status}`);
         const runningData = await runningResponse.json();
         displayModels(runningData.models || [], 'runningModels');
     } catch (error) {
-        if (!serverIsKnownOffline) {
-            console.error('Error refreshing models:', error.message);
-        }
-        const errorMsg = error.message.includes('not running') ? 
-            'Ollama server is not running. Please start the server and try again.' :
-            error.message;
-        displayModels([], 'localModels', errorMsg);
-        displayModels([], 'runningModels', errorMsg);
+        handleServerError(error, 'Models');
+        displayModels([], 'localModels', error.message);
+        displayModels([], 'runningModels', error.message);
     }
 }
 
@@ -405,13 +396,8 @@ async function saveSettings() {
         localStorage.setItem('ollamaUrl', ollamaUrl);
         $('#settingsModal').modal('hide');
         showMessage('Success', 'Settings saved successfully');
-        refreshAll();
+        window.location.reload(); // Reload to apply new server URL
     } catch (error) {
         showMessage('Error', error.message, true);
     }
 }
-
-/* Initialize modals and other UI components */
-$(document).ready(function() {
-    $('.ui.modal').modal();
-});
