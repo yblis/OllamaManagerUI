@@ -7,6 +7,7 @@ import time
 import subprocess
 import re
 import os
+import json
 
 app = Flask(__name__)
 ollama_client = OllamaClient()
@@ -110,6 +111,40 @@ def delete_model():
             'status': 'error'
         }), 500
     return jsonify(result)
+
+@app.route('/api/models/pull', methods=['POST'])
+@with_error_handling
+def pull_model():
+    model_name = request.json.get('name')
+    if not model_name:
+        return jsonify({
+            'error': 'Le nom du modèle est requis',
+            'status': 'validation_error'
+        }), 400
+        
+    try:
+        url = f'{ollama_client.base_url}/api/pull'
+        response = requests.post(url, 
+            headers=ollama_client._get_headers(),
+            json={'name': model_name},
+            stream=True)
+        
+        response.raise_for_status()
+        
+        # Process the streaming response
+        for line in response.iter_lines():
+            if line:
+                try:
+                    data = json.loads(line)
+                    # If we get a success status, break the loop
+                    if data.get('status') == 'success':
+                        break
+                except json.JSONDecodeError:
+                    continue
+                    
+        return jsonify({'success': True, 'message': f'Successfully pulled model {model_name}'})
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/models/search', methods=['POST'])
 @with_error_handling
