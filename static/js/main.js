@@ -61,6 +61,52 @@ async function refreshAll() {
     ]);
 }
 
+// Format byte sizes into human-readable format
+function formatSize(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+    }
+    
+    return `${size.toFixed(2)} ${units[unitIndex]}`;
+}
+
+// Fetch and display statistics
+async function refreshStats() {
+    try {
+        const response = await fetch('/api/stats');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        
+        // Update overall stats
+        const overallStats = document.getElementById('overallStats');
+        overallStats.innerHTML = `
+            <div class="ui statistic">
+                <div class="value">${data.total_operations || 0}</div>
+                <div class="label">Total Operations</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${data.total_prompt_tokens || 0}</div>
+                <div class="label">Total Prompt Tokens</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${data.total_completion_tokens || 0}</div>
+                <div class="label">Total Completion Tokens</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${(data.total_duration || 0).toFixed(2)}s</div>
+                <div class="label">Total Duration</div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error refreshing stats:', error);
+    }
+}
+
 // Display models in table format with improved error handling
 function displayModels(models, containerId, errorMessage = null) {
     const container = document.getElementById(containerId);
@@ -176,5 +222,7 @@ async function refreshModels() {
     }
 }
 
-// Rest of the code remains the same...
-// (Previous utility functions and modal initialization)
+// Initialize modals and other UI components
+$(document).ready(function() {
+    $('.ui.modal').modal();
+});
