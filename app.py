@@ -93,6 +93,33 @@ def stop_model():
         }), 500
     return jsonify(result)
 
+@app.route('/api/models/search', methods=['POST'])
+@with_error_handling
+def search_models():
+    keyword = request.json.get('keyword', '')
+    try:
+        # Use curl to get models directly
+        result = subprocess.run(['curl', '-s', 'https://ollama.com/library'], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
+            
+        # Extract model names using regex
+        pattern = r'(?<=<span>).*?(?=</span>)'
+        models = re.findall(pattern, result.stdout)
+        
+        # Filter models based on keyword
+        filtered_models = [model for model in models if keyword.lower() in model.lower()]
+        
+        # Common model size tags
+        size_tags = ['1b', '1.5b', '2b', '3b', '7b', '8b', '9b', '13b', '34b', '70b']
+        
+        # Prepare response with models and their tags
+        models_with_tags = [{'name': model, 'tags': size_tags} for model in filtered_models]
+        
+        return jsonify({'models': models_with_tags})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/models/stats', methods=['GET'])
 @with_error_handling
 def get_all_model_stats():

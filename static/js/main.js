@@ -308,7 +308,6 @@ function formatBytes(bytes, decimals = 2) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-// Add the new model management functions here
 window.showModelConfig = async function(modelName) {
     try {
         const response = await fetch(`/api/models/${modelName}/config`, {
