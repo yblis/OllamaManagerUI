@@ -12,7 +12,7 @@ function showMessage(title, message, isError = false) {
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('modalMessage').textContent = message;
     document.getElementById('modalMessage').className = isError ? 'error-message' : 'success-message';
-    $('.ui.modal').modal('show');
+    $('.ui.modal#messageModal').modal('show');
 }
 
 // Format file size
@@ -145,6 +145,107 @@ async function showModelStats(modelName) {
     }
 }
 
+// Show model configuration
+let currentModel = null;
+
+async function showModelConfig(modelName) {
+    try {
+        currentModel = modelName;
+        const response = await fetch(`/api/models/config?name=${encodeURIComponent(modelName)}`);
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.error || 'Failed to fetch model configuration');
+        
+        document.getElementById('systemPrompt').value = data.system || '';
+        document.getElementById('template').value = data.template || '';
+        
+        const parametersDiv = document.getElementById('parameters');
+        parametersDiv.innerHTML = '';
+        
+        Object.entries(data.parameters || {}).forEach(([key, value]) => {
+            parametersDiv.appendChild(createParameterSegment(key, value));
+        });
+        
+        $('#configModal').modal('show');
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
+}
+
+function createParameterSegment(key = '', value = '') {
+    const segment = document.createElement('div');
+    segment.className = 'ui segment parameter-segment';
+    
+    segment.innerHTML = `
+        <div class="two fields">
+            <div class="field">
+                <input type="text" class="parameter-key" placeholder="Parameter name" value="${key}">
+            </div>
+            <div class="field">
+                <div class="ui action input">
+                    <input type="text" class="parameter-value" placeholder="Parameter value" value="${value}">
+                    <button class="ui negative icon button" onclick="removeParameter(this)">
+                        <i class="trash icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return segment;
+}
+
+function addParameter() {
+    const parametersDiv = document.getElementById('parameters');
+    parametersDiv.appendChild(createParameterSegment());
+}
+
+function removeParameter(button) {
+    button.closest('.parameter-segment').remove();
+}
+
+async function saveModelConfig() {
+    if (!currentModel) return;
+    
+    try {
+        const parameters = {};
+        document.querySelectorAll('.parameter-segment').forEach(segment => {
+            const key = segment.querySelector('.parameter-key').value.trim();
+            const value = segment.querySelector('.parameter-value').value.trim();
+            if (key && value) {
+                parameters[key] = value;
+            }
+        });
+        
+        const config = {
+            system: document.getElementById('systemPrompt').value.trim(),
+            template: document.getElementById('template').value.trim(),
+            parameters: parameters
+        };
+        
+        const response = await fetch('/api/models/config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: currentModel,
+                config: config
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) throw new Error(data.error || 'Failed to update model configuration');
+        
+        showMessage('Success', `Configuration updated for model: ${currentModel}`);
+        $('#configModal').modal('hide');
+        refreshModels();
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
+}
+
 // Refresh models
 async function refreshModels() {
     try {
@@ -207,9 +308,12 @@ function displayModels(models, containerId, errorMessage = null) {
                 </div>
             </div>
             <div class="extra content">
-                <div class="ui two buttons">
+                <div class="ui three buttons">
                     <button class="ui primary button" onclick="showModelStats('${model.name}')">
                         <i class="chart bar icon"></i> Stats
+                    </button>
+                    <button class="ui teal button" onclick="showModelConfig('${model.name}')">
+                        <i class="cog icon"></i> Config
                     </button>
                     <button class="ui negative button" onclick="deleteModel('${model.name}')">
                         <i class="trash icon"></i> Delete

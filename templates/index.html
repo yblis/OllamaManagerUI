@@ -78,4 +78,34 @@
         <div class="ui positive button">Close</div>
     </div>
 </div>
+
+<!-- Model Config Modal -->
+<div class="ui modal" id="configModal">
+    <div class="header">Model Configuration</div>
+    <div class="content">
+        <form class="ui form">
+            <div class="field">
+                <label>System Prompt</label>
+                <textarea id="systemPrompt" rows="3"></textarea>
+            </div>
+            <div class="field">
+                <label>Template</label>
+                <textarea id="template" rows="3"></textarea>
+            </div>
+            <div class="field">
+                <label>Parameters</label>
+                <div id="parameters" class="ui segments">
+                    <!-- Parameters will be populated here -->
+                </div>
+                <button type="button" class="ui small primary button" onclick="addParameter()">
+                    <i class="plus icon"></i> Add Parameter
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui negative button">Cancel</div>
+        <div class="ui positive button" onclick="saveModelConfig()">Save</div>
+    </div>
+</div>
 {% endblock %}

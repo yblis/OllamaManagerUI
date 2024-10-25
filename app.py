@@ -77,6 +77,36 @@ def get_model_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/models/config', methods=['GET'])
+def get_model_config():
+    try:
+        if not ollama_client.check_server():
+            return jsonify({'error': 'Ollama server is not running. Please start the server and try again.'}), 503
+        
+        model_name = request.args.get('name')
+        if not model_name:
+            return jsonify({'error': 'Model name is required'}), 400
+        
+        config = ollama_client.get_model_config(model_name)
+        return jsonify(config)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/models/config', methods=['POST'])
+def update_model_config():
+    try:
+        if not ollama_client.check_server():
+            return jsonify({'error': 'Ollama server is not running. Please start the server and try again.'}), 503
+        
+        data = request.json
+        if not data or 'name' not in data or 'config' not in data:
+            return jsonify({'error': 'Model name and configuration are required'}), 400
+        
+        result = ollama_client.update_model_config(data['name'], data['config'])
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.errorhandler(Exception)
 def handle_error(error):
     print(traceback.format_exc())
