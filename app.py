@@ -12,6 +12,11 @@ def with_error_handling(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         try:
+            if not ollama_client.check_server():
+                return jsonify({
+                    'error': 'Ollama server is not running. Please ensure Ollama is installed and running.',
+                    'status': 'server_stopped'
+                }), 503
             return f(*args, **kwargs)
         except requests.exceptions.ConnectionError:
             return jsonify({
@@ -51,46 +56,34 @@ def server_status():
 @app.route('/api/models', methods=['GET'])
 @with_error_handling
 def get_models():
-    if not ollama_client.check_server():
-        return jsonify({
-            'error': 'Ollama server is not running. Please start the server and try again.',
-            'status': 'server_stopped'
-        }), 503
     models = ollama_client.list_models()
     return jsonify({'models': models})
 
 @app.route('/api/models/running', methods=['GET'])
 @with_error_handling
 def get_running_models():
-    if not ollama_client.check_server():
-        return jsonify({
-            'error': 'Ollama server is not running. Please start the server and try again.',
-            'status': 'server_stopped'
-        }), 503
     response = ollama_client.list_running()
     return jsonify(response)
 
+@app.route('/api/models/<model_name>/config', methods=['GET'])
+@with_error_handling
+def get_model_config(model_name):
+    return jsonify(ollama_client.get_model_config(model_name))
+
+@app.route('/api/models/<model_name>/stats', methods=['GET'])
+@with_error_handling
+def get_model_stats(model_name):
+    return jsonify(ollama_client.get_model_stats(model_name))
+
 @app.route('/api/models/stats', methods=['GET'])
 @with_error_handling
-def get_model_stats():
-    if not ollama_client.check_server():
-        return jsonify({
-            'error': 'Ollama server is not running. Please start the server and try again.',
-            'status': 'server_stopped'
-        }), 503
-    
+def get_all_model_stats():
     stats = ollama_client.get_model_stats()
     return jsonify(stats)
 
 @app.route('/api/models/stop', methods=['POST'])
 @with_error_handling
 def stop_model():
-    if not ollama_client.check_server():
-        return jsonify({
-            'error': 'Ollama server is not running. Please start the server and try again.',
-            'status': 'server_stopped'
-        }), 503
-    
     model_name = request.json.get('name')
     if not model_name:
         return jsonify({
@@ -98,30 +91,27 @@ def stop_model():
             'status': 'validation_error'
         }), 400
     
-    max_retries = 3
-    retry_delay = 1  # seconds
-    
-    for attempt in range(max_retries):
-        try:
-            response = requests.post('http://localhost:11434/api/generate', json={
-                'model': model_name,
-                'prompt': '',
-                'keep_alive': 0
-            })
-            response.raise_for_status()
-            return jsonify({
-                'success': True,
-                'message': f'Successfully stopped model {model_name}'
-            })
-        except requests.exceptions.RequestException as e:
-            if attempt == max_retries - 1:
-                raise
-            time.sleep(retry_delay)
-    
-    return jsonify({
-        'error': 'Failed to stop model after multiple attempts',
-        'status': 'error'
-    }), 500
+    try:
+        result = ollama_client.stop_model(model_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'error'
+        }), 500
+
+@app.route('/api/models/delete', methods=['POST'])
+@with_error_handling
+def delete_model():
+    model_name = request.json.get('name')
+    if not model_name:
+        return jsonify({
+            'error': 'Model name is required',
+            'status': 'validation_error'
+        }), 400
+        
+    result = ollama_client.delete_model(model_name)
+    return jsonify(result)
 
 @app.errorhandler(Exception)
 def handle_error(error):

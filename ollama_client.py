@@ -1,5 +1,5 @@
 import requests
-from requests.exceptions import ConnectionError, RequestException
+from requests.exceptions import ConnectionError, RequestException, Timeout
 from models import ModelUsage
 
 class OllamaClient:
@@ -9,12 +9,17 @@ class OllamaClient:
     def _handle_request(self, method, endpoint, **kwargs):
         """Generic method to handle requests and provide meaningful error messages"""
         try:
+            kwargs['timeout'] = kwargs.get('timeout', 5)  # Add timeout parameter
             response = method(f'{self.base_url}{endpoint}', **kwargs)
             response.raise_for_status()
             return response.json()
         except ConnectionError:
             raise Exception("Unable to connect to Ollama server. Please ensure Ollama is installed and running.")
+        except Timeout:
+            raise Exception("Connection to Ollama server timed out. Please check if the server is responsive.")
         except RequestException as e:
+            if hasattr(e.response, 'status_code') and e.response.status_code == 503:
+                raise Exception("Ollama server is not running. Please start the server and try again.")
             raise Exception(f"Error communicating with Ollama server: {str(e)}")
 
     def _log_usage(self, model_name, operation, response_data):
@@ -49,21 +54,26 @@ class OllamaClient:
 
     def pull_model(self, model_name):
         response = self._handle_request(requests.post, '/api/pull', 
-            json={'name': model_name, 'stream': False})
+            json={'name': model_name})
         self._log_usage(model_name, 'pull', response)
         return {'success': True, 'message': f'Successfully pulled model {model_name}'}
 
     def delete_model(self, model_name):
-        self._handle_request(requests.delete, '/api/delete', 
+        self._handle_request(requests.post, '/api/delete', 
             json={'name': model_name})
         return {'success': True, 'message': f'Successfully deleted model {model_name}'}
+
+    def stop_model(self, model_name):
+        self._handle_request(requests.post, '/api/generate', 
+            json={'model': model_name, 'prompt': '', 'keep_alive': 0})
+        return {'success': True, 'message': f'Successfully stopped model {model_name}'}
 
     def check_server(self):
         """Check if Ollama server is running"""
         try:
             requests.get(f'{self.base_url}/api/tags', timeout=2)
             return True
-        except:
+        except (ConnectionError, Timeout, RequestException):
             return False
 
     def get_model_stats(self, model_name=None):
