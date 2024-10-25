@@ -49,21 +49,6 @@ def get_running_models():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/models/stop', methods=['POST'])
-def stop_model():
-    try:
-        if not ollama_client.check_server():
-            return jsonify({'error': 'Ollama server is not running. Please start the server and try again.'}), 503
-        
-        model_name = request.json.get('name')
-        if not model_name:
-            return jsonify({'error': 'Model name is required'}), 400
-        
-        result = ollama_client.stop_model(model_name)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/models/pull', methods=['POST'])
 def pull_model():
     try:

@@ -101,6 +101,7 @@ async function refreshAll() {
     try {
         const serverStatus = await checkServerStatus();
         if (!serverStatus) {
+            handleServerError();
             return;
         }
         await refreshModels();
@@ -174,23 +175,109 @@ async function batchDeleteModels() {
     }
 }
 
-// Stop model
-async function stopModel(modelName) {
-    if (!confirm(`Are you sure you want to stop model: ${modelName}?`)) {
+// Batch configure models
+async function batchConfigureModels() {
+    const selectedModels = getSelectedModels();
+    if (selectedModels.length === 0) {
+        showMessage('Error', 'Please select at least one model to configure', true);
         return;
     }
-    
+
+    currentModel = null; // Clear single model selection
+    document.getElementById('selectedModels').innerHTML = selectedModels.map(model => `
+        <div class="item">
+            <i class="cog icon"></i>
+            <div class="content">${model}</div>
+        </div>
+    `).join('');
+
+    document.getElementById('systemPrompt').value = '';
+    document.getElementById('template').value = '';
+    document.getElementById('parameters').innerHTML = '';
+
+    $('#configModal').modal('show');
+}
+
+// Save model configuration
+async function saveModelConfig() {
     try {
-        const data = await makeApiRequest('/models/stop', {
+        const parameters = {};
+        document.querySelectorAll('.parameter-segment').forEach(segment => {
+            const key = segment.querySelector('.parameter-key').value.trim();
+            const value = segment.querySelector('.parameter-value').value.trim();
+            if (key && value) {
+                parameters[key] = value;
+            }
+        });
+
+        const config = {
+            system: document.getElementById('systemPrompt').value.trim(),
+            template: document.getElementById('template').value.trim(),
+            parameters: parameters
+        };
+
+        const selectedModels = currentModel ? [currentModel] : getSelectedModels();
+        
+        if (selectedModels.length === 0) {
+            throw new Error('No models selected');
+        }
+
+        const data = await makeApiRequest('/models/batch/update_config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: modelName })
+            body: JSON.stringify({
+                models: selectedModels,
+                config: config
+            })
         });
-        
-        showMessage('Success', `Successfully stopped model: ${modelName}`);
+
+        $('#configModal').modal('hide');
+        displayBatchResults(data.results);
         refreshModels();
     } catch (error) {
         showMessage('Error', error.message, true);
+    }
+}
+
+// Display batch operation results
+function displayBatchResults(results) {
+    const resultsDiv = document.getElementById('batchResults');
+    resultsDiv.innerHTML = results.map(result => `
+        <div class="batch-results-item ${result.success ? 'success' : 'error'}">
+            <i class="icon ${result.success ? 'check circle' : 'times circle'}"></i>
+            <div class="content">
+                <div class="header">${result.name}</div>
+                <div class="description">${result.message}</div>
+            </div>
+        </div>
+    `).join('');
+
+    $('#batchResultsModal').modal('show');
+}
+
+// Refresh models
+async function refreshModels() {
+    try {
+        const serverStatus = await checkServerStatus();
+        if (!serverStatus) {
+            return;
+        }
+
+        // Get local models
+        const localData = await makeApiRequest('/models');
+        displayModels(localData.models || [], 'localModels');
+        
+        // Get running models
+        const runningData = await makeApiRequest('/models/running');
+        displayModels(runningData.models || [], 'runningModels');
+    } catch (error) {
+        console.error('Error refreshing models:', error);
+        if (error.message.includes('Ollama server is not running')) {
+            handleServerError();
+        } else {
+            displayModels([], 'localModels', error.message);
+            displayModels([], 'runningModels', error.message);
+        }
     }
 }
 
@@ -222,30 +309,6 @@ function displayModels(models, containerId, errorMessage = null) {
                 </div>
             </div>
         ` : '';
-
-        // Define buttons based on container type
-        const buttons = containerId === 'runningModels' ? `
-            <div class="ui two buttons">
-                <button class="ui primary button" onclick="showModelStats('${model.name}')">
-                    <i class="chart bar icon"></i> Stats
-                </button>
-                <button class="ui negative button" onclick="stopModel('${model.name}')">
-                    <i class="stop icon"></i> Stop
-                </button>
-            </div>
-        ` : `
-            <div class="ui three buttons">
-                <button class="ui primary button" onclick="showModelStats('${model.name}')">
-                    <i class="chart bar icon"></i> Stats
-                </button>
-                <button class="ui teal button" onclick="showModelConfig('${model.name}')">
-                    <i class="cog icon"></i> Config
-                </button>
-                <button class="ui negative button" onclick="deleteModel('${model.name}')">
-                    <i class="trash icon"></i> Delete
-                </button>
-            </div>
-        `;
         
         card.innerHTML = `
             ${checkbox}
@@ -262,7 +325,17 @@ function displayModels(models, containerId, errorMessage = null) {
                 </div>
             </div>
             <div class="extra content">
-                ${buttons}
+                <div class="ui three buttons">
+                    <button class="ui primary button" onclick="showModelStats('${model.name}')">
+                        <i class="chart bar icon"></i> Stats
+                    </button>
+                    <button class="ui teal button" onclick="showModelConfig('${model.name}')">
+                        <i class="cog icon"></i> Config
+                    </button>
+                    <button class="ui negative button" onclick="deleteModel('${model.name}')">
+                        <i class="trash icon"></i> Delete
+                    </button>
+                </div>
             </div>
         `;
         
@@ -273,4 +346,179 @@ function displayModels(models, containerId, errorMessage = null) {
     $('.ui.checkbox').checkbox();
 }
 
-[...rest of the file remains the same...]
+// Refresh overall stats
+async function refreshOverallStats() {
+    try {
+        const data = await makeApiRequest('/models/stats');
+        
+        const statsContainer = document.getElementById('overallStats');
+        statsContainer.innerHTML = `
+            <div class="ui statistic">
+                <div class="value">${data.total_operations}</div>
+                <div class="label">Total Operations</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${data.total_prompt_tokens}</div>
+                <div class="label">Prompt Tokens</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${data.total_completion_tokens}</div>
+                <div class="label">Completion Tokens</div>
+            </div>
+            <div class="ui statistic">
+                <div class="value">${formatDuration(data.total_duration)}</div>
+                <div class="label">Total Duration</div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error fetching overall stats:', error);
+    }
+}
+
+// Pull model
+async function pullModel() {
+    const modelName = document.getElementById('modelNameInput').value.trim();
+    
+    if (!modelName) {
+        showMessage('Error', 'Please enter a model name', true);
+        return;
+    }
+    
+    try {
+        const data = await makeApiRequest('/models/pull', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        showMessage('Success', `Successfully pulled model: ${modelName}`);
+        document.getElementById('modelNameInput').value = '';
+        refreshModels();
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
+}
+
+// Delete model
+async function deleteModel(modelName) {
+    if (!confirm(`Are you sure you want to delete model: ${modelName}?`)) {
+        return;
+    }
+    
+    try {
+        const data = await makeApiRequest('/models/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        showMessage('Success', `Successfully deleted model: ${modelName}`);
+        refreshModels();
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
+}
+
+// Show model configuration
+let currentModel = null;
+
+async function showModelConfig(modelName) {
+    try {
+        currentModel = modelName;
+        const data = await makeApiRequest(`/models/config?name=${encodeURIComponent(modelName)}`);
+        
+        document.getElementById('systemPrompt').value = data.system || '';
+        document.getElementById('template').value = data.template || '';
+        
+        const parametersDiv = document.getElementById('parameters');
+        parametersDiv.innerHTML = '';
+        
+        Object.entries(data.parameters || {}).forEach(([key, value]) => {
+            parametersDiv.appendChild(createParameterSegment(key, value));
+        });
+        
+        $('#configModal').modal('show');
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
+}
+
+function createParameterSegment(key = '', value = '') {
+    const segment = document.createElement('div');
+    segment.className = 'ui segment parameter-segment';
+    
+    segment.innerHTML = `
+        <div class="two fields">
+            <div class="field">
+                <input type="text" class="parameter-key" placeholder="Parameter name" value="${key}">
+            </div>
+            <div class="field">
+                <div class="ui action input">
+                    <input type="text" class="parameter-value" placeholder="Parameter value" value="${value}">
+                    <button class="ui negative icon button" onclick="removeParameter(this)">
+                        <i class="trash icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return segment;
+}
+
+function addParameter() {
+    const parametersDiv = document.getElementById('parameters');
+    parametersDiv.appendChild(createParameterSegment());
+}
+
+function removeParameter(button) {
+    button.closest('.parameter-segment').remove();
+}
+
+// Show model statistics
+async function showModelStats(modelName) {
+    try {
+        const data = await makeApiRequest(`/models/stats?name=${encodeURIComponent(modelName)}`);
+        
+        const statsDiv = document.getElementById('modelStats');
+        statsDiv.innerHTML = `
+            <div class="ui statistics">
+                <div class="statistic">
+                    <div class="value">${data.total_operations}</div>
+                    <div class="label">Total Operations</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${data.total_prompt_tokens}</div>
+                    <div class="label">Prompt Tokens</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${data.total_completion_tokens}</div>
+                    <div class="label">Completion Tokens</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${formatDuration(data.total_duration)}</div>
+                    <div class="label">Total Duration</div>
+                </div>
+            </div>
+            <div class="ui segment">
+                <h4 class="ui header">Operations by Type</h4>
+                <div class="ui list">
+                    ${Object.entries(data.operations_by_type)
+                        .map(([type, count]) => `
+                            <div class="item">
+                                <i class="right triangle icon"></i>
+                                <div class="content">
+                                    <div class="header">${type}</div>
+                                    <div class="description">${count} operations</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                </div>
+            </div>
+        `;
+        
+        $('#statsModal').modal('show');
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
+}

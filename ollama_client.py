@@ -58,11 +58,6 @@ class OllamaClient:
             json={'name': model_name})
         return {'success': True, 'message': f'Successfully deleted model {model_name}'}
 
-    def stop_model(self, model_name):
-        self._handle_request(requests.post, '/api/stop', 
-            json={'name': model_name})
-        return {'success': True, 'message': f'Successfully stopped model {model_name}'}
-
     def check_server(self):
         """Check if Ollama server is running"""
         try:
