@@ -2,11 +2,7 @@
     margin-top: 2rem;
 }
 
-.model-card {
-    margin-bottom: 1rem !important;
-}
-
-.ui.cards {
+.ui.table {
     margin-top: 1rem;
 }
 
@@ -22,14 +18,8 @@
     color: #21ba45;
 }
 
-.model-details {
-    margin-top: 0.5rem;
-    font-size: 0.9em;
-    color: #666;
-}
-
-.model-size {
-    font-weight: bold;
+.batch-actions {
+    margin-bottom: 1rem;
 }
 
 .ui.statistics {
@@ -58,21 +48,6 @@
 
 .ui.list .item {
     padding: 0.5rem 0;
-}
-
-.batch-actions {
-    margin-bottom: 1rem;
-}
-
-.model-checkbox {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 1;
-}
-
-.model-checkbox .ui.checkbox {
-    margin-right: 0;
 }
 
 .batch-results-item {
@@ -108,4 +83,25 @@
 
 #selectedModels .item i {
     margin-right: 0.5rem;
+}
+
+/* Table specific styles */
+.ui.table td.center.aligned .ui.tiny.buttons {
+    white-space: nowrap;
+}
+
+.ui.table td.center.aligned .ui.button {
+    padding: 0.5em 0.8em;
+}
+
+.ui.table td.center.aligned .ui.button i.icon {
+    margin-right: 0.3em;
+}
+
+/* Make the table responsive */
+@media only screen and (max-width: 991px) {
+    .ui.table {
+        overflow-x: auto;
+        display: block;
+    }
 }

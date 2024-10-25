@@ -44,7 +44,7 @@
     <!-- Local Models -->
     <div class="ui segment">
         <h3 class="ui header">Local Models</h3>
-        <div class="ui buttons batch-actions" style="margin-bottom: 1rem;">
+        <div class="ui buttons batch-actions">
             <button class="ui negative button" onclick="batchDeleteModels()">
                 <i class="trash icon"></i> Delete Selected
             </button>
@@ -55,17 +55,49 @@
                 <i class="check square outline icon"></i> Toggle All
             </button>
         </div>
-        <div class="ui cards" id="localModels">
-            <!-- Models will be populated here -->
-        </div>
+        <table class="ui celled table" id="localModels">
+            <thead>
+                <tr>
+                    <th class="collapsing">
+                        <div class="ui fitted checkbox">
+                            <input type="checkbox" onclick="toggleAllModels()">
+                            <label></label>
+                        </div>
+                    </th>
+                    <th>Model Name</th>
+                    <th>Modified Date</th>
+                    <th>Size</th>
+                    <th>Format</th>
+                    <th>Family</th>
+                    <th>Parameters</th>
+                    <th class="center aligned">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Models will be populated here -->
+            </tbody>
+        </table>
     </div>
 
     <!-- Running Models -->
     <div class="ui segment">
         <h3 class="ui header">Running Models</h3>
-        <div class="ui cards" id="runningModels">
-            <!-- Running models will be populated here -->
-        </div>
+        <table class="ui celled table" id="runningModels">
+            <thead>
+                <tr>
+                    <th>Model Name</th>
+                    <th>Modified Date</th>
+                    <th>Size</th>
+                    <th>Format</th>
+                    <th>Family</th>
+                    <th>Parameters</th>
+                    <th class="center aligned">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Running models will be populated here -->
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -118,7 +150,7 @@
 <div class="ui modal" id="configModal">
     <div class="header">Model Configuration</div>
     <div class="content">
-        <div id="selectedModels" class="ui list" style="margin-bottom: 1rem;">
+        <div id="selectedModels" class="ui list">
             <!-- Selected models will be listed here -->
         </div>
         <form class="ui form">
