@@ -41,12 +41,8 @@ class OllamaClient:
 
     def list_running(self):
         try:
-            response = self._handle_request(requests.get, '/api/tags')
-            models = []
-            for model in response.get('models', []):
-                if model.get('status') == 'running':
-                    models.append(model)
-            return {'models': models}
+            response = self._handle_request(requests.get, '/api/ps')
+            return {'models': response.get('models', [])}
         except Exception as e:
             print(f"Error checking running models: {str(e)}")
             return {'models': []}
