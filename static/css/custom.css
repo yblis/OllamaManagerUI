@@ -89,7 +89,7 @@ body {
 .theme-toggle {
     position: fixed;
     top: 1rem;
-    right: 1rem;
+    left: 1rem;  /* Changed from right to left */
     z-index: 1001;
 }
 
@@ -123,36 +123,58 @@ body {
 
 /* Responsive improvements */
 @media screen and (max-width: 768px) {
+    .theme-toggle {
+        top: 1rem;  /* Keep at top even on mobile */
+        left: 1rem;
+        bottom: auto;
+    }
+    
     .ui.container {
         margin: 1rem !important;
-        width: auto !important;
+        width: 100% !important;
         padding: 0 1rem;
+        overflow-x: hidden;
+    }
+    
+    .ui.table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .ui.tiny.buttons {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
     }
     
     .ui.statistics {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
+        width: 100%;
     }
     
-    .ui.table td.center.aligned .ui.tiny.buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
+    .ui.modal {
+        width: 95% !important;
+        margin: 0 auto !important;
     }
     
-    .theme-toggle {
-        top: auto;
-        bottom: 1rem;
-        right: 1rem;
+    input, button, .ui.button {
+        min-height: 44px;
     }
+}
+
+/* Add fluid container for better responsiveness */
+.ui.container {
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 
 /* Existing styles */
-.ui.container {
-    margin-top: 2rem;
-}
-
 .error-message {
     color: #db2828;
 }

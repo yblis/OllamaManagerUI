@@ -428,6 +428,101 @@ async function refreshAll() {
     ]);
 }
 
+// Batch operations
+window.toggleModelSelection = function(checkbox, modelName) {
+    // This function can be used to handle individual model selection
+    console.log(`Model ${modelName} ${checkbox.checked ? 'selected' : 'deselected'}`);
+};
+
+window.toggleAllModels = function() {
+    const checkboxes = document.querySelectorAll('#localModels input[type="checkbox"]');
+    const headerCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
+    const isChecked = headerCheckbox.checked;
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = isChecked;
+    });
+};
+
+window.batchConfigureModels = function() {
+    const selectedModels = document.querySelectorAll('input[type="checkbox"]:checked');
+    if (selectedModels.length === 0) {
+        showMessage('Erreur', 'Veuillez sélectionner au moins un modèle', true);
+        return;
+    }
+
+    const selectedModelNames = Array.from(selectedModels).map(checkbox => checkbox.getAttribute('data-model-name'));
+    
+    // Update selected models list in the modal
+    document.getElementById('selectedModels').innerHTML = selectedModelNames.map(name => `
+        <div class="item">
+            <i class="cube icon"></i>
+            ${name}
+        </div>
+    `).join('');
+
+    // Show the config modal
+    $('#configModal').modal('show');
+};
+
+window.batchDeleteModels = async function() {
+    const selectedModels = document.querySelectorAll('input[type="checkbox"]:checked');
+    if (selectedModels.length === 0) {
+        showMessage('Erreur', 'Veuillez sélectionner au moins un modèle', true);
+        return;
+    }
+
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedModels.length} modèle(s) ?`)) {
+        return;
+    }
+
+    const results = [];
+    for (const checkbox of selectedModels) {
+        const modelName = checkbox.getAttribute('data-model-name');
+        try {
+            const response = await fetch('/api/models/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Ollama-URL': ollamaUrl
+                },
+                body: JSON.stringify({ name: modelName })
+            });
+            
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Échec de la suppression');
+            }
+            
+            results.push({
+                model: modelName,
+                success: true,
+                message: 'Supprimé avec succès'
+            });
+        } catch (error) {
+            results.push({
+                model: modelName,
+                success: false,
+                message: error.message
+            });
+        }
+    }
+
+    // Show results in batch results modal
+    document.getElementById('batchResults').innerHTML = results.map(result => `
+        <div class="item batch-results-item ${result.success ? 'success' : 'error'}">
+            <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
+            <div class="content">
+                <div class="header">${result.model}</div>
+                <div class="description">${result.message}</div>
+            </div>
+        </div>
+    `).join('');
+
+    $('#batchResultsModal').modal('show');
+    refreshAll();
+};
+
 // Utility functions
 function formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return '0 Bytes';
