@@ -2,6 +2,7 @@
 const REFRESH_INTERVAL = 5000; // 5 seconds
 const MAX_RETRIES = 3;
 let retryCount = 0;
+let serverIsKnownOffline = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,7 +17,8 @@ async function checkServerStatus() {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         
-        updateServerStatus(data.status === 'running');
+        serverIsKnownOffline = data.status !== 'running';
+        updateServerStatus(!serverIsKnownOffline);
         // Reset retry count on successful connection
         retryCount = 0;
     } catch (error) {
@@ -25,6 +27,7 @@ async function checkServerStatus() {
             retryCount++;
             setTimeout(checkServerStatus, 2000); // Retry after 2 seconds
         } else {
+            serverIsKnownOffline = true;
             updateServerStatus(false);
         }
     }
@@ -53,12 +56,22 @@ function updateServerStatus(isRunning) {
     });
 }
 
-// Refresh all data with error handling
+// Refresh all data with improved error handling
 async function refreshAll() {
-    await Promise.all([
-        refreshModels().catch(error => console.error('Error refreshing models:', error)),
-        refreshStats().catch(error => console.error('Error refreshing stats:', error))
-    ]);
+    if (!serverIsKnownOffline) {
+        await Promise.all([
+            refreshModels().catch(error => {
+                if (!serverIsKnownOffline) {
+                    console.error('Error refreshing models:', error.message);
+                }
+            }),
+            refreshStats().catch(error => {
+                if (!serverIsKnownOffline) {
+                    console.error('Error refreshing stats:', error.message);
+                }
+            })
+        ]);
+    }
 }
 
 // Format byte sizes into human-readable format
@@ -103,7 +116,9 @@ async function refreshStats() {
             </div>
         `;
     } catch (error) {
-        console.error('Error refreshing stats:', error);
+        if (!serverIsKnownOffline) {
+            console.error('Error refreshing stats:', error);
+        }
     }
 }
 
@@ -213,7 +228,9 @@ async function refreshModels() {
         const runningData = await runningResponse.json();
         displayModels(runningData.models || [], 'runningModels');
     } catch (error) {
-        console.error('Error refreshing models:', error.message);
+        if (!serverIsKnownOffline) {
+            console.error('Error refreshing models:', error.message);
+        }
         const errorMsg = error.message.includes('not running') ? 
             'Ollama server is not running. Please start the server and try again.' :
             error.message;

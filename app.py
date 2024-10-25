@@ -70,6 +70,18 @@ def get_running_models():
     response = ollama_client.list_running()
     return jsonify(response)
 
+@app.route('/api/models/stats', methods=['GET'])
+@with_error_handling
+def get_model_stats():
+    if not ollama_client.check_server():
+        return jsonify({
+            'error': 'Ollama server is not running. Please start the server and try again.',
+            'status': 'server_stopped'
+        }), 503
+    
+    stats = ollama_client.get_model_stats()
+    return jsonify(stats)
+
 @app.route('/api/models/stop', methods=['POST'])
 @with_error_handling
 def stop_model():
@@ -110,9 +122,6 @@ def stop_model():
         'error': 'Failed to stop model after multiple attempts',
         'status': 'error'
     }), 500
-
-# Rest of the routes with @with_error_handling decorator...
-# (Previous route handlers remain the same with the decorator added)
 
 @app.errorhandler(Exception)
 def handle_error(error):
