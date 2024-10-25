@@ -5,7 +5,7 @@
 <div class="server-status-container">
     <div id="serverStatus" class="ui tiny message {% if server_status %}positive{% else %}negative{% endif %}">
         <i class="icon {% if server_status %}check circle{% else %}times circle{% endif %}"></i>
-        <span>Ollama server is {% if server_status %}running{% else %}not running{% endif %}</span>
+        <span>Le serveur Ollama est {% if server_status %}en cours d'exécution{% else %}arrêté{% endif %}</span>
     </div>
     <div class="ui button" onclick="showSettings()">
         <i class="cog icon"></i>
@@ -13,25 +13,25 @@
 </div>
 
 <div class="ui basic segment">
-    <h1 class="ui header">Ollama Model Manager</h1>
+    <h1 class="ui header">Gestionnaire de Modèles Ollama</h1>
     
     <!-- Pull Model Form -->
     <div class="ui segment">
-        <h3 class="ui header">Pull New Model</h3>
+        <h3 class="ui header">Télécharger un Nouveau Modèle</h3>
         <div class="ui action input fluid">
-            <input type="text" id="modelNameInput" placeholder="Enter model name (e.g., llama2:7b)">
-            <button class="ui primary button" onclick="pullModel()">Pull Model</button>
+            <input type="text" id="modelNameInput" placeholder="Entrez le nom du modèle (ex: llama2:7b)">
+            <button class="ui primary button" onclick="pullModel()">Télécharger</button>
         </div>
         <!-- Add progress bar -->
         <div id="pullProgress" class="ui indicating progress" style="display: none;">
             <div class="bar progress"></div>
-            <div class="label">Starting download...</div>
+            <div class="label">Démarrage du téléchargement...</div>
         </div>
     </div>
 
     <!-- Overall Usage Statistics -->
     <div class="ui segment">
-        <h3 class="ui header">Overall Usage Statistics</h3>
+        <h3 class="ui header">Statistiques Globales d'Utilisation</h3>
         <div id="overallStats" class="ui statistics">
             <!-- Statistics will be populated here -->
         </div>
@@ -39,19 +39,19 @@
 
     <!-- Local Models -->
     <div class="ui segment">
-        <h3 class="ui header">Local Models</h3>
+        <h3 class="ui header">Modèles Locaux</h3>
         <div class="ui buttons batch-actions">
             <button class="ui negative button" onclick="batchDeleteModels()">
-                <i class="trash icon"></i> Delete Selected
+                <i class="trash icon"></i> Supprimer la Sélection
             </button>
             <button class="ui teal button" onclick="batchConfigureModels()">
-                <i class="cog icon"></i> Configure Selected
+                <i class="cog icon"></i> Configurer la Sélection
             </button>
             <button class="ui olive button" onclick="compareSelectedModels()">
-                <i class="exchange icon"></i> Compare Selected
+                <i class="exchange icon"></i> Comparer la Sélection
             </button>
             <button class="ui button" onclick="toggleAllModels()">
-                <i class="check square outline icon"></i> Toggle All
+                <i class="check square outline icon"></i> Tout Sélectionner
             </button>
         </div>
         <table class="ui celled table" id="localModels">
@@ -63,12 +63,12 @@
                             <label></label>
                         </div>
                     </th>
-                    <th>Model Name</th>
-                    <th>Modified Date</th>
-                    <th>Size</th>
+                    <th>Nom du Modèle</th>
+                    <th>Date de Modification</th>
+                    <th>Taille</th>
                     <th>Format</th>
-                    <th>Family</th>
-                    <th>Parameters</th>
+                    <th>Famille</th>
+                    <th>Paramètres</th>
                     <th class="center aligned">Actions</th>
                 </tr>
             </thead>
@@ -80,16 +80,16 @@
 
     <!-- Running Models -->
     <div class="ui segment">
-        <h3 class="ui header">Running Models</h3>
+        <h3 class="ui header">Modèles en Cours d'Exécution</h3>
         <table class="ui celled table" id="runningModels">
             <thead>
                 <tr>
-                    <th>Model Name</th>
-                    <th>Modified Date</th>
-                    <th>Size</th>
+                    <th>Nom du Modèle</th>
+                    <th>Date de Modification</th>
+                    <th>Taille</th>
                     <th>Format</th>
-                    <th>Family</th>
-                    <th>Parameters</th>
+                    <th>Famille</th>
+                    <th>Paramètres</th>
                     <th class="center aligned">Actions</th>
                 </tr>
             </thead>
@@ -111,7 +111,7 @@
 <div class="ui fullscreen modal" id="comparisonModal">
     <div class="header">
         <i class="exchange icon"></i>
-        Model Comparison
+        Comparaison de Modèles
     </div>
     <div class="content">
         <div id="modelComparison" class="ui grid">
@@ -119,7 +119,7 @@
         </div>
     </div>
     <div class="actions">
-        <div class="ui positive button">Close</div>
+        <div class="ui positive button">Fermer</div>
     </div>
 </div>
 
