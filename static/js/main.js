@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     $('.ui.modal').modal();
     refreshAll();
     setInterval(checkServerStatus, REFRESH_INTERVAL);
+    
+    // Add search listener
+    document.getElementById('modelNameInput').addEventListener('input', debounce(searchAndPullModel, 500));
 });
 
 function formatSize(bytes) {
@@ -97,7 +100,9 @@ function updateServerStatus(isRunning) {
 }
 
 // Settings functionality
-async function showSettings() {
+function showSettings() {
+    const ollamaUrl = localStorage.getItem('ollamaUrl') || 'http://localhost:11434';
+    document.getElementById('ollamaUrl').value = ollamaUrl;
     $('#settingsModal').modal('show');
 }
 
@@ -271,9 +276,65 @@ async function refreshRunningModels() {
     }
 }
 
-async function pullModel() {
+// Search and pull model functionality
+async function searchAndPullModel() {
     const modelName = document.getElementById('modelNameInput').value;
     if (!modelName) {
+        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
+        return;
+    }
+
+    try {
+        const searchResponse = await fetch('/api/models/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword: modelName })
+        });
+        
+        if (!searchResponse.ok) throw new Error('Erreur lors de la recherche');
+        const searchData = await searchResponse.json();
+        
+        const searchResults = document.getElementById('searchResults');
+        const searchResultsContainer = document.querySelector('.search-results');
+        
+        if (searchData.models && searchData.models.length > 0) {
+            searchResults.innerHTML = searchData.models.map(model => `
+                <div class="item">
+                    <div class="content">
+                        <div class="header">${model}</div>
+                        <div class="description">
+                            <button class="ui mini primary button" onclick="pullModel('${model}')">
+                                <i class="download icon"></i> Télécharger
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            searchResultsContainer.style.display = 'block';
+        } else {
+            searchResults.innerHTML = '<div class="ui message">Aucun modèle trouvé</div>';
+            searchResultsContainer.style.display = 'block';
+        }
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+async function pullModel(modelName = null) {
+    const name = modelName || document.getElementById('modelNameInput').value;
+    if (!name) {
         showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
         return;
     }
@@ -288,7 +349,7 @@ async function pullModel() {
         const response = await fetch('/api/models/pull', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: modelName })
+            body: JSON.stringify({ name: name })
         });
         
         if (!response.ok) {
@@ -297,13 +358,15 @@ async function pullModel() {
         }
         
         const data = await response.json();
-        showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
+        showMessage('Succès', `Modèle ${name} téléchargé avec succès`);
         refreshAll();
     } catch (error) {
         showMessage('Erreur', error.message, true);
     } finally {
         // Hide progress bar
         document.getElementById('pullProgress').style.display = 'none';
+        // Hide search results
+        document.querySelector('.search-results').style.display = 'none';
     }
 }
 

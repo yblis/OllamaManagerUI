@@ -27,6 +27,12 @@
             <div class="bar progress"></div>
             <div class="label">Démarrage du téléchargement...</div>
         </div>
+        <!-- Add search results section -->
+        <div class="ui search-results" style="margin-top: 1rem; display: none;">
+            <div class="ui relaxed divided list" id="searchResults">
+                <!-- Search results will be displayed here -->
+            </div>
+        </div>
     </div>
 
     <!-- Overall Usage Statistics -->
@@ -105,7 +111,6 @@
     </div>
 </div>
 
-<!-- Existing Modals -->
 {% include "modals/settings.html" %}
 {% include "modals/message.html" %}
 {% include "modals/stats.html" %}

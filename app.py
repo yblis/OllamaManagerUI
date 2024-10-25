@@ -4,6 +4,7 @@ import traceback
 import requests
 from functools import wraps
 import time
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 ollama_client = OllamaClient()
@@ -58,6 +59,27 @@ def server_status():
 def get_models():
     models = ollama_client.list_models()
     return jsonify({'models': models})
+
+@app.route('/api/models/search', methods=['POST'])
+@with_error_handling
+def search_models():
+    keyword = request.json.get('keyword', '')
+    url = "https://ollama.com/library/"
+    try:
+        response = requests.get(url)
+        if response.status_code != 200:
+            return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        models = []
+        for model in soup.find_all('a', class_='model-link'):
+            model_name = model.text.strip()
+            if keyword.lower() in model_name.lower():
+                models.append(model_name)
+        
+        return jsonify({'models': models})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/models/running', methods=['GET'])
 @with_error_handling
