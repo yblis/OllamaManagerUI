@@ -22,6 +22,25 @@
     margin-bottom: 1rem;
 }
 
+.server-status-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.server-status-container .ui.message {
+    margin: 0;
+    padding: 0.5em 1em;
+}
+
+.server-status-container .ui.button {
+    margin: 0;
+}
+
 .ui.statistics {
     display: flex;
     flex-wrap: wrap;

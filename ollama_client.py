@@ -1,26 +1,45 @@
 import requests
 from requests.exceptions import ConnectionError, RequestException, Timeout
 from models import ModelUsage
+import time
 
 class OllamaClient:
     def __init__(self, base_url=None):
         self.base_url = base_url or 'http://localhost:11434'
+        self.max_retries = 3
+        self.retry_delay = 1  # Initial delay in seconds
 
     def _handle_request(self, method, endpoint, **kwargs):
-        """Generic method to handle requests and provide meaningful error messages"""
-        try:
-            kwargs['timeout'] = kwargs.get('timeout', 5)  # Add timeout parameter
-            response = method(f'{self.base_url}{endpoint}', **kwargs)
-            response.raise_for_status()
-            return response.json()
-        except ConnectionError:
-            raise Exception("Unable to connect to Ollama server. Please ensure Ollama is installed and running.")
-        except Timeout:
-            raise Exception("Connection to Ollama server timed out. Please check if the server is responsive.")
-        except RequestException as e:
-            if hasattr(e.response, 'status_code') and e.response.status_code == 503:
-                raise Exception("Ollama server is not running. Please start the server and try again.")
-            raise Exception(f"Error communicating with Ollama server: {str(e)}")
+        """Generic method to handle requests with retry mechanism"""
+        retries = 0
+        last_error = None
+        current_delay = self.retry_delay
+
+        while retries < self.max_retries:
+            try:
+                kwargs['timeout'] = kwargs.get('timeout', 5)
+                response = method(f'{self.base_url}{endpoint}', **kwargs)
+                response.raise_for_status()
+                return response.json()
+            except ConnectionError:
+                last_error = "Unable to connect to Ollama server. Please ensure Ollama is installed and running."
+            except Timeout:
+                last_error = "Connection to Ollama server timed out. Please check if the server is responsive."
+            except RequestException as e:
+                if hasattr(e.response, 'status_code'):
+                    if e.response.status_code == 503:
+                        last_error = "Ollama server is not running. Please start the server and try again."
+                    else:
+                        last_error = f"Server error (HTTP {e.response.status_code})"
+                else:
+                    last_error = str(e)
+
+            retries += 1
+            if retries < self.max_retries:
+                time.sleep(current_delay)
+                current_delay *= 2  # Exponential backoff
+
+        raise Exception(last_error)
 
     def _log_usage(self, model_name, operation, response_data):
         """Log model usage statistics"""
@@ -35,6 +54,26 @@ class OllamaClient:
             completion_tokens=completion_tokens,
             total_duration=total_duration
         )
+
+    def check_server(self):
+        """Check if Ollama server is running with retry mechanism"""
+        retries = 0
+        current_delay = self.retry_delay
+
+        while retries < self.max_retries:
+            try:
+                response = requests.get(f'{self.base_url}/api/tags', timeout=2)
+                if response.status_code == 200:
+                    return True
+            except (ConnectionError, Timeout, RequestException):
+                pass
+
+            retries += 1
+            if retries < self.max_retries:
+                time.sleep(current_delay)
+                current_delay *= 2
+
+        return False
 
     def list_models(self):
         try:
@@ -68,20 +107,12 @@ class OllamaClient:
             json={'model': model_name, 'prompt': '', 'keep_alive': 0})
         return {'success': True, 'message': f'Successfully stopped model {model_name}'}
 
-    def check_server(self):
-        """Check if Ollama server is running"""
-        try:
-            requests.get(f'{self.base_url}/api/tags', timeout=2)
-            return True
-        except (ConnectionError, Timeout, RequestException):
-            return False
-
     def get_model_stats(self, model_name=None):
         """Get usage statistics for a specific model or all models"""
         return ModelUsage.get_model_stats(model_name)
 
     def get_model_config(self, model_name):
-        """Get model configuration details"""
+        """Get model configuration details with retry mechanism"""
         try:
             response = self._handle_request(requests.post, '/api/show', json={'name': model_name})
             return {
@@ -94,7 +125,7 @@ class OllamaClient:
             raise Exception(f"Error getting model configuration: {str(e)}")
 
     def update_model_config(self, model_name, config):
-        """Update model configuration by creating a new model version"""
+        """Update model configuration with retry mechanism"""
         try:
             modelfile = self._generate_modelfile(model_name, config)
             response = self._handle_request(requests.post, '/api/create', json={

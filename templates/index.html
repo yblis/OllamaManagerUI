@@ -1,28 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Server Status -->
+<div class="server-status-container">
+    <div id="serverStatus" class="ui tiny message {% if server_status %}positive{% else %}negative{% endif %}">
+        <i class="icon {% if server_status %}check circle{% else %}times circle{% endif %}"></i>
+        <span>Ollama server is {% if server_status %}running{% else %}not running{% endif %}</span>
+    </div>
+    <div class="ui button" onclick="showSettings()">
+        <i class="cog icon"></i>
+    </div>
+</div>
+
 <div class="ui basic segment">
     <h1 class="ui header">Ollama Model Manager</h1>
-    
-    <!-- Server Status -->
-    <div class="ui segment">
-        <h3 class="ui header">Server Status</h3>
-        <div class="ui right floated button" onclick="showSettings()">
-            <i class="cog icon"></i>
-            Settings
-        </div>
-        <div id="serverStatus" class="ui message {% if server_status %}positive{% else %}negative{% endif %}">
-            <i class="icon {% if server_status %}check circle{% else %}times circle{% endif %}"></i>
-            <span>Ollama server is {% if server_status %}running{% else %}not running{% endif %}</span>
-        </div>
-        {% if not server_status %}
-        <div class="ui warning message">
-            <div class="header">Server Not Running</div>
-            <p>Please ensure Ollama is installed and running on your system. You can download it from <a href="https://ollama.ai" target="_blank">ollama.ai</a>.</p>
-            <p>Once installed, start the Ollama server before using this interface.</p>
-        </div>
-        {% endif %}
-    </div>
     
     <!-- Pull Model Form -->
     <div class="ui segment">
