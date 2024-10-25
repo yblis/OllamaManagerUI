@@ -78,7 +78,7 @@ function formatSize(bytes) {
 // Fetch and display statistics
 async function refreshStats() {
     try {
-        const response = await fetch('/api/stats');
+        const response = await fetch('/api/models/stats');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         
@@ -220,6 +220,134 @@ async function refreshModels() {
         displayModels([], 'localModels', errorMsg);
         displayModels([], 'runningModels', errorMsg);
     }
+}
+
+// Show model configuration modal
+async function showModelConfig(modelName) {
+    try {
+        const response = await fetch(`/api/models/${modelName}/config`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const config = await response.json();
+        
+        // Populate modal fields
+        document.getElementById('selectedModels').innerHTML = `
+            <div class="item">
+                <i class="cube icon"></i>
+                ${modelName}
+            </div>
+        `;
+        document.getElementById('systemPrompt').value = config.system || '';
+        document.getElementById('template').value = config.template || '';
+        
+        // Populate parameters
+        const parametersDiv = document.getElementById('parameters');
+        parametersDiv.innerHTML = '';
+        Object.entries(config.parameters || {}).forEach(([key, value]) => {
+            parametersDiv.innerHTML += `
+                <div class="ui segment">
+                    <div class="two fields">
+                        <div class="field">
+                            <input type="text" value="${key}" readonly>
+                        </div>
+                        <div class="field">
+                            <input type="text" value="${value}">
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        // Show modal
+        $('#configModal').modal('show');
+    } catch (error) {
+        showMessage('Error', `Failed to load model configuration: ${error.message}`);
+    }
+}
+
+// Show model statistics modal
+async function showModelStats(modelName) {
+    try {
+        const response = await fetch(`/api/models/${modelName}/stats`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const stats = await response.json();
+        
+        // Update modal content
+        document.getElementById('modelStats').innerHTML = `
+            <h3>${modelName} Statistics</h3>
+            <div class="ui statistics">
+                <div class="statistic">
+                    <div class="value">${stats.total_operations || 0}</div>
+                    <div class="label">Total Operations</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${stats.total_prompt_tokens || 0}</div>
+                    <div class="label">Prompt Tokens</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${stats.total_completion_tokens || 0}</div>
+                    <div class="label">Completion Tokens</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
+                    <div class="label">Total Duration</div>
+                </div>
+            </div>
+            
+            <div class="ui segment">
+                <h4>Operations by Type</h4>
+                <div class="ui list">
+                    ${Object.entries(stats.operations_by_type || {})
+                        .map(([type, count]) => `
+                            <div class="item">
+                                <i class="right triangle icon"></i>
+                                <div class="content">
+                                    <div class="header">${type}</div>
+                                    <div class="description">${count} operations</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                </div>
+            </div>
+        `;
+        
+        // Show modal
+        $('#statsModal').modal('show');
+    } catch (error) {
+        showMessage('Error', `Failed to load model statistics: ${error.message}`);
+    }
+}
+
+// Delete model with confirmation
+async function deleteModel(modelName) {
+    if (!confirm(`Are you sure you want to delete ${modelName}?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/models/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        
+        showMessage('Success', result.message);
+        refreshModels();
+    } catch (error) {
+        showMessage('Error', `Failed to delete model: ${error.message}`);
+    }
+}
+
+// Helper function to show messages
+function showMessage(title, message, isError = false) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMessage').textContent = message;
+    document.getElementById('modalMessage').className = isError ? 'error-message' : 'success-message';
+    $('#messageModal').modal('show');
 }
 
 // Initialize modals and other UI components
