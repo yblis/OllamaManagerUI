@@ -1,5 +1,8 @@
 # Gestionnaire de Modèles Ollama
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/downloads/)
+
 ![Interface du Gestionnaire de Modèles Ollama](image.png)
 
 ## Description
@@ -22,8 +25,8 @@ Une interface web pour gérer vos modèles Ollama, construite avec Flask et Sema
 ## Installation
 1. Cloner le dépôt
 ```bash
-git clone [URL_du_repo]
-cd [nom_du_repo]
+git clone https://github.com/yblis/OllamaManagerUI
+cd OllamaManagerUI
 ```
 
 2. Installer les dépendances
