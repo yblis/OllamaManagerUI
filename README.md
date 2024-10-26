@@ -22,8 +22,8 @@ Une interface web pour gérer vos modèles Ollama, construite avec Flask et Sema
 ## Installation
 1. Cloner le dépôt
 ```bash
-git clone [URL_du_repo]
-cd [nom_du_repo]
+git clone https://github.com/yblis/OllamaManagerUI
+cd OllamaManagerUI
 ```
 
 2. Installer les dépendances
