@@ -11,36 +11,15 @@
 </head>
 <body>
 
-<div class="ui fixed top menu navbar">
-    <div class="left menu">
-        <!-- Theme toggle -->
-        <div class="item theme-toggle">
-            <button class="ui circular icon button" onclick="toggleTheme()">
-                <i class="sun icon"></i>
-            </button>
-        </div>
-    </div>
-    
-    <div class="right menu">
-        <!-- Server status -->
-        <div class="item">
-            <div id="serverStatus" class="ui tiny message">
-                <i class="icon"></i>
-                <span></span>
-            </div>
-        </div>
-        <!-- Settings button -->
-        <div class="item">
-            <button class="ui icon button" onclick="showSettings()">
-                <i class="cog icon"></i>
-            </button>
-        </div>
-    </div>
+<div class="ui container">
+    {% block content %}{% endblock %}
 </div>
 
-<!-- Add margin to container for fixed navbar -->
-<div class="ui main container">
-    {% block content %}{% endblock %}
+<!-- Theme Toggle Button -->
+<div class="theme-toggle">
+    <button class="ui circular icon button" onclick="toggleTheme()">
+        <i class="sun icon"></i>
+    </button>
 </div>
 
 <!-- Scripts -->

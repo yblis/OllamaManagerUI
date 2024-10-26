@@ -30,42 +30,6 @@ body {
     transition: all 0.3s ease;
 }
 
-/* Navbar styles */
-.ui.menu.navbar {
-    margin: 0;
-    border-radius: 0;
-    background-color: var(--nav-bg);
-    border-bottom: 1px solid var(--border-color);
-    z-index: 1000;
-}
-
-.ui.menu.navbar .item {
-    padding: 0.5em 1em;
-}
-
-.ui.menu.navbar .theme-toggle {
-    padding: 0.5em 1em;
-}
-
-.ui.menu.navbar .theme-toggle .button {
-    box-shadow: none;
-    position: static;
-}
-
-.ui.menu.navbar #serverStatus {
-    margin: 0;
-    background: transparent;
-    box-shadow: none;
-    padding: 0;
-}
-
-/* Adjust main container for fixed navbar */
-.ui.main.container {
-    margin-top: 4rem !important;
-    padding-top: 1rem;
-}
-
-/* Existing styles */
 .ui.segment {
     background-color: var(--card-bg);
     border-color: var(--border-color);
@@ -121,31 +85,48 @@ body {
     color: var(--text-primary) !important;
 }
 
-/* Error and success messages */
-.error-message {
-    color: #db2828;
+/* Theme toggle button enhancements */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;  /* Changed from right to left */
+    z-index: 1001;
 }
 
-.success-message {
-    color: #21ba45;
+.theme-toggle .button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
 }
 
-.batch-actions {
-    margin-bottom: 1rem;
+.theme-toggle .button:hover {
+    transform: scale(1.1);
+    background-color: var(--button-hover);
 }
 
-/* Responsive adjustments */
+.theme-toggle .button i {
+    font-size: 1.2em;
+}
+
+/* Animation for theme transition */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Responsive improvements */
 @media screen and (max-width: 768px) {
-    .ui.menu.navbar {
-        padding: 0.5em;
-    }
-    
-    .ui.menu.navbar .item {
-        padding: 0.3em;
-    }
-    
-    .ui.menu.navbar #serverStatus {
-        font-size: 0.9em;
+    .theme-toggle {
+        top: 1rem;  /* Keep at top even on mobile */
+        left: 1rem;
+        bottom: auto;
     }
     
     .ui.container {
@@ -174,9 +155,65 @@ body {
         gap: 1rem;
         width: 100%;
     }
+    
+    .ui.modal {
+        width: 95% !important;
+        margin: 0 auto !important;
+    }
+    
+    input, button, .ui.button {
+        min-height: 44px;
+    }
 }
 
-/* Batch operation results */
+/* Add fluid container for better responsiveness */
+.ui.container {
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Existing styles */
+.error-message {
+    color: #db2828;
+}
+
+.success-message {
+    color: #21ba45;
+}
+
+.batch-actions {
+    margin-bottom: 1rem;
+}
+
+.server-status-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.server-status-container .ui.message {
+    margin: 0;
+    padding: 0.5em 1em;
+}
+
+.server-status-container .ui.button {
+    margin: 0;
+}
+
+#modelStats .ui.segment {
+    margin-top: 2rem;
+}
+
+.ui.list .item {
+    padding: 0.5rem 0;
+}
+
 .batch-results-item {
     display: flex;
     align-items: center;
@@ -195,7 +232,6 @@ body {
     color: #db2828;
 }
 
-/* Model selection styles */
 #selectedModels {
     margin-bottom: 1rem;
     padding: 1rem;
@@ -213,7 +249,7 @@ body {
     margin-right: 0.5rem;
 }
 
-/* Model comparison styles */
+/* Model comparison specific styles */
 #modelComparison {
     display: flex;
     flex-wrap: wrap;
@@ -246,9 +282,4 @@ body {
 
 #modelComparison .ui.tiny.statistics .statistic > .label {
     font-size: 0.8rem !important;
-}
-
-/* Animation for theme transition */
-* {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
