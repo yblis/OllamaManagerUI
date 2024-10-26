@@ -40,4 +40,66 @@ async function checkServerStatus() {
     }
 }
 
-[Rest of the file content remains unchanged...]
+// Model management functions
+async function stopModel(modelName) {
+    try {
+        const response = await fetch('/api/models/stop', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Ollama-URL': ollamaUrl
+            },
+            body: JSON.stringify({ name: modelName })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Échec de l'arrêt du modèle');
+        }
+        
+        const result = await response.json();
+        showMessage('Succès', result.message || 'Modèle arrêté avec succès');
+        refreshRunningModels();
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+}
+
+// Running models refresh function
+async function refreshRunningModels() {
+    try {
+        const response = await fetch('/api/models/running', {
+            headers: { 'X-Ollama-URL': ollamaUrl }
+        });
+        if (!response.ok) throw new Error('Échec de la récupération des modèles en cours d'exécution');
+        
+        const data = await response.json();
+        const tbody = document.querySelector('#runningModels tbody');
+        tbody.innerHTML = data.models.map(model => `
+            <tr>
+                <td>${model.name}</td>
+                <td>${new Date(model.modified_at).toLocaleString()}</td>
+                <td>${formatBytes(model.size)}</td>
+                <td>${model.details?.format || 'N/A'}</td>
+                <td>${model.details?.family || 'N/A'}</td>
+                <td>${model.details?.parameter_size || 'N/A'}</td>
+                <td class="center aligned">
+                    <button class="ui negative button" onclick="stopModel('${model.name}')">
+                        <i class="stop icon"></i> Arrêter
+                    </button>
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d'exécution</td></tr>';
+    } catch (error) {
+        console.error('Error refreshing running models:', error);
+        showMessage('Erreur', error.message, true);
+    }
+}
+
+// Initialize refresh timer for running models
+document.addEventListener('DOMContentLoaded', () => {
+    // First check
+    refreshRunningModels();
+    // Then check every 30 seconds
+    setInterval(refreshRunningModels, 30000);
+});
