@@ -65,10 +65,6 @@ window.showMessage = function(title, message, isError = false) {
 
 // Model management functions
 window.stopModel = async function(modelName) {
-    if (!confirm(`Êtes-vous sûr de vouloir arrêter le modèle ${modelName} ?`)) {
-        return;
-    }
-    
     try {
         const response = await fetch('/api/models/stop', {
             method: 'POST',
@@ -81,17 +77,45 @@ window.stopModel = async function(modelName) {
         
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Échec de l\'arrêt du modèle');
+            throw new Error(data.error || 'Échec de l'arrêt du modèle');
         }
         
         showMessage('Succès', `Modèle ${modelName} arrêté avec succès`);
-        await refreshRunningModels();  // Refresh only running models table
+        refreshRunningModels();
     } catch (error) {
         showMessage('Erreur', error.message, true);
     }
 };
 
-// ... [Previous code remains unchanged until the batch operations section]
+window.refreshRunningModels = async function() {
+    try {
+        const response = await fetch('/api/models/running', {
+            headers: { 'X-Ollama-URL': ollamaUrl }
+        });
+        if (!response.ok) throw new Error('Failed to fetch running models');
+        
+        const data = await response.json();
+        const tbody = document.querySelector('#runningModels tbody');
+        tbody.innerHTML = data.models.map(model => `
+            <tr>
+                <td>${model.name}</td>
+                <td>${new Date(model.modified_at).toLocaleString()}</td>
+                <td>${formatBytes(model.size)}</td>
+                <td>${model.details?.format || 'N/A'}</td>
+                <td>${model.details?.family || 'N/A'}</td>
+                <td>${model.details?.parameter_size || 'N/A'}</td>
+                <td class="center aligned">
+                    <button class="ui negative button" onclick="stopModel('${model.name}')">
+                        <i class="stop icon"></i> Arrêter
+                    </button>
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
+    } catch (error) {
+        console.error('Error refreshing running models:', error);
+        showMessage('Erreur', error.message, true);
+    }
+};
 
 // Batch operations
 window.toggleModelSelection = function(checkbox, modelName) {
@@ -164,5 +188,3 @@ window.batchDeleteModels = async function() {
     $('#batchResultsModal').modal('show');
     refreshAll();
 };
-
-// ... [Rest of the code remains unchanged]
