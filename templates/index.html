@@ -45,7 +45,12 @@
 
     <!-- Local Models -->
     <div class="ui segment">
-        <h3 class="ui header">Modèles Locaux</h3>
+        <div class="ui clearing">
+            <h3 class="ui left floated header">Modèles Locaux</h3>
+            <button class="ui right floated button" onclick="refreshLocalModels()">
+                <i class="refresh icon"></i> Actualiser
+            </button>
+        </div>
         <div class="ui buttons batch-actions">
             <button class="ui negative button" onclick="batchDeleteModels()">
                 <i class="trash icon"></i> Supprimer la Sélection
