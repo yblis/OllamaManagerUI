@@ -12,14 +12,15 @@
 }
 
 [data-theme="dark"] {
-    --bg-primary: #1E1E1E;  /* Darker background like in image */
-    --text-primary: #FFFFFF;
-    --card-bg: #2D2D2D;
-    --border-color: #3D3D3D;
-    --header-bg: #2D2D2D;
-    --button-bg: #4D4D4D;
-    --button-hover: #5D5D5D;
-    --nav-bg: #2D2D2D;
+    --bg-primary: #1a1a1a;
+    --text-primary: #ffffff;
+    --card-bg: #2d2d2d;
+    --border-color: #444;
+    --header-bg: #2d2d2d;
+    --button-bg: #3d3d3d;
+    --button-hover: #4d4d4d;
+    --button-text: #ffffff;
+    --nav-bg: #2d2d2d;
 }
 
 /* Apply theme colors */
@@ -29,27 +30,24 @@ body {
     transition: all 0.3s ease;
 }
 
-.ui.container {
-    padding: 2rem;
-    margin-top: 1rem !important;
-    width: 100% !important;
-    max-width: 1200px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+.ui.segment {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
 }
 
-.ui.segment {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.ui.table {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.ui.table thead th {
+    background-color: var(--header-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
 }
 
 .ui.button {
-    border-radius: 6px;
-    padding: 0.8em 1.5em;
-    font-weight: 500;
-    transition: all 0.3s ease;
     background-color: var(--button-bg);
     color: var(--button-text);
 }
@@ -59,40 +57,6 @@ body {
     color: var(--button-text);
 }
 
-.ui.primary.button {
-    background: #4CAF50;
-}
-
-.ui.primary.button:hover {
-    background: #45a049;
-}
-
-.top-nav {
-    background: var(--card-bg);
-    padding: 1rem;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    gap: 2rem;
-    align-items: center;
-}
-
-.top-nav .item {
-    color: var(--text-primary);
-    opacity: 0.8;
-    transition: opacity 0.3s ease;
-}
-
-.top-nav .item:hover {
-    opacity: 1;
-}
-
-.top-nav .item.active {
-    color: #4CAF50;  /* Green accent color */
-    opacity: 1;
-}
-
-/* Rest of existing styles */
 .ui.modal {
     background-color: var(--card-bg);
     color: var(--text-primary);
@@ -125,7 +89,7 @@ body {
 .theme-toggle {
     position: fixed;
     top: 1rem;
-    left: 1rem;
+    left: 1rem;  /* Changed from right to left */
     z-index: 1001;
 }
 
@@ -160,7 +124,7 @@ body {
 /* Responsive improvements */
 @media screen and (max-width: 768px) {
     .theme-toggle {
-        top: 1rem;
+        top: 1rem;  /* Keep at top even on mobile */
         left: 1rem;
         bottom: auto;
     }
@@ -202,7 +166,15 @@ body {
     }
 }
 
-/* Server status and other existing styles */
+/* Add fluid container for better responsiveness */
+.ui.container {
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Existing styles */
 .error-message {
     color: #db2828;
 }
