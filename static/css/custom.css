@@ -9,6 +9,10 @@
     --button-hover: #cacbcd;
     --button-text: #000000;
     --nav-bg: #f8f9fa;
+    --primary-gradient: linear-gradient(135deg, #6e8efb, #a777e3);
+    --accent-color: #6e8efb;
+    --success-color: #4CAF50;
+    --error-color: #f44336;
 }
 
 [data-theme="dark"] {
@@ -23,13 +27,75 @@
     --nav-bg: #2d2d2d;
 }
 
-/* Apply theme colors */
+/* Glass morphism effects */
+.ui.segment, .ui.modal, .ui.statistics .statistic {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.17);
+}
+
+/* Smooth transitions and hover effects */
+.ui.button, .ui.segment, .ui.statistics .statistic {
+    transition: all 0.3s ease;
+}
+
+.ui.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Typography and spacing improvements */
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     transition: all 0.3s ease;
+    line-height: 1.6;
+    letter-spacing: 0.3px;
 }
 
+.ui.header {
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+/* Neuro-ergonomic improvements */
+.ui.button, input, .ui.input input {
+    min-height: 44px; /* Larger touch targets */
+}
+
+.ui.segment {
+    margin: 1.5rem 0; /* Consistent spacing */
+    padding: 1.5rem;
+}
+
+.ui.statistics {
+    margin: 2rem 0;
+}
+
+/* Enhanced contrast and readability */
+.ui.header {
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.ui.table {
+    border-spacing: 0;
+    border-collapse: separate;
+    font-size: 1rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ui.segment {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Apply theme colors */
 .ui.segment {
     background-color: var(--card-bg);
     border-color: var(--border-color);
@@ -45,6 +111,7 @@ body {
     background-color: var(--header-bg);
     color: var(--text-primary);
     border-color: var(--border-color);
+    padding: 1rem;
 }
 
 .ui.button {
@@ -66,18 +133,20 @@ body {
     background-color: var(--header-bg);
     color: var(--text-primary);
     border-color: var(--border-color);
+    padding: 1.2rem;
 }
 
 .ui.modal .content {
     background-color: var(--card-bg);
     color: var(--text-primary);
+    padding: 1.5rem;
 }
 
 .ui.statistics .statistic {
     background-color: var(--card-bg);
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin: 0.5rem;
 }
 
 .ui.statistics .statistic .value,
@@ -85,17 +154,17 @@ body {
     color: var(--text-primary) !important;
 }
 
-/* Theme toggle button enhancements */
+/* Theme toggle button */
 .theme-toggle {
     position: fixed;
     top: 1rem;
-    left: 1rem;  /* Changed from right to left */
+    left: 1rem;
     z-index: 1001;
 }
 
 .theme-toggle .button {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     padding: 0;
     display: flex;
@@ -116,19 +185,42 @@ body {
     font-size: 1.2em;
 }
 
-/* Animation for theme transition */
-* {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+/* Server status container */
+.server-status-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem;
+    border-radius: 8px;
 }
 
-/* Responsive improvements */
+.server-status-container .ui.message {
+    margin: 0;
+    padding: 0.8rem 1.2rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+}
+
+/* Batch actions */
+.batch-actions {
+    margin: 1.5rem 0;
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.batch-actions .ui.button {
+    margin: 0;
+}
+
+/* Mobile responsiveness */
 @media screen and (max-width: 768px) {
-    .theme-toggle {
-        top: 1rem;  /* Keep at top even on mobile */
-        left: 1rem;
-        bottom: auto;
-    }
-    
     .ui.container {
         margin: 1rem !important;
         width: 100% !important;
@@ -142,144 +234,49 @@ body {
         white-space: nowrap;
     }
     
-    .ui.tiny.buttons {
-        display: flex;
+    .batch-actions {
         flex-direction: column;
         width: 100%;
-        gap: 0.5rem;
     }
     
     .ui.statistics {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
-        width: 100%;
     }
     
     .ui.modal {
         width: 95% !important;
         margin: 0 auto !important;
     }
-    
-    input, button, .ui.button {
-        min-height: 44px;
-    }
 }
 
-/* Add fluid container for better responsiveness */
-.ui.container {
-    width: 100% !important;
-    max-width: 1200px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+/* Additional ergonomic improvements */
+.ui.form .field {
+    margin-bottom: 1.5rem;
 }
 
-/* Existing styles */
+.ui.form label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.ui.form input, .ui.form textarea {
+    padding: 0.8rem;
+    border-radius: 6px;
+}
+
+/* Error and success states */
 .error-message {
-    color: #db2828;
+    color: var(--error-color);
+    padding: 0.8rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
 }
 
 .success-message {
-    color: #21ba45;
-}
-
-.batch-actions {
-    margin-bottom: 1rem;
-}
-
-.server-status-container {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.server-status-container .ui.message {
-    margin: 0;
-    padding: 0.5em 1em;
-}
-
-.server-status-container .ui.button {
-    margin: 0;
-}
-
-#modelStats .ui.segment {
-    margin-top: 2rem;
-}
-
-.ui.list .item {
-    padding: 0.5rem 0;
-}
-
-.batch-results-item {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 0;
-}
-
-.batch-results-item i {
-    margin-right: 0.5rem;
-}
-
-.batch-results-item.success {
-    color: #21ba45;
-}
-
-.batch-results-item.error {
-    color: #db2828;
-}
-
-#selectedModels {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background: var(--card-bg);
-    border-radius: 4px;
-}
-
-#selectedModels .item {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem;
-}
-
-#selectedModels .item i {
-    margin-right: 0.5rem;
-}
-
-/* Model comparison specific styles */
-#modelComparison {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 1rem;
-}
-
-#modelComparison .column {
-    min-width: 300px;
-}
-
-#modelComparison .ui.segment {
-    height: 100%;
-}
-
-#modelComparison .ui.tiny.statistics {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin: 1rem 0;
-}
-
-#modelComparison .ui.tiny.statistics .statistic {
-    margin: 0 !important;
-}
-
-#modelComparison .ui.tiny.statistics .statistic > .value {
-    font-size: 1.5rem !important;
-}
-
-#modelComparison .ui.tiny.statistics .statistic > .label {
-    font-size: 0.8rem !important;
+    color: var(--success-color);
+    padding: 0.8rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
 }
