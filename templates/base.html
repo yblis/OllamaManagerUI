@@ -1,44 +1,31 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestionnaire de Modèles Ollama</title>
     
-    <!-- Element UI -->
-    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- Semantic UI -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="app">
-        <!-- Navbar -->
-        <el-menu mode="horizontal" :default-active="activeIndex" class="el-menu-demo">
-            <el-menu-item index="1">
-                <i class="el-icon-menu"></i>
-                Gestionnaire Ollama
-            </el-menu-item>
-            <el-menu-item index="2" style="float: right" @click="showSettings">
-                <i class="el-icon-setting"></i>
-                Paramètres
-            </el-menu-item>
-            <el-menu-item index="3" style="float: right" @click="toggleTheme">
-                <i :class="themeIcon"></i>
-            </el-menu-item>
-        </el-menu>
 
-        <!-- Main Container -->
-        <div class="container main-content">
-            {% block content %}{% endblock %}
-        </div>
-    </div>
+<div class="ui container">
+    {% block content %}{% endblock %}
+</div>
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
-    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
-    <script src="https://unpkg.com/element-ui/lib/umd/locale/fr.js"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<!-- Theme Toggle Button -->
+<div class="theme-toggle">
+    <button class="ui circular icon button" onclick="toggleTheme()">
+        <i class="sun icon"></i>
+    </button>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </body>
 </html>

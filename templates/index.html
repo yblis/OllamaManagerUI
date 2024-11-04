@@ -3,196 +3,134 @@
 {% block content %}
 <!-- Server Status -->
 <div class="server-status-container">
-    <el-alert
-        :title="serverStatusMessage"
-        :type="serverStatus ? 'success' : 'error'"
-        show-icon>
-    </el-alert>
+    <div id="serverStatus" class="ui tiny message {% if server_status %}positive{% else %}negative{% endif %}">
+        <i class="icon {% if server_status %}check circle{% else %}times circle{% endif %}"></i>
+        <span>Le serveur Ollama est {% if server_status %}en cours d'exécution{% else %}arrêté{% endif %}</span>
+    </div>
+    <div class="ui button" onclick="showSettings()">
+        <i class="cog icon"></i>
+    </div>
 </div>
 
-<!-- Header -->
-<el-card>
-    <h1 class="text-center">Gestionnaire de Modèles Ollama</h1>
-</el-card>
-
-<!-- Content Grid -->
-<el-row :gutter="20">
+<div class="ui basic segment">
+    <h1 class="ui header">Gestionnaire de Modèles Ollama</h1>
+    
     <!-- Pull Model Form -->
-    <el-col :span="12">
-        <el-card class="box-card">
-            <div slot="header">
-                <span>Télécharger un Nouveau Modèle</span>
+    <div class="ui segment">
+        <h3 class="ui header">Télécharger un Nouveau Modèle</h3>
+        <div class="ui action input fluid">
+            <input type="text" id="modelNameInput" placeholder="Entrez le nom du modèle (ex: llama2:7b)">
+            <button class="ui primary button" onclick="pullModel()">Télécharger</button>
+        </div>
+        <!-- Add progress bar -->
+        <div id="pullProgress" class="ui indicating progress" style="display: none;">
+            <div class="bar progress"></div>
+            <div class="label">Démarrage du téléchargement...</div>
+        </div>
+        <!-- Add search results section -->
+        <div class="ui search-results" style="margin-top: 1rem; display: none;">
+            <div class="ui relaxed divided list" id="searchResults">
+                <!-- Search results will be displayed here -->
             </div>
-            <el-input
-                v-model="modelName"
-                placeholder="Entrez le nom du modèle (ex: llama2:7b)">
-                <el-button slot="append" type="primary" @click="pullModel">
-                    Télécharger
-                </el-button>
-            </el-input>
-            <el-progress
-                v-if="showProgress"
-                :percentage="downloadProgress"
-                :status="progressStatus">
-            </el-progress>
-            <!-- Search Results -->
-            <div v-show="showSearchResults" class="search-results">
-                <el-card v-for="model in searchResults" :key="model.name">
-                    <div class="model-item">
-                        <span>{% raw %}{{ model.name }}{% endraw %}</span>
-                        <div class="model-tags">
-                            <el-button
-                                v-for="tag in model.tags"
-                                :key="tag"
-                                size="mini"
-                                @click="selectModel(`${model.name}:${tag}`)">
-                                {% raw %}{{ tag }}{% endraw %}
-                            </el-button>
-                        </div>
-                    </div>
-                </el-card>
-            </div>
-        </el-card>
-    </el-col>
+        </div>
+    </div>
 
     <!-- Overall Usage Statistics -->
-    <el-col :span="12">
-        <el-card class="box-card">
-            <div slot="header">
-                <span>Statistiques Globales d'Utilisation</span>
-            </div>
-            <el-row :gutter="20" class="statistics-grid">
-                <el-col :span="12" v-for="stat in overallStats" :key="stat.label">
-                    <div class="statistic-item">
-                        <div class="value">{% raw %}{{ stat.value }}{% endraw %}</div>
-                        <div class="label">{% raw %}{{ stat.label }}{% endraw %}</div>
-                    </div>
-                </el-col>
-            </el-row>
-        </el-card>
-    </el-col>
-</el-row>
+    <div class="ui segment">
+        <h3 class="ui header">Statistiques Globales d'Utilisation</h3>
+        <div id="overallStats" class="ui statistics">
+            <!-- Statistics will be populated here -->
+        </div>
+    </div>
 
-<!-- Models Sections -->
-<el-row>
     <!-- Local Models -->
-    <el-col :span="24">
-        <el-card class="box-card">
-            <div slot="header" class="clearfix">
-                <span>Modèles Locaux</span>
-                <el-button-group style="float: right">
-                    <el-button type="danger" @click="batchDeleteModels">
-                        <i class="el-icon-delete"></i> Supprimer la Sélection
-                    </el-button>
-                    <el-button type="primary" @click="batchConfigureModels">
-                        <i class="el-icon-setting"></i> Configurer la Sélection
-                    </el-button>
-                    <el-button type="info" @click="compareSelectedModels">
-                        <i class="el-icon-sort"></i> Comparer la Sélection
-                    </el-button>
-                    <el-button @click="toggleAllModels">
-                        <i class="el-icon-check"></i> Tout Sélectionner
-                    </el-button>
-                    <el-button @click="refreshLocalModels">
-                        <i class="el-icon-refresh"></i> Actualiser
-                    </el-button>
-                </el-button-group>
-            </div>
-            <el-table
-                ref="localModelsTable"
-                :data="localModels"
-                @selection-change="handleSelectionChange">
-                <el-table-column type="selection" width="55"></el-table-column>
-                <el-table-column prop="name" label="Nom du Modèle"></el-table-column>
-                <el-table-column prop="modified_at" label="Date de Modification">
-                    <template slot-scope="scope">
-                        {% raw %}{{ formatDate(scope.row.modified_at) }}{% endraw %}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="size" label="Taille">
-                    <template slot-scope="scope">
-                        {% raw %}{{ formatBytes(scope.row.size) }}{% endraw %}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="details.format" label="Format"></el-table-column>
-                <el-table-column prop="details.family" label="Famille"></el-table-column>
-                <el-table-column prop="details.parameter_size" label="Paramètres"></el-table-column>
-                <el-table-column label="Actions" width="300">
-                    <template slot-scope="scope">
-                        <el-button-group>
-                            <el-button size="mini" @click="showModelConfig(scope.row.name)">
-                                <i class="el-icon-setting"></i>
-                            </el-button>
-                            <el-button size="mini" type="info" @click="showModelStats(scope.row.name)">
-                                <i class="el-icon-data-line"></i>
-                            </el-button>
-                            <el-button size="mini" type="danger" @click="deleteModel(scope.row.name)">
-                                <i class="el-icon-delete"></i>
-                            </el-button>
-                        </el-button-group>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </el-card>
-    </el-col>
+    <div class="ui segment">
+        <h3 class="ui header">Modèles Locaux</h3>
+        <div class="ui buttons batch-actions">
+            <button class="ui negative button" onclick="batchDeleteModels()">
+                <i class="trash icon"></i> Supprimer la Sélection
+            </button>
+            <button class="ui teal button" onclick="batchConfigureModels()">
+                <i class="cog icon"></i> Configurer la Sélection
+            </button>
+            <button class="ui olive button" onclick="compareSelectedModels()">
+                <i class="exchange icon"></i> Comparer la Sélection
+            </button>
+            <button class="ui button" onclick="toggleAllModels()">
+                <i class="check square outline icon"></i> Tout Sélectionner
+            </button>
+        </div>
+        <table class="ui celled table" id="localModels">
+            <thead>
+                <tr>
+                    <th class="collapsing">
+                        <div class="ui fitted checkbox">
+                            <input type="checkbox" onclick="toggleAllModels()">
+                            <label></label>
+                        </div>
+                    </th>
+                    <th>Nom du Modèle</th>
+                    <th>Date de Modification</th>
+                    <th>Taille</th>
+                    <th>Format</th>
+                    <th>Famille</th>
+                    <th>Paramètres</th>
+                    <th class="center aligned">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Models will be populated here -->
+            </tbody>
+        </table>
+    </div>
 
     <!-- Running Models -->
-    <el-col :span="24" style="margin-top: 20px;">
-        <el-card class="box-card">
-            <div slot="header" class="clearfix">
-                <span>Modèles en Cours d'Exécution</span>
-                <el-button style="float: right" @click="refreshRunningModels">
-                    <i class="el-icon-refresh"></i> Actualiser
-                </el-button>
-            </div>
-            <el-table :data="runningModels">
-                <el-table-column prop="name" label="Nom du Modèle"></el-table-column>
-                <el-table-column prop="modified_at" label="Date de Modification">
-                    <template slot-scope="scope">
-                        {% raw %}{{ formatDate(scope.row.modified_at) }}{% endraw %}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="size" label="Taille">
-                    <template slot-scope="scope">
-                        {% raw %}{{ formatBytes(scope.row.size) }}{% endraw %}
-                    </template>
-                </el-table-column>
-                <el-table-column prop="details.format" label="Format"></el-table-column>
-                <el-table-column prop="details.family" label="Famille"></el-table-column>
-                <el-table-column prop="details.parameter_size" label="Paramètres"></el-table-column>
-                <el-table-column label="Actions" width="120">
-                    <template slot-scope="scope">
-                        <el-button type="danger" size="mini" @click="stopModel(scope.row.name)">
-                            <i class="el-icon-video-pause"></i> Arrêter
-                        </el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </el-card>
-    </el-col>
-</el-row>
-
-{% include 'modals/settings.html' %}
-{% include 'modals/stats.html' %}
-{% include 'modals/config.html' %}
-{% include 'modals/batch_results.html' %}
-{% include 'modals/message.html' %}
-
-<!-- Model Comparison Dialog -->
-<el-dialog title="Comparaison de Modèles" :visible.sync="comparisonDialogVisible" fullscreen>
-    <div class="comparison-container">
-        <el-row :gutter="20">
-            <el-col :span="12" v-for="model in selectedModels" :key="model.name">
-                <el-card class="box-card">
-                    <div slot="header">
-                        <span>{% raw %}{{ model.name }}{% endraw %}</span>
-                    </div>
-                    <div class="model-details">
-                        <!-- Model comparison content -->
-                    </div>
-                </el-card>
-            </el-col>
-        </el-row>
+    <div class="ui segment">
+        <div class="ui clearing">
+            <h3 class="ui left floated header">Modèles en Cours d'Exécution</h3>
+            <button class="ui right floated button" onclick="refreshRunningModels()">
+                <i class="refresh icon"></i> Actualiser
+            </button>
+        </div>
+        <table class="ui celled table" id="runningModels">
+            <thead>
+                <tr>
+                    <th>Nom du Modèle</th>
+                    <th>Date de Modification</th>
+                    <th>Taille</th>
+                    <th>Format</th>
+                    <th>Famille</th>
+                    <th>Paramètres</th>
+                    <th class="center aligned">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Running models will be populated here -->
+            </tbody>
+        </table>
     </div>
-</el-dialog>
+</div>
+
+{% include "modals/settings.html" %}
+{% include "modals/message.html" %}
+{% include "modals/stats.html" %}
+{% include "modals/config.html" %}
+{% include "modals/batch_results.html" %}
+
+<!-- Model Comparison Modal -->
+<div class="ui fullscreen modal" id="comparisonModal">
+    <div class="header">
+        <i class="exchange icon"></i>
+        Comparaison de Modèles
+    </div>
+    <div class="content">
+        <div id="modelComparison" class="ui grid">
+            <!-- Comparison data will be populated here -->
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui positive button">Fermer</div>
+    </div>
+</div>
+
 {% endblock %}
