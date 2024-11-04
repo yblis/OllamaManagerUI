@@ -47,7 +47,6 @@ new Vue({
         }
     },
     methods: {
-        // Original methods
         toggleTheme() {
             this.isDarkMode = !this.isDarkMode;
         },
@@ -212,104 +211,6 @@ new Vue({
 
         handleSelectionChange(selection) {
             this.selectedModels = selection;
-        },
-
-        // New methods from manager's message
-        showSettings() {
-            this.settingsVisible = true;
-        },
-        
-        async pullModel() {
-            if (!this.modelName) {
-                this.$message.warning('Veuillez entrer un nom de modèle');
-                return;
-            }
-            
-            try {
-                this.showProgress = true;
-                this.progressStatus = 'active';
-                const response = await fetch('/api/models/pull', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Ollama-URL': this.ollamaUrl
-                    },
-                    body: JSON.stringify({ name: this.modelName })
-                });
-                
-                if (!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Failed to pull model');
-                }
-                
-                this.$message.success(`Modèle ${this.modelName} téléchargé avec succès`);
-                this.modelName = '';
-                await this.refreshLocalModels();
-            } catch (error) {
-                console.error('Error pulling model:', error);
-                this.$message.error(error.message);
-            } finally {
-                this.showProgress = false;
-            }
-        },
-        
-        async batchDeleteModels() {
-            if (!this.selectedModels.length) {
-                this.$message.warning('Veuillez sélectionner des modèles à supprimer');
-                return;
-            }
-            
-            try {
-                const result = await this.$confirm(
-                    'Êtes-vous sûr de vouloir supprimer les modèles sélectionnés ?',
-                    'Confirmation',
-                    {
-                        confirmButtonText: 'Oui',
-                        cancelButtonText: 'Non',
-                        type: 'warning'
-                    }
-                );
-                
-                if (result !== 'confirm') return;
-                
-                for (const model of this.selectedModels) {
-                    await fetch('/api/models/delete', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Ollama-URL': this.ollamaUrl
-                        },
-                        body: JSON.stringify({ name: model.name })
-                    });
-                }
-                
-                this.$message.success('Modèles supprimés avec succès');
-                await this.refreshLocalModels();
-            } catch (error) {
-                console.error('Error deleting models:', error);
-                this.$message.error(error.message);
-            }
-        },
-        
-        batchConfigureModels() {
-            if (!this.selectedModels.length) {
-                this.$message.warning('Veuillez sélectionner des modèles à configurer');
-                return;
-            }
-            this.configDialogVisible = true;
-        },
-        
-        compareSelectedModels() {
-            if (this.selectedModels.length < 2) {
-                this.$message.warning('Veuillez sélectionner au moins deux modèles à comparer');
-                return;
-            }
-            this.comparisonDialogVisible = true;
-        },
-        
-        toggleAllModels() {
-            const toggleTo = this.selectedModels.length !== this.localModels.length;
-            this.$refs.localModelsTable.toggleAllSelection(toggleTo);
         }
     },
     mounted() {
