@@ -1,88 +1,222 @@
+/* Import Google Fonts */
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
 /* Theme variables */
 :root {
     --bg-primary: #ffffff;
-    --text-primary: #000000;
-    --card-bg: #ffffff;
-    --border-color: #ddd;
-    --header-bg: #f8f9fa;
-    --button-bg: #e0e1e2;
-    --button-hover: #cacbcd;
-    --button-text: #000000;
-    --nav-bg: #f8f9fa;
-    --primary-gradient: linear-gradient(135deg, #6e8efb, #a777e3);
+    --text-primary: #333333;
+    --card-bg: #f9f9f9;
+    --border-color: #e0e0e0;
+    --header-bg: #f1f1f1;
+    --button-bg: #6e8efb;
+    --button-hover: #5a7de3;
+    --button-text: #ffffff;
     --accent-color: #6e8efb;
     --success-color: #4CAF50;
     --error-color: #f44336;
 }
 
 [data-theme="dark"] {
-    --bg-primary: #1a1a1a;
-    --text-primary: #ffffff;
-    --card-bg: #2d2d2d;
-    --border-color: #444;
-    --header-bg: #2d2d2d;
-    --button-bg: #3d3d3d;
-    --button-hover: #4d4d4d;
+    --bg-primary: #121212;
+    --text-primary: #e0e0e0;
+    --card-bg: #1e1e1e;
+    --border-color: #333333;
+    --header-bg: #1e1e1e;
+    --button-bg: #6e8efb;
+    --button-hover: #5a7de3;
     --button-text: #ffffff;
-    --nav-bg: #2d2d2d;
+    --accent-color: #6e8efb;
+    --success-color: #81c784;
+    --error-color: #e57373;
 }
 
-/* Glass morphism effects */
-.ui.segment, .ui.modal, .ui.statistics .statistic {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.17);
-}
-
-/* Smooth transitions and hover effects */
-.ui.button, .ui.segment, .ui.statistics .statistic {
-    transition: all 0.3s ease;
-}
-
-.ui.button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-/* Typography and spacing improvements */
+/* General Styles */
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    transition: all 0.3s ease;
-    line-height: 1.6;
-    letter-spacing: 0.3px;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.ui.header {
-    font-weight: 300;
-    letter-spacing: 1px;
+.ui.container.main-content {
+    margin-top: 4rem;
+    margin-bottom: 2rem;
 }
 
-/* Neuro-ergonomic improvements */
-.ui.button, input, .ui.input input {
-    min-height: 44px; /* Larger touch targets */
+/* Navbar Styles */
+.ui.inverted.menu {
+    background-color: var(--card-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.ui.segment {
-    margin: 1.5rem 0; /* Consistent spacing */
-    padding: 1.5rem;
+.ui.inverted.menu .item {
+    color: var(--text-primary) !important;
 }
 
-.ui.statistics {
-    margin: 2rem 0;
+.ui.inverted.menu .item:hover {
+    background-color: var(--button-hover) !important;
+    color: var(--button-text) !important;
 }
 
-/* Enhanced contrast and readability */
-.ui.header {
-    margin-bottom: 1.5rem;
-    color: var(--text-primary);
+.ui.inverted.menu .right.menu .item {
+    display: flex;
+    align-items: center;
 }
 
-.ui.table {
-    border-spacing: 0;
-    border-collapse: separate;
-    font-size: 1rem;
+.ui.toggle.button {
+    background-color: var(--button-bg) !important;
+    color: var(--button-text) !important;
+    transition: background-color 0.3s ease;
+}
+
+.ui.toggle.button:hover {
+    background-color: var(--button-hover) !important;
+}
+
+/* Server Status Container */
+.server-status-container {
+    position: fixed;
+    top: 4rem; /* Adjusted for navbar */
+    right: 1rem;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+[data-theme="dark"] .server-status-container {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Segments and Cards */
+.ui.raised.segment {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ui.raised.segment:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Buttons */
+.ui.button {
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.ui.button.primary {
+    background-color: var(--button-bg) !important;
+    color: var(--button-text) !important;
+}
+
+.ui.button.primary:hover {
+    background-color: var(--button-hover) !important;
+}
+
+/* Tables */
+.ui.celled.table {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.ui.celled.table thead th {
+    background-color: var(--header-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.ui.celled.table tbody tr:hover {
+    background-color: rgba(110, 142, 251, 0.1);
+}
+
+.ui.celled.table td, .ui.celled.table th {
+    padding: 1rem !important;
+}
+
+/* Batch Actions */
+.batch-actions {
+    margin: 1.5rem 0;
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.batch-actions .ui.button {
+    margin: 0;
+}
+
+/* Modals */
+.ui.modal {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+}
+
+.ui.modal .header {
+    background-color: var(--header-bg) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.ui.modal .content {
+    background-color: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+.ui.modal .actions .button {
+    background-color: var(--button-bg) !important;
+    color: var(--button-text) !important;
+}
+
+.ui.modal .actions .button:hover {
+    background-color: var(--button-hover) !important;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .ui.container.main-content {
+        margin-top: 6rem;
+        padding: 0 1rem;
+    }
+
+    .server-status-container {
+        top: 6rem;
+        right: 0.5rem;
+        padding: 0.3rem 0.8rem;
+    }
+
+    .ui.grid.stackable > .column {
+        margin-bottom: 2rem;
+    }
+
+    .batch-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .ui.statistics {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+        gap: 1rem !important;
+    }
 }
 
 /* Animations */
@@ -95,163 +229,7 @@ body {
     animation: fadeIn 0.3s ease-out;
 }
 
-/* Apply theme colors */
-.ui.segment {
-    background-color: var(--card-bg);
-    border-color: var(--border-color);
-}
-
-.ui.table {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-
-.ui.table thead th {
-    background-color: var(--header-bg);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-    padding: 1rem;
-}
-
-.ui.button {
-    background-color: var(--button-bg);
-    color: var(--button-text);
-}
-
-.ui.button:hover {
-    background-color: var(--button-hover);
-    color: var(--button-text);
-}
-
-.ui.modal {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-}
-
-.ui.modal .header {
-    background-color: var(--header-bg);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-    padding: 1.2rem;
-}
-
-.ui.modal .content {
-    background-color: var(--card-bg);
-    color: var(--text-primary);
-    padding: 1.5rem;
-}
-
-.ui.statistics .statistic {
-    background-color: var(--card-bg);
-    padding: 1.5rem;
-    border-radius: 12px;
-    margin: 0.5rem;
-}
-
-.ui.statistics .statistic .value,
-.ui.statistics .statistic .label {
-    color: var(--text-primary) !important;
-}
-
-/* Theme toggle button */
-.theme-toggle {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 1001;
-}
-
-.theme-toggle .button {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--button-bg);
-    color: var(--button-text);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-}
-
-.theme-toggle .button:hover {
-    transform: scale(1.1);
-    background-color: var(--button-hover);
-}
-
-.theme-toggle .button i {
-    font-size: 1.2em;
-}
-
-/* Server status container */
-.server-status-container {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    padding: 0.5rem;
-    border-radius: 8px;
-}
-
-.server-status-container .ui.message {
-    margin: 0;
-    padding: 0.8rem 1.2rem;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
-}
-
-/* Batch actions */
-.batch-actions {
-    margin: 1.5rem 0;
-    display: flex;
-    gap: 0.8rem;
-    flex-wrap: wrap;
-}
-
-.batch-actions .ui.button {
-    margin: 0;
-}
-
-/* Mobile responsiveness */
-@media screen and (max-width: 768px) {
-    .ui.container {
-        margin: 1rem !important;
-        width: 100% !important;
-        padding: 0 1rem;
-        overflow-x: hidden;
-    }
-    
-    .ui.table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-    
-    .batch-actions {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    .ui.statistics {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-    }
-    
-    .ui.modal {
-        width: 95% !important;
-        margin: 0 auto !important;
-    }
-}
-
-/* Additional ergonomic improvements */
+/* Enhanced Forms */
 .ui.form .field {
     margin-bottom: 1.5rem;
 }
@@ -264,14 +242,23 @@ body {
 .ui.form input, .ui.form textarea {
     padding: 0.8rem;
     border-radius: 6px;
+    border: 1px solid var(--border-color) !important;
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    transition: border-color 0.3s ease;
 }
 
-/* Error and success states */
+.ui.form input:focus, .ui.form textarea:focus {
+    border-color: var(--accent-color) !important;
+}
+
+/* Messages */
 .error-message {
     color: var(--error-color);
     padding: 0.8rem;
     border-radius: 6px;
     margin-top: 0.5rem;
+    background-color: rgba(244, 67, 54, 0.1);
 }
 
 .success-message {
@@ -279,4 +266,26 @@ body {
     padding: 0.8rem;
     border-radius: 6px;
     margin-top: 0.5rem;
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.ui.celled.table {
+    overflow-x: auto;
+    display: block;
+}
+
+.ui.celled.table thead {
+    background-color: var(--header-bg);
+}
+
+@media screen and (max-width: 768px) {
+    .ui.celled.table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .ui.celled.table th, .ui.celled.table td {
+        padding: 0.8rem;
+    }
 }

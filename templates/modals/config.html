@@ -1,6 +1,6 @@
 <!-- Model Config Modal -->
 <div class="ui modal" id="configModal">
-    <div class="header">Model Configuration</div>
+    <div class="header">Configuration du Modèle</div>
     <div class="content">
         <div id="selectedModels" class="ui list">
             <!-- Selected models will be listed here -->
@@ -15,18 +15,18 @@
                 <textarea id="template" rows="3"></textarea>
             </div>
             <div class="field">
-                <label>Parameters</label>
+                <label>Paramètres</label>
                 <div id="parameters" class="ui segments">
                     <!-- Parameters will be populated here -->
                 </div>
                 <button type="button" class="ui small primary button" onclick="addParameter()">
-                    <i class="plus icon"></i> Add Parameter
+                    <i class="plus icon"></i> Ajouter un Paramètre
                 </button>
             </div>
         </form>
     </div>
     <div class="actions">
-        <div class="ui negative button">Cancel</div>
-        <div class="ui positive button" onclick="saveModelConfig()">Save</div>
+        <div class="ui negative button">Annuler</div>
+        <div class="ui positive button" onclick="saveModelConfig()">Enregistrer</div>
     </div>
 </div>
