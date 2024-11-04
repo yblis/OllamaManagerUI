@@ -9,7 +9,6 @@
     --button-hover: #cacbcd;
     --button-text: #000000;
     --nav-bg: #f8f9fa;
-    --animation-duration: 0.3s;
 }
 
 [data-theme="dark"] {
@@ -24,34 +23,6 @@
     --nav-bg: #2d2d2d;
 }
 
-/* Animation keyframes */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { 
-        transform: translateY(20px);
-        opacity: 0;
-    }
-    to { 
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes scaleIn {
-    from { 
-        transform: scale(0.95);
-        opacity: 0;
-    }
-    to { 
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
 /* Apply theme colors */
 body {
     background-color: var(--bg-primary);
@@ -62,7 +33,6 @@ body {
 .ui.segment {
     background-color: var(--card-bg);
     border-color: var(--border-color);
-    animation: scaleIn var(--animation-duration) ease-out;
 }
 
 .ui.table {
@@ -75,10 +45,6 @@ body {
     background-color: var(--header-bg);
     color: var(--text-primary);
     border-color: var(--border-color);
-}
-
-.ui.table tbody tr {
-    animation: slideUp var(--animation-duration) ease-out;
 }
 
 .ui.button {
@@ -112,7 +78,6 @@ body {
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    animation: fadeIn var(--animation-duration) ease-out;
 }
 
 .ui.statistics .statistic .value,
@@ -120,10 +85,11 @@ body {
     color: var(--text-primary) !important;
 }
 
+/* Theme toggle button enhancements */
 .theme-toggle {
     position: fixed;
     top: 1rem;
-    left: 1rem;
+    left: 1rem;  /* Changed from right to left */
     z-index: 1001;
 }
 
@@ -150,13 +116,15 @@ body {
     font-size: 1.2em;
 }
 
+/* Animation for theme transition */
 * {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Responsive improvements */
 @media screen and (max-width: 768px) {
     .theme-toggle {
-        top: 1rem;
+        top: 1rem;  /* Keep at top even on mobile */
         left: 1rem;
         bottom: auto;
     }
@@ -198,6 +166,7 @@ body {
     }
 }
 
+/* Add fluid container for better responsiveness */
 .ui.container {
     width: 100% !important;
     max-width: 1200px !important;
@@ -205,6 +174,7 @@ body {
     margin-right: auto !important;
 }
 
+/* Existing styles */
 .error-message {
     color: #db2828;
 }
@@ -225,7 +195,6 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
-    animation: slideUp var(--animation-duration) ease-out;
 }
 
 .server-status-container .ui.message {
@@ -280,6 +249,7 @@ body {
     margin-right: 0.5rem;
 }
 
+/* Model comparison specific styles */
 #modelComparison {
     display: flex;
     flex-wrap: wrap;
