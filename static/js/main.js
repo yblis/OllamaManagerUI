@@ -12,7 +12,7 @@ if (window.location.hostname !== 'localhost') {
                 localStorage.setItem('ollamaUrl', ollamaUrl);
             }
         })
-        .catch(error => console.error('Error fetching server URL:', error));
+        .catch(console.error);
 }
 
 async function checkServerStatus() {
@@ -79,98 +79,134 @@ window.stopModel = async function(modelName) {
             body: JSON.stringify({ name: modelName })
         });
         
-        const data = await response.json();
         if (!response.ok) {
+            const data = await response.json();
             throw new Error(data.error || 'Échec de l\'arrêt du modèle');
         }
         
         showMessage('Succès', `Modèle ${modelName} arrêté avec succès`);
         await refreshRunningModels();  // Refresh only running models table
     } catch (error) {
-        console.error('Error stopping model:', error);
         showMessage('Erreur', error.message, true);
     }
 };
 
-window.refreshLocalModels = async function() {
+window.showModelConfig = async function(modelName) {
     try {
-        const response = await fetch('/api/models', {
+        const response = await fetch(`/api/models/${modelName}/config`, {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to fetch local models');
-        }
+        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        const config = await response.json();
         
-        const data = await response.json();
-        const tbody = document.querySelector('#localModels tbody');
-        tbody.innerHTML = data.models.map(model => `
-            <tr>
-                <td class="collapsing">
-                    <div class="ui fitted checkbox">
-                        <input type="checkbox" data-model-name="${model.name}" onchange="toggleModelSelection(this, '${model.name}')">
-                        <label></label>
+        document.getElementById('selectedModels').innerHTML = `
+            <div class="item">
+                <i class="cube icon"></i>
+                ${modelName}
+            </div>
+        `;
+        
+        document.getElementById('systemPrompt').value = config.system || '';
+        document.getElementById('template').value = config.template || '';
+        
+        const parametersContainer = document.getElementById('parameters');
+        parametersContainer.innerHTML = '';
+        
+        Object.entries(config.parameters || {}).forEach(([key, value]) => {
+            parametersContainer.innerHTML += `
+                <div class="ui segment">
+                    <div class="two fields">
+                        <div class="field">
+                            <input type="text" value="${key}" readonly>
+                        </div>
+                        <div class="field">
+                            <input type="text" value="${value}">
+                        </div>
                     </div>
-                </td>
-                <td>${model.name}</td>
-                <td>${new Date(model.modified_at).toLocaleString()}</td>
-                <td>${formatBytes(model.size)}</td>
-                <td>${model.details?.format || 'N/A'}</td>
-                <td>${model.details?.family || 'N/A'}</td>
-                <td>${model.details?.parameter_size || 'N/A'}</td>
-                <td class="center aligned">
-                    <div class="ui tiny buttons">
-                        <button class="ui button" onclick="showModelConfig('${model.name}')">
-                            <i class="cog icon"></i> Config
-                        </button>
-                        <button class="ui teal button" onclick="showModelStats('${model.name}')">
-                            <i class="chart bar icon"></i> Stats
-                        </button>
-                        <button class="ui negative button" onclick="deleteModel('${model.name}')">
-                            <i class="trash icon"></i> Supprimer
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
+                </div>
+            `;
+        });
+        
+        $('#configModal').modal('show');
     } catch (error) {
-        console.error('Error refreshing local models:', error);
-        const tbody = document.querySelector('#localModels tbody');
-        tbody.innerHTML = '<tr><td colspan="8" class="center aligned error">Erreur lors du chargement des modèles: ' + error.message + '</td></tr>';
+        showMessage('Erreur', error.message, true);
     }
 };
 
-window.refreshRunningModels = async function() {
+window.showModelStats = async function(modelName) {
     try {
-        const response = await fetch('/api/models/running', {
+        const response = await fetch(`/api/models/${modelName}/stats`, {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
+        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        const stats = await response.json();
+        
+        document.getElementById('modelStats').innerHTML = `
+            <div class="ui statistics">
+                <div class="statistic">
+                    <div class="value">${stats.total_operations || 0}</div>
+                    <div class="label">Opérations Totales</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${stats.total_prompt_tokens || 0}</div>
+                    <div class="label">Tokens de Prompt</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${stats.total_completion_tokens || 0}</div>
+                    <div class="label">Tokens de Complétion</div>
+                </div>
+                <div class="statistic">
+                    <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
+                    <div class="label">Durée Totale</div>
+                </div>
+            </div>
+            
+            <div class="ui segment">
+                <h4 class="ui header">Opérations par Type</h4>
+                <div class="ui list">
+                    ${Object.entries(stats.operations_by_type || {}).map(([type, count]) => `
+                        <div class="item">
+                            <i class="right triangle icon"></i>
+                            <div class="content">
+                                <div class="header">${type}</div>
+                                <div class="description">${count} opération(s)</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        $('#statsModal').modal('show');
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+};
+
+window.deleteModel = async function(modelName) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le modèle ${modelName} ?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/models/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Ollama-URL': ollamaUrl
+            },
+            body: JSON.stringify({ name: modelName })
+        });
+        
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Failed to fetch running models');
+            throw new Error(data.error || 'Échec de la suppression du modèle');
         }
         
-        const data = await response.json();
-        const tbody = document.querySelector('#runningModels tbody');
-        tbody.innerHTML = data.models.map(model => `
-            <tr>
-                <td>${model.name}</td>
-                <td>${new Date(model.modified_at).toLocaleString()}</td>
-                <td>${formatBytes(model.size)}</td>
-                <td>${model.details?.format || 'N/A'}</td>
-                <td>${model.details?.family || 'N/A'}</td>
-                <td>${model.details?.parameter_size || 'N/A'}</td>
-                <td class="center aligned">
-                    <button class="ui red tiny button" onclick="stopModel('${model.name}')">
-                        <i class="stop icon"></i> Arrêter
-                    </button>
-                </td>
-            </tr>
-        `).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
+        showMessage('Succès', `Modèle ${modelName} supprimé avec succès`);
+        refreshAll();
     } catch (error) {
-        console.error('Error refreshing running models:', error);
-        const tbody = document.querySelector('#runningModels tbody');
-        tbody.innerHTML = '<tr><td colspan="7" class="center aligned error">Erreur lors du chargement des modèles: ' + error.message + '</td></tr>';
+        showMessage('Erreur', error.message, true);
     }
 };
 
@@ -267,6 +303,7 @@ window.pullModel = async function() {
             throw new Error(data.error || 'Échec du téléchargement du modèle');
         }
         
+        const data = await response.json();
         showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
         document.getElementById('modelNameInput').value = '';
         refreshAll();
@@ -277,124 +314,119 @@ window.pullModel = async function() {
     }
 };
 
-window.showModelConfig = async function(modelName) {
+// Refresh functions
+window.refreshLocalModels = async function() {
     try {
-        const response = await fetch(`/api/models/${modelName}/config`, {
+        const response = await fetch('/api/models', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
-        const config = await response.json();
+        if (!response.ok) throw new Error('Failed to fetch local models');
         
-        document.getElementById('selectedModels').innerHTML = `
-            <div class="item">
-                <i class="cube icon"></i>
-                ${modelName}
-            </div>
-        `;
-        
-        document.getElementById('systemPrompt').value = config.system || '';
-        document.getElementById('template').value = config.template || '';
-        
-        const parametersContainer = document.getElementById('parameters');
-        parametersContainer.innerHTML = '';
-        
-        for (const [key, value] of Object.entries(config.parameters || {})) {
-            parametersContainer.innerHTML += `
-                <div class="ui segment">
-                    <div class="two fields">
-                        <div class="field">
-                            <input type="text" value="${key}" readonly>
-                        </div>
-                        <div class="field">
-                            <input type="text" value="${value}">
-                        </div>
+        const data = await response.json();
+        const tbody = document.querySelector('#localModels tbody');
+        tbody.innerHTML = data.models.map(model => `
+            <tr>
+                <td class="collapsing">
+                    <div class="ui fitted checkbox">
+                        <input type="checkbox" data-model-name="${model.name}" onchange="toggleModelSelection(this, '${model.name}')">
+                        <label></label>
                     </div>
-                </div>
-            `;
-        }
-        
-        $('#configModal').modal('show');
+                </td>
+                <td>${model.name}</td>
+                <td>${new Date(model.modified_at).toLocaleString()}</td>
+                <td>${formatBytes(model.size)}</td>
+                <td>${model.details?.format || 'N/A'}</td>
+                <td>${model.details?.family || 'N/A'}</td>
+                <td>${model.details?.parameter_size || 'N/A'}</td>
+                <td class="center aligned">
+                    <div class="ui tiny buttons">
+                        <button class="ui button" onclick="showModelConfig('${model.name}')">
+                            <i class="cog icon"></i> Config
+                        </button>
+                        <button class="ui teal button" onclick="showModelStats('${model.name}')">
+                            <i class="chart bar icon"></i> Stats
+                        </button>
+                        <button class="ui negative button" onclick="deleteModel('${model.name}')">
+                            <i class="trash icon"></i> Supprimer
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
     } catch (error) {
+        console.error('Error refreshing local models:', error);
         showMessage('Erreur', error.message, true);
     }
 };
 
-window.showModelStats = async function(modelName) {
+window.refreshRunningModels = async function() {
     try {
-        const response = await fetch(`/api/models/${modelName}/stats`, {
+        const response = await fetch('/api/models/running', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
-        const stats = await response.json();
+        if (!response.ok) throw new Error('Failed to fetch running models');
         
-        document.getElementById('modelStats').innerHTML = `
-            <div class="ui statistics">
-                <div class="statistic">
-                    <div class="value">${stats.total_operations || 0}</div>
-                    <div class="label">Opérations Totales</div>
-                </div>
-                <div class="statistic">
-                    <div class="value">${stats.total_prompt_tokens || 0}</div>
-                    <div class="label">Tokens de Prompt</div>
-                </div>
-                <div class="statistic">
-                    <div class="value">${stats.total_completion_tokens || 0}</div>
-                    <div class="label">Tokens de Complétion</div>
-                </div>
-                <div class="statistic">
-                    <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
-                    <div class="label">Durée Totale</div>
-                </div>
-            </div>
-            
-            <div class="ui segment">
-                <h4 class="ui header">Opérations par Type</h4>
-                <div class="ui list">
-                    ${Object.entries(stats.operations_by_type || {}).map(([type, count]) => `
-                        <div class="item">
-                            <i class="right triangle icon"></i>
-                            <div class="content">
-                                <div class="header">${type}</div>
-                                <div class="description">${count} opération(s)</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-        
-        $('#statsModal').modal('show');
+        const data = await response.json();
+        const tbody = document.querySelector('#runningModels tbody');
+        tbody.innerHTML = data.models.map(model => `
+            <tr>
+                <td>${model.name}</td>
+                <td>${new Date(model.modified_at).toLocaleString()}</td>
+                <td>${formatBytes(model.size)}</td>
+                <td>${model.details?.format || 'N/A'}</td>
+                <td>${model.details?.family || 'N/A'}</td>
+                <td>${model.details?.parameter_size || 'N/A'}</td>
+                <td class="center aligned">
+                    <button class="ui red tiny button" onclick="stopModel('${model.name}')">
+                        <i class="stop icon"></i> Arrêter
+                    </button>
+                </td>
+            </tr>
+        `).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
     } catch (error) {
+        console.error('Error refreshing running models:', error);
         showMessage('Erreur', error.message, true);
     }
 };
 
-window.deleteModel = async function(modelName) {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le modèle ${modelName} ?`)) {
-        return;
-    }
-    
+async function refreshStats() {
     try {
-        const response = await fetch('/api/models/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Ollama-URL': ollamaUrl
-            },
-            body: JSON.stringify({ name: modelName })
+        const response = await fetch('/api/models/stats', {
+            headers: { 'X-Ollama-URL': ollamaUrl }
         });
+        if (!response.ok) throw new Error('Failed to fetch stats');
         
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Échec de la suppression du modèle');
-        }
-        
-        showMessage('Succès', `Modèle ${modelName} supprimé avec succès`);
-        refreshAll();
+        const stats = await response.json();
+        document.getElementById('overallStats').innerHTML = `
+            <div class="statistic">
+                <div class="value">${stats.total_operations || 0}</div>
+                <div class="label">Opérations Totales</div>
+            </div>
+            <div class="statistic">
+                <div class="value">${stats.total_prompt_tokens || 0}</div>
+                <div class="label">Tokens de Prompt</div>
+            </div>
+            <div class="statistic">
+                <div class="value">${stats.total_completion_tokens || 0}</div>
+                <div class="label">Tokens de Complétion</div>
+            </div>
+            <div class="statistic">
+                <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
+                <div class="label">Durée Totale</div>
+            </div>
+        `;
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        console.error('Error refreshing stats:', error);
     }
-};
+}
+
+async function refreshAll() {
+    await Promise.all([
+        refreshLocalModels(),
+        refreshRunningModels(),
+        refreshStats()
+    ]);
+}
 
 // Batch operations
 window.toggleModelSelection = function(checkbox, modelName) {
@@ -502,54 +534,6 @@ function formatBytes(bytes, decimals = 2) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
-
-async function refreshStats() {
-    try {
-        const response = await fetch('/api/models/stats', {
-            headers: { 'X-Ollama-URL': ollamaUrl }
-        });
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to fetch stats');
-        }
-        
-        const stats = await response.json();
-        document.getElementById('overallStats').innerHTML = `
-            <div class="statistic">
-                <div class="value">${stats.total_operations || 0}</div>
-                <div class="label">Opérations Totales</div>
-            </div>
-            <div class="statistic">
-                <div class="value">${stats.total_prompt_tokens || 0}</div>
-                <div class="label">Tokens de Prompt</div>
-            </div>
-            <div class="statistic">
-                <div class="value">${stats.total_completion_tokens || 0}</div>
-                <div class="label">Tokens de Complétion</div>
-            </div>
-            <div class="statistic">
-                <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
-                <div class="label">Durée Totale</div>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error refreshing stats:', error);
-        document.getElementById('overallStats').innerHTML = `
-            <div class="ui negative message">
-                <i class="warning icon"></i>
-                Erreur lors du chargement des statistiques: ${error.message}
-            </div>
-        `;
-    }
-}
-
-async function refreshAll() {
-    await Promise.all([
-        refreshLocalModels(),
-        refreshRunningModels(),
-        refreshStats()
-    ]);
 }
 
 // Initialize
