@@ -6,7 +6,7 @@ import os
 import json
 
 class OllamaClient:
-    def __init__(self, base_url=None):
+    def __init__(self, base_url=None)
         self.base_url = base_url or os.environ.get('OLLAMA_SERVER_URL', 'http://localhost:11434')
         if self.base_url.endswith('/'):
             self.base_url = self.base_url[:-1]
