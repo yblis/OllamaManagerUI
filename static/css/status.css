@@ -1,16 +1,33 @@
-.status-message {
-    transition: all 0.5s ease-in-out;
-    opacity: 1;
-    margin-bottom: 1em;
-    position: relative;
-    top: 0;
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    transition: all 0.3s ease-in-out;
 }
 
-.status-message.fade-out {
+.status-indicator.online {
+    background-color: #21ba45;
+    box-shadow: 0 0 8px #21ba45;
+}
+
+.status-indicator.offline {
+    background-color: #db2828;
+    box-shadow: 0 0 8px #db2828;
+}
+
+.server-status {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    margin-bottom: 1em;
+    transition: all 0.3s ease-in-out;
+}
+
+.server-status.fade-out {
     opacity: 0;
     transform: translateY(-20px);
-    height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
 }

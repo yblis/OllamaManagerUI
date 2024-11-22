@@ -3,9 +3,9 @@
 {% block content %}
 <!-- Server Status -->
 <div class="server-status-container">
-    <div id="serverStatus" class="ui tiny message {% if server_status %}positive{% else %}negative{% endif %}">
-        <i class="icon {% if server_status %}check circle{% else %}times circle{% endif %}"></i>
-        <span>Le serveur Ollama est {% if server_status %}en cours d'exécution{% else %}arrêté{% endif %}</span>
+    <div id="serverStatus" class="server-status">
+        <span class="status-indicator" id="statusDot"></span>
+        <span class="status-text">Statut du serveur Ollama</span>
     </div>
 </div>
 

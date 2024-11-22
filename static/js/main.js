@@ -23,14 +23,17 @@ async function checkServerStatus() {
         const data = await response.json();
         
         const statusElement = document.getElementById('serverStatus');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = statusElement.querySelector('.status-text');
+        
         statusElement.classList.remove('fade-out');
         
         if (data.status === 'running') {
-            statusElement.className = 'ui tiny positive message status-message';
-            statusElement.innerHTML = '<i class="check circle icon"></i>Le serveur Ollama est en cours d\'exécution';
+            statusDot.className = 'status-indicator online';
+            statusText.textContent = 'Serveur Ollama connecté';
         } else {
-            statusElement.className = 'ui tiny negative message status-message';
-            statusElement.innerHTML = '<i class="times circle icon"></i>Le serveur Ollama est arrêté';
+            statusDot.className = 'status-indicator offline';
+            statusText.textContent = 'Serveur Ollama déconnecté';
         }
         
         // Start fadeout after 5 seconds
@@ -40,8 +43,11 @@ async function checkServerStatus() {
     } catch (error) {
         console.error('Error checking server status:', error);
         const statusElement = document.getElementById('serverStatus');
-        statusElement.className = 'ui tiny negative message';
-        statusElement.innerHTML = '<i class="times circle icon"></i>Erreur de connexion au serveur';
+        const statusDot = document.getElementById('statusDot');
+        const statusText = statusElement.querySelector('.status-text');
+        
+        statusDot.className = 'status-indicator offline';
+        statusText.textContent = 'Erreur de connexion au serveur';
     }
 }
 
