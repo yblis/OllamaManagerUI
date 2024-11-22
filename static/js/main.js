@@ -633,6 +633,14 @@ document.addEventListener('DOMContentLoaded', () => {
     $('.ui.modal').modal({
         closable: false
     });
+
+    // Attacher l'événement au checkbox "Tous Sélectionner"
+    const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            selectAllModels(this);
+        });
+    }
     
     // Set up model name input events
     const modelNameInput = document.getElementById('modelNameInput');

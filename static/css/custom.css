@@ -742,6 +742,92 @@ body {
     padding: 1rem;
 }
 
+/* Styles généraux pour toutes les modales en mode sombre */
+.ui.modal {
+    background-color: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.ui.modal > .header {
+    background-color: var(--modal-header);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ui.modal > .content {
+    background-color: var(--modal-bg);
+    color: var(--text-primary);
+}
+
+.ui.modal > .actions {
+    background-color: var(--modal-footer);
+    border-top: 1px solid var(--border-color);
+    padding: 1rem;
+}
+
+/* Styles spécifiques pour le mode sombre */
+[data-theme="dark"] .ui.modal {
+    background-color: #1f1f1f;
+    border-color: #404040;
+}
+
+[data-theme="dark"] .ui.modal > .header {
+    background-color: #252525;
+    color: #ffffff;
+    border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .ui.modal > .content {
+    background-color: #1f1f1f;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .ui.modal > .actions {
+    background-color: #252525;
+    border-top-color: #404040;
+}
+
+[data-theme="dark"] .ui.modal .ui.button {
+    background-color: #333333;
+    color: #ffffff;
+    border-color: #404040;
+}
+
+[data-theme="dark"] .ui.modal .ui.button:hover {
+    background-color: #404040;
+}
+
+[data-theme="dark"] .ui.modal .ui.primary.button {
+    background-color: #2185d0;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .ui.modal .ui.primary.button:hover {
+    background-color: #1678c2;
+}
+
+/* Styles pour les éléments de liste dans les modales */
+[data-theme="dark"] .ui.modal .ui.list .item {
+    color: #e0e0e0;
+    border-color: #404040;
+}
+
+[data-theme="dark"] .ui.modal .batch-results-item {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+[data-theme="dark"] .ui.modal .batch-results-item.success {
+    border-left: 3px solid #21ba45;
+}
+
+[data-theme="dark"] .ui.modal .batch-results-item.error {
+    border-left: 3px solid #db2828;
+}
 /* Styles pour la modale de comparaison */
 #compareModal.ui.modal {
     background-color: var(--modal-bg);
