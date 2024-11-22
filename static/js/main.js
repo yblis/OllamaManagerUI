@@ -431,6 +431,91 @@ async function refreshAll() {
 // Batch operations
 window.toggleModelSelection = function(checkbox, modelName) {
     // This function can be used to handle individual model selection
+let selectedModels = new Set();
+
+window.selectAllModels = function(checkbox) {
+    const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+        const modelName = cb.getAttribute('data-model-name');
+        if (checkbox.checked) {
+            selectedModels.add(modelName);
+        } else {
+            selectedModels.delete(modelName);
+        }
+    });
+    updateCompareButton();
+};
+
+window.toggleModelSelection = function(checkbox, modelName) {
+    if (checkbox.checked) {
+        selectedModels.add(modelName);
+    } else {
+        selectedModels.delete(modelName);
+        // Décocher la case "Tous Sélectionner" si un modèle est décoché
+        document.querySelector('#selectAllCheckbox').checked = false;
+    }
+    updateCompareButton();
+};
+
+function updateCompareButton() {
+    const compareButton = document.querySelector('#compareButton');
+    if (compareButton) {
+        compareButton.disabled = selectedModels.size < 2;
+    }
+}
+
+window.compareSelectedModels = async function() {
+    if (selectedModels.size < 2) {
+        showMessage('Erreur', 'Veuillez sélectionner au moins 2 modèles à comparer', true);
+        return;
+    }
+
+    try {
+        const modelsArray = Array.from(selectedModels);
+        const comparisons = [];
+        
+        for (let i = 0; i < modelsArray.length; i++) {
+            const modelStats = await fetch(`/api/models/${modelsArray[i]}/stats`, {
+                headers: { 'X-Ollama-URL': ollamaUrl }
+            }).then(res => res.json());
+            
+            comparisons.push({
+                name: modelsArray[i],
+                stats: modelStats
+            });
+        }
+
+        const comparisonContent = document.getElementById('modelComparison');
+        comparisonContent.innerHTML = comparisons.map(model => `
+            <div class="ui segment">
+                <h3 class="ui header">${model.name}</h3>
+                <div class="ui statistics tiny">
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_operations || 0}</div>
+                        <div class="label">Opérations</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_prompt_tokens || 0}</div>
+                        <div class="label">Tokens Prompt</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_completion_tokens || 0}</div>
+                        <div class="label">Tokens Complétion</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
+                        <div class="label">Durée</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        $('#compareModal').modal('show');
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+};
     console.log(`Model ${modelName} ${checkbox.checked ? 'selected' : 'deselected'}`);
 };
 

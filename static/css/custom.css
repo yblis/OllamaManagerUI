@@ -742,6 +742,80 @@ body {
     padding: 1rem;
 }
 
+/* Styles pour la modale de comparaison */
+#compareModal.ui.modal {
+    background-color: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+#compareModal.ui.modal > .header {
+    background-color: var(--modal-header);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+}
+
+#compareModal.ui.modal > .content {
+    background-color: var(--modal-bg);
+    color: var(--text-primary);
+    padding: 1.5rem;
+}
+
+#compareModal.ui.modal .ui.segment {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    margin: 0.5rem 0;
+}
+
+#compareModal.ui.modal .ui.statistics .statistic > .value,
+#compareModal.ui.modal .ui.statistics .statistic > .label {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] #compareModal.ui.modal {
+    background-color: #1f1f1f;
+    border-color: #404040;
+}
+
+[data-theme="dark"] #compareModal.ui.modal > .header {
+    background-color: #252525;
+    color: #ffffff;
+    border-bottom-color: #404040;
+}
+
+[data-theme="dark"] #compareModal.ui.modal > .content {
+    background-color: #1f1f1f;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] #compareModal.ui.modal .ui.segment {
+    background-color: #2d2d2d;
+    border-color: #404040;
+}
+
+[data-theme="dark"] #compareModal.ui.modal .ui.statistics .statistic {
+    background-color: #333333;
+}
+
+/* Amélioration du style des checkboxes en mode sombre */
+[data-theme="dark"] .ui.checkbox input:checked ~ .box:before,
+[data-theme="dark"] .ui.checkbox input:checked ~ label:before {
+    background-color: #2185d0;
+    border-color: #2185d0;
+}
+
+[data-theme="dark"] .ui.checkbox .box:before,
+[data-theme="dark"] .ui.checkbox label:before {
+    background-color: #333333;
+    border-color: #404040;
+}
+
+[data-theme="dark"] .ui.checkbox .box:hover::before,
+[data-theme="dark"] .ui.checkbox label:hover::before {
+    background-color: #404040;
+    border-color: #505050;
+}
 #modelComparison .column {
     min-width: 300px;
 }
