@@ -23,13 +23,20 @@ async function checkServerStatus() {
         const data = await response.json();
         
         const statusElement = document.getElementById('serverStatus');
+        statusElement.classList.remove('fade-out');
+        
         if (data.status === 'running') {
-            statusElement.className = 'ui tiny positive message';
+            statusElement.className = 'ui tiny positive message status-message';
             statusElement.innerHTML = '<i class="check circle icon"></i>Le serveur Ollama est en cours d\'exécution';
         } else {
-            statusElement.className = 'ui tiny negative message';
+            statusElement.className = 'ui tiny negative message status-message';
             statusElement.innerHTML = '<i class="times circle icon"></i>Le serveur Ollama est arrêté';
         }
+        
+        // Start fadeout after 5 seconds
+        setTimeout(() => {
+            statusElement.classList.add('fade-out');
+        }, 5000);
     } catch (error) {
         console.error('Error checking server status:', error);
         const statusElement = document.getElementById('serverStatus');
