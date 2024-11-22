@@ -326,10 +326,25 @@ window.pullModel = async function() {
 // Refresh functions
 window.refreshLocalModels = async function() {
     try {
+        const serverStatusResponse = await fetch('/api/server/status', {
+            headers: { 'X-Ollama-URL': ollamaUrl }
+        });
+        const serverStatus = await serverStatusResponse.json();
+        
+        if (serverStatus.status !== 'running') {
+            const tbody = document.querySelector('#localModels tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Serveur Ollama non connecté</td></tr>';
+            return;
+        }
+
         const response = await fetch('/api/models', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error('Failed to fetch local models');
+        if (!response.ok) {
+            const tbody = document.querySelector('#localModels tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Impossible de récupérer les modèles</td></tr>';
+            return;
+        }
         
         const data = await response.json();
         const tbody = document.querySelector('#localModels tbody');
@@ -370,10 +385,25 @@ window.refreshLocalModels = async function() {
 
 window.refreshRunningModels = async function() {
     try {
+        const serverStatusResponse = await fetch('/api/server/status', {
+            headers: { 'X-Ollama-URL': ollamaUrl }
+        });
+        const serverStatus = await serverStatusResponse.json();
+        
+        if (serverStatus.status !== 'running') {
+            const tbody = document.querySelector('#runningModels tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Serveur Ollama non connecté</td></tr>';
+            return;
+        }
+
         const response = await fetch('/api/models/running', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error('Failed to fetch running models');
+        if (!response.ok) {
+            const tbody = document.querySelector('#runningModels tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Impossible de récupérer les modèles en cours d\'exécution</td></tr>';
+            return;
+        }
         
         const data = await response.json();
         const tbody = document.querySelector('#runningModels tbody');
