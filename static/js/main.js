@@ -23,53 +23,25 @@ async function checkServerStatus() {
         const data = await response.json();
         
         const statusElement = document.getElementById('serverStatus');
-        if (!statusElement) return;
-
         if (data.status === 'running') {
-            statusElement.className = 'flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-800';
-            statusElement.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Le serveur Ollama est en cours d\'exécution';
+            statusElement.className = 'ui tiny positive message';
+            statusElement.innerHTML = '<i class="check circle icon"></i>Le serveur Ollama est en cours d\'exécution';
         } else {
-            statusElement.className = 'flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-red-100 text-red-800';
-            statusElement.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Le serveur Ollama est arrêté';
+            statusElement.className = 'ui tiny negative message';
+            statusElement.innerHTML = '<i class="times circle icon"></i>Le serveur Ollama est arrêté';
         }
     } catch (error) {
         console.error('Error checking server status:', error);
         const statusElement = document.getElementById('serverStatus');
-        if (!statusElement) return;
-        
-        statusElement.className = 'flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-red-100 text-red-800';
-        statusElement.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Erreur de connexion au serveur';
-    }
-}
-
-// Modal management
-function showModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
+        statusElement.className = 'ui tiny negative message';
+        statusElement.innerHTML = '<i class="times circle icon"></i>Erreur de connexion au serveur';
     }
 }
 
 // Settings management
 window.showSettings = function() {
-    const urlInput = document.getElementById('ollamaUrl');
-    if (urlInput) {
-        urlInput.value = ollamaUrl;
-    }
-    showModal('settingsModal');
-};
-
-window.closeConfigModal = function() {
-    closeModal('configModal');
+    document.getElementById('ollamaUrl').value = ollamaUrl;
+    $('#settingsModal').modal('show');
 };
 
 window.saveSettings = function() {
@@ -395,96 +367,31 @@ window.refreshRunningModels = async function() {
         if (!response.ok) throw new Error('Failed to fetch running models');
         
         const data = await response.json();
-        const tbody = document.getElementById('runningModels');
-        if (!tbody) return;
-        
+        const tbody = document.querySelector('#runningModels tbody');
         tbody.innerHTML = data.models.map(model => `
-            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                <td class="py-4 px-6">${model.name}</td>
-                <td class="py-4 px-6">${new Date(model.modified_at).toLocaleString()}</td>
-                <td class="py-4 px-6">${formatBytes(model.size)}</td>
-                <td class="py-4 px-6">${model.details?.format || 'N/A'}</td>
-                <td class="py-4 px-6">${model.details?.family || 'N/A'}</td>
-                <td class="py-4 px-6">${model.details?.parameter_size || 'N/A'}</td>
-                <td class="py-4 px-6 text-center">
-                    <button 
-                        class="btn-danger inline-flex items-center px-3 py-2"
-                        onclick="stopModel('${model.name}')"
-                    >
-                        <i class="fas fa-stop mr-2"></i> Arrêter
+            <tr>
+                <td>${model.name}</td>
+                <td>${new Date(model.modified_at).toLocaleString()}</td>
+                <td>${formatBytes(model.size)}</td>
+                <td>${model.details?.format || 'N/A'}</td>
+                <td>${model.details?.family || 'N/A'}</td>
+                <td>${model.details?.parameter_size || 'N/A'}</td>
+                <td class="center aligned">
+                    <button class="ui red tiny button" onclick="stopModel('${model.name}')">
+                        <i class="stop icon"></i> Arrêter
                     </button>
                 </td>
             </tr>
-        `).join('') || `
-            <tr class="bg-white dark:bg-gray-800">
-                <td colspan="7" class="py-4 px-6 text-center text-gray-500 dark:text-gray-400">
-                    Aucun modèle en cours d'exécution
-                </td>
-            </tr>`;
+        `).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
     } catch (error) {
         console.error('Error refreshing running models:', error);
-        showMessage('Erreur', error.message || 'Erreur lors de l\'actualisation des modèles en cours d\'exécution', true);
+        showMessage('Erreur', error.message, true);
     }
 };
 
 async function refreshStats() {
     try {
         const response = await fetch('/api/models/stats', {
-// Modal comparison functions
-window.closeComparisonModal = function() {
-    document.getElementById('comparisonModal').classList.add('hidden');
-    document.body.style.overflow = 'auto';
-};
-
-window.compareSelectedModels = async function() {
-    const selectedModels = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
-        .map(checkbox => checkbox.getAttribute('data-model-name'))
-        .filter(Boolean);
-
-    if (selectedModels.length < 2) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins 2 modèles à comparer', true);
-        return;
-    }
-
-    try {
-        const comparisons = await Promise.all(selectedModels.map(async (modelName) => {
-            const response = await fetch(`/api/models/${modelName}/stats`, {
-                headers: { 'X-Ollama-URL': ollamaUrl }
-            });
-            const stats = await response.json();
-            return { modelName, stats };
-        }));
-
-        document.getElementById('modelComparison').innerHTML = comparisons.map(({ modelName, stats }) => `
-            <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-sm animate-fade-in">
-                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">${modelName}</h4>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">${stats.total_operations || 0}</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Opérations</div>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">${stats.total_prompt_tokens || 0}</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Tokens Prompt</div>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">${stats.total_completion_tokens || 0}</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Tokens Complétion</div>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                        <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">${(stats.total_duration || 0).toFixed(2)}s</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">Durée Totale</div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-
-        document.getElementById('comparisonModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    } catch (error) {
-        showMessage('Erreur', error.message, true);
-    }
-};
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
         if (!response.ok) throw new Error('Failed to fetch stats');
