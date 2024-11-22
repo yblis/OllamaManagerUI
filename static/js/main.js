@@ -17,34 +17,33 @@ if (window.location.hostname !== 'localhost') {
 
 async function checkServerStatus() {
     try {
-        const statusDot = document.getElementById('statusDot');
-        if (!statusDot) return;
-        
         const response = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        
-        if (!response.ok) {
-            statusDot.className = 'status-indicator offline';
-            return;
-        }
-        
         const data = await response.json();
-        statusDot.className = 'status-indicator ' + (data.status === 'running' ? 'online' : 'offline');
         
-        // Update status check interval
-        setTimeout(checkServerStatus, 5000);
-    } catch (error) {
-        const statusDot = document.getElementById('statusDot');
-        if (statusDot) {
-            statusDot.className = 'status-indicator offline';
+        const statusElement = document.getElementById('serverStatus');
+        statusElement.classList.remove('fade-out');
+        
+        if (data.status === 'running') {
+            statusElement.className = 'ui tiny positive message status-message';
+            statusElement.innerHTML = '<i class="check circle icon"></i>Le serveur Ollama est en cours d\'exécution';
+        } else {
+            statusElement.className = 'ui tiny negative message status-message';
+            statusElement.innerHTML = '<i class="times circle icon"></i>Le serveur Ollama est arrêté';
         }
-        setTimeout(checkServerStatus, 5000);
+        
+        // Start fadeout after 5 seconds
+        setTimeout(() => {
+            statusElement.classList.add('fade-out');
+        }, 5000);
+    } catch (error) {
+        console.error('Error checking server status:', error);
+        const statusElement = document.getElementById('serverStatus');
+        statusElement.className = 'ui tiny negative message';
+        statusElement.innerHTML = '<i class="times circle icon"></i>Erreur de connexion au serveur';
     }
 }
-
-// Start status checking when page loads
-document.addEventListener('DOMContentLoaded', checkServerStatus);
 
 // Settings management
 window.showSettings = function() {
@@ -327,25 +326,10 @@ window.pullModel = async function() {
 // Refresh functions
 window.refreshLocalModels = async function() {
     try {
-        const serverStatusResponse = await fetch('/api/server/status', {
-            headers: { 'X-Ollama-URL': ollamaUrl }
-        });
-        const serverStatus = await serverStatusResponse.json();
-        
-        if (serverStatus.status !== 'running') {
-            const tbody = document.querySelector('#localModels tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Serveur Ollama non connecté</td></tr>';
-            return;
-        }
-
         const response = await fetch('/api/models', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) {
-            const tbody = document.querySelector('#localModels tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Impossible de récupérer les modèles</td></tr>';
-            return;
-        }
+        if (!response.ok) throw new Error('Failed to fetch local models');
         
         const data = await response.json();
         const tbody = document.querySelector('#localModels tbody');
@@ -386,25 +370,10 @@ window.refreshLocalModels = async function() {
 
 window.refreshRunningModels = async function() {
     try {
-        const serverStatusResponse = await fetch('/api/server/status', {
-            headers: { 'X-Ollama-URL': ollamaUrl }
-        });
-        const serverStatus = await serverStatusResponse.json();
-        
-        if (serverStatus.status !== 'running') {
-            const tbody = document.querySelector('#runningModels tbody');
-            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Serveur Ollama non connecté</td></tr>';
-            return;
-        }
-
         const response = await fetch('/api/models/running', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) {
-            const tbody = document.querySelector('#runningModels tbody');
-            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Impossible de récupérer les modèles en cours d\'exécution</td></tr>';
-            return;
-        }
+        if (!response.ok) throw new Error('Failed to fetch running models');
         
         const data = await response.json();
         const tbody = document.querySelector('#runningModels tbody');
