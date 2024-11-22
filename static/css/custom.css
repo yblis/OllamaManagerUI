@@ -405,6 +405,108 @@ body {
 }
 /* Smooth theme transitions */
 [data-theme="dark"] {
+/* Styles spécifiques pour les modales en mode sombre */
+[data-theme="dark"] .ui.modal {
+    background-color: #1a1a1a;
+    border: 1px solid #404040;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .ui.modal > .header {
+    background-color: #252525;
+    color: #ffffff;
+    border-bottom: 1px solid #404040;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .ui.modal > .content {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .ui.modal > .actions {
+    background-color: #252525;
+    border-top: 1px solid #404040;
+    padding: 1rem;
+}
+
+[data-theme="dark"] .ui.modal .ui.form input,
+[data-theme="dark"] .ui.modal .ui.form textarea {
+    background-color: #2d2d2d;
+    color: #ffffff;
+    border: 1px solid #404040;
+}
+
+[data-theme="dark"] .ui.modal .ui.form input:focus,
+[data-theme="dark"] .ui.modal .ui.form textarea:focus {
+    background-color: #333333;
+    border-color: #505050;
+    box-shadow: 0 0 0 1px #505050;
+}
+
+[data-theme="dark"] .ui.modal .ui.form label {
+    color: #cccccc;
+}
+
+[data-theme="dark"] .ui.modal .error-message {
+    color: #ff9999;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .ui.modal .success-message {
+    color: #7fff7f;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .ui.modal .ui.statistics .statistic > .value {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .ui.modal .ui.statistics .statistic > .label {
+    color: #cccccc;
+}
+
+[data-theme="dark"] .ui.modal .ui.list .item {
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .ui.modal .ui.list .item .header {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .ui.modal .ui.list .item .description {
+    color: #cccccc;
+}
+
+/* Amélioration des boutons dans les modales en mode sombre */
+[data-theme="dark"] .ui.modal .ui.button {
+    background-color: #2d2d2d;
+    color: #ffffff;
+    border: 1px solid #404040;
+}
+
+[data-theme="dark"] .ui.modal .ui.button:hover {
+    background-color: #333333;
+    border-color: #505050;
+}
+
+[data-theme="dark"] .ui.modal .ui.positive.button {
+    background-color: #1b5e20;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .ui.modal .ui.positive.button:hover {
+    background-color: #2e7d32;
+}
+
+[data-theme="dark"] .ui.modal .ui.negative.button {
+    background-color: #b71c1c;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .ui.modal .ui.negative.button:hover {
+    background-color: #c62828;
+}
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
