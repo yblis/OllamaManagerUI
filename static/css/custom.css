@@ -71,6 +71,16 @@ body {
     border-bottom: 2px solid var(--border-color);
 }
 
+.ui.title {
+    font-weight: 600;
+    margin-bottom: 0; 
+    margin-top: 1.5rem;
+    padding-bottom: 1;
+    padding-top: 0;
+    border-bottom: none; 
+    line-height: 0;
+}
+
 .ui.segment {
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
