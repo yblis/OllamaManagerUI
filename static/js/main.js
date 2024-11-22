@@ -221,8 +221,10 @@ window.deleteModel = async function(modelName) {
 function setTheme(themeName) {
     localStorage.setItem('theme', themeName);
     document.documentElement.setAttribute('data-theme', themeName);
-    const icon = document.querySelector('.theme-toggle i');
-    icon.className = themeName === 'dark' ? 'moon icon' : 'sun icon';
+    const icon = document.querySelector('#settingsModal .ui.circular.button i');
+    if (icon) {
+        icon.className = themeName === 'dark' ? 'moon icon' : 'sun icon';
+    }
 }
 
 function toggleTheme() {

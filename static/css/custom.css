@@ -324,18 +324,10 @@ body {
     color: var(--text-primary) !important;
 }
 
-/* Theme toggle button enhancements */
-.theme-toggle {
-    position: fixed;
-    top: 1rem;
-    left: 1rem;  /* Changed from right to left */
-    z-index: 1001;
-}
-
-.theme-toggle .button {
+/* Settings theme toggle button enhancements */
+.ui.modal .ui.circular.button {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
     padding: 0;
     display: flex;
     align-items: center;
@@ -346,12 +338,12 @@ body {
     transition: all 0.3s ease;
 }
 
-.theme-toggle .button:hover {
+.ui.modal .ui.circular.button:hover {
     transform: scale(1.1);
     background-color: var(--button-hover);
 }
 
-.theme-toggle .button i {
+.ui.modal .ui.circular.button i {
     font-size: 1.2em;
 }
 
