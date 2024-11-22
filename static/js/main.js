@@ -429,6 +429,25 @@ async function refreshStats() {
     }
 }
 
+// Show settings modal
+window.showSettings = function() {
+    $('#settingsModal').modal('show');
+};
+
+// Toggle theme function
+window.toggleTheme = function() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Update theme button icon
+    const themeIcon = document.querySelector('.theme-toggle i');
+    if (themeIcon) {
+        themeIcon.className = newTheme === 'dark' ? 'moon icon' : 'sun icon';
+    }
+};
+
 // Toggle all model checkboxes
 window.toggleAllModels = function() {
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
@@ -437,6 +456,9 @@ window.toggleAllModels = function() {
     
     checkboxes.forEach(checkbox => {
         checkbox.checked = isChecked;
+        if (checkbox.dataset.modelName) {
+            toggleModelSelection(checkbox, checkbox.dataset.modelName);
+        }
     });
 };
 

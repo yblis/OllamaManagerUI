@@ -737,6 +737,42 @@ body {
 /* Styles généraux pour toutes les modales en mode sombre */
 .ui.modal {
     background-color: var(--modal-bg);
+/* Styles pour le conteneur de titre et le bouton paramètres */
+.title-container {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-content h1 {
+    margin: 0;
+    flex-grow: 1;
+    text-align: center;
+}
+
+.header-content button {
+    margin-left: 1rem;
+}
+
+@media screen and (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .header-content button {
+        margin-left: 0;
+    }
+    
+    .header-content h1 {
+        font-size: 1.5rem;
+    }
+}
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 8px var(--shadow-color);
 }
