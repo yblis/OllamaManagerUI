@@ -429,11 +429,7 @@ window.refreshRunningModels = async function() {
     }
 };
 
-async function refreshStats() {
-    try {
-        const response = await fetch('/api/models/stats', {
-            headers: { 'X-Ollama-URL': ollamaUrl }
-        });
+// Removed stats refresh function as it's no longer needed
         if (!response.ok) throw new Error('Failed to fetch stats');
         
         const stats = await response.json();
