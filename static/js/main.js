@@ -433,15 +433,11 @@ window.toggleModelSelection = function(checkbox, modelName) {
     // This function can be used to handle individual model selection
 let selectedModels = new Set();
 
-// Variable pour stocker les modèles sélectionnés
-const selectedModels = new Set();
-
-window.selectAllModels = function() {
-    const mainCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
+window.selectAllModels = function(checkbox) {
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
-    const isChecked = mainCheckbox.checked;
+    const isChecked = checkbox.checked;
     
-    selectedModels.clear();
+    selectedModels.clear(); // Réinitialiser la sélection
     
     checkboxes.forEach(cb => {
         cb.checked = isChecked;
@@ -451,32 +447,7 @@ window.selectAllModels = function() {
         }
     });
     
-    updateBatchActions();
-};
-
-// Fonction pour mettre à jour l'état des boutons d'actions groupées
-function updateBatchActions() {
-    const batchButtons = document.querySelectorAll('.batch-actions button');
-    const hasSelection = selectedModels.size > 0;
-    
-    batchButtons.forEach(button => {
-        button.disabled = !hasSelection;
-        if (!button.classList.contains('select-all')) {
-            button.classList.toggle('disabled', !hasSelection);
-        }
-    });
-}
-
-// Fonction pour gérer la sélection individuelle des modèles
-window.toggleModelSelection = function(checkbox, modelName) {
-    if (checkbox.checked) {
-        selectedModels.add(modelName);
-    } else {
-        selectedModels.delete(modelName);
-        // Décocher la case "Tout Sélectionner" si un modèle est décoché
-        document.querySelector('#localModels thead input[type="checkbox"]').checked = false;
-    }
-    updateBatchActions();
+    updateCompareButton();
 };
 
 window.toggleModelSelection = function(checkbox, modelName) {
@@ -688,29 +659,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 // Fonction pour ajouter un paramètre dans la modale de configuration
 window.addParameter = function() {
-    const parametersContainer = document.getElementById('parameters');
-    if (!parametersContainer) return;
-
-    const newSegment = document.createElement('div');
-    newSegment.className = 'ui segment parameter-item';
+    const parametersList = document.querySelector('.parameters-list');
+    const newItem = document.createElement('div');
+    newItem.className = 'parameter-item';
     
-    newSegment.innerHTML = `
-        <div class="two fields">
-            <div class="field">
-                <input type="text" placeholder="Clé" class="param-key">
-            </div>
-            <div class="field">
-                <div class="ui action input">
-                    <input type="text" placeholder="Valeur" class="param-value">
-                    <button class="ui icon button red" onclick="this.closest('.parameter-item').remove()">
-                        <i class="trash icon"></i>
-                    </button>
-                </div>
-            </div>
+    const paramCount = document.querySelectorAll('.parameter-item').length + 1;
+    
+    newItem.innerHTML = `
+        <div class="ui fluid input">
+            <input type="text" placeholder="Clé" class="param-key" />
         </div>
+        <div class="ui fluid input">
+            <input type="text" placeholder="Valeur" class="param-value" />
+        </div>
+        <button class="ui icon button red" onclick="this.parentElement.remove()">
+            <i class="trash icon"></i>
+        </button>
     `;
     
-    parametersContainer.appendChild(newSegment);
+    parametersList.appendChild(newItem);
 };
 
 // Server status check interval
