@@ -1,16 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Server Status -->
-<div class="server-status-container">
-    <div id="serverStatus" class="server-status">
-        <span class="status-indicator" id="statusDot"></span>
-        <span class="status-text">Statut du serveur Ollama</span>
-    </div>
-</div>
-
 <div style="display: flex; align-items: center; justify-content: space-between;">
-    <h1 class="ui title">Gestionnaire de Modèles Ollama</h1>
+    <div style="display: flex; align-items: center;">
+        <h1 class="ui title">Gestionnaire de Modèles Ollama</h1>
+        <span class="status-indicator" id="statusDot"></span>
+    </div>
     <button class="ui button" onclick="showSettings()">
         <i class="cog icon"></i>
     </button>

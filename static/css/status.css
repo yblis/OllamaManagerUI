@@ -1,33 +1,20 @@
 .status-indicator {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     display: inline-block;
-    margin-right: 8px;
+    margin-left: 10px;
     transition: all 0.3s ease-in-out;
+    vertical-align: middle;
+    position: relative;
 }
 
 .status-indicator.online {
     background-color: #21ba45;
-    box-shadow: 0 0 8px #21ba45;
+    box-shadow: 0 0 4px #21ba45;
 }
 
 .status-indicator.offline {
     background-color: #db2828;
-    box-shadow: 0 0 8px #db2828;
-}
-
-.server-status {
-    display: flex;
-    align-items: center;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    margin-bottom: 1em;
-    transition: all 0.3s ease-in-out;
-}
-
-.server-status.fade-out {
-    opacity: 0;
-    transform: translateY(-20px);
+    box-shadow: 0 0 4px #db2828;
 }

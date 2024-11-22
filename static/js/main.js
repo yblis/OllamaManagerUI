@@ -17,39 +17,34 @@ if (window.location.hostname !== 'localhost') {
 
 async function checkServerStatus() {
     try {
+        const statusDot = document.getElementById('statusDot');
+        if (!statusDot) return;
+        
         const response = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        const data = await response.json();
         
-        const statusElement = document.getElementById('serverStatus');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = statusElement.querySelector('.status-text');
-        
-        statusElement.classList.remove('fade-out');
-        
-        if (data.status === 'running') {
-            statusDot.className = 'status-indicator online';
-            statusText.textContent = 'Serveur Ollama connecté';
-        } else {
+        if (!response.ok) {
             statusDot.className = 'status-indicator offline';
-            statusText.textContent = 'Serveur Ollama déconnecté';
+            return;
         }
         
-        // Start fadeout after 5 seconds
-        setTimeout(() => {
-            statusElement.classList.add('fade-out');
-        }, 5000);
-    } catch (error) {
-        console.error('Error checking server status:', error);
-        const statusElement = document.getElementById('serverStatus');
-        const statusDot = document.getElementById('statusDot');
-        const statusText = statusElement.querySelector('.status-text');
+        const data = await response.json();
+        statusDot.className = 'status-indicator ' + (data.status === 'running' ? 'online' : 'offline');
         
-        statusDot.className = 'status-indicator offline';
-        statusText.textContent = 'Erreur de connexion au serveur';
+        // Update status check interval
+        setTimeout(checkServerStatus, 5000);
+    } catch (error) {
+        const statusDot = document.getElementById('statusDot');
+        if (statusDot) {
+            statusDot.className = 'status-indicator offline';
+        }
+        setTimeout(checkServerStatus, 5000);
     }
 }
+
+// Start status checking when page loads
+document.addEventListener('DOMContentLoaded', checkServerStatus);
 
 // Settings management
 window.showSettings = function() {
