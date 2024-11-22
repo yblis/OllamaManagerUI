@@ -433,11 +433,15 @@ window.toggleModelSelection = function(checkbox, modelName) {
     // This function can be used to handle individual model selection
 let selectedModels = new Set();
 
-window.selectAllModels = function(checkbox) {
+// Variable pour stocker les modèles sélectionnés
+const selectedModels = new Set();
+
+window.selectAllModels = function() {
+    const mainCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
-    const isChecked = checkbox.checked;
+    const isChecked = mainCheckbox.checked;
     
-    selectedModels.clear(); // Réinitialiser la sélection
+    selectedModels.clear();
     
     checkboxes.forEach(cb => {
         cb.checked = isChecked;
@@ -447,7 +451,32 @@ window.selectAllModels = function(checkbox) {
         }
     });
     
-    updateCompareButton();
+    updateBatchActions();
+};
+
+// Fonction pour mettre à jour l'état des boutons d'actions groupées
+function updateBatchActions() {
+    const batchButtons = document.querySelectorAll('.batch-actions button');
+    const hasSelection = selectedModels.size > 0;
+    
+    batchButtons.forEach(button => {
+        button.disabled = !hasSelection;
+        if (!button.classList.contains('select-all')) {
+            button.classList.toggle('disabled', !hasSelection);
+        }
+    });
+}
+
+// Fonction pour gérer la sélection individuelle des modèles
+window.toggleModelSelection = function(checkbox, modelName) {
+    if (checkbox.checked) {
+        selectedModels.add(modelName);
+    } else {
+        selectedModels.delete(modelName);
+        // Décocher la case "Tout Sélectionner" si un modèle est décoché
+        document.querySelector('#localModels thead input[type="checkbox"]').checked = false;
+    }
+    updateBatchActions();
 };
 
 window.toggleModelSelection = function(checkbox, modelName) {
@@ -659,25 +688,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 // Fonction pour ajouter un paramètre dans la modale de configuration
 window.addParameter = function() {
-    const parametersList = document.querySelector('.parameters-list');
-    const newItem = document.createElement('div');
-    newItem.className = 'parameter-item';
+    const parametersContainer = document.getElementById('parameters');
+    if (!parametersContainer) return;
+
+    const newSegment = document.createElement('div');
+    newSegment.className = 'ui segment parameter-item';
     
-    const paramCount = document.querySelectorAll('.parameter-item').length + 1;
-    
-    newItem.innerHTML = `
-        <div class="ui fluid input">
-            <input type="text" placeholder="Clé" class="param-key" />
+    newSegment.innerHTML = `
+        <div class="two fields">
+            <div class="field">
+                <input type="text" placeholder="Clé" class="param-key">
+            </div>
+            <div class="field">
+                <div class="ui action input">
+                    <input type="text" placeholder="Valeur" class="param-value">
+                    <button class="ui icon button red" onclick="this.closest('.parameter-item').remove()">
+                        <i class="trash icon"></i>
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="ui fluid input">
-            <input type="text" placeholder="Valeur" class="param-value" />
-        </div>
-        <button class="ui icon button red" onclick="this.parentElement.remove()">
-            <i class="trash icon"></i>
-        </button>
     `;
     
-    parametersList.appendChild(newItem);
+    parametersContainer.appendChild(newSegment);
 };
 
 // Server status check interval
