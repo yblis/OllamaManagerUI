@@ -29,6 +29,73 @@ body {
     color: var(--text-primary);
     transition: all 0.3s ease;
 }
+/* Enhanced animations and transitions */
+.ui.segment, .ui.button, .ui.message, .ui.modal, .ui.statistics .statistic {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ui.segment:hover, .ui.statistics .statistic:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.ui.button:active {
+    transform: scale(0.98);
+}
+
+/* Enhanced visual hierarchy */
+.ui.header {
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.ui.segment {
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.ui.table {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.ui.statistics .statistic {
+    transition: transform 0.3s ease;
+    border-radius: 12px;
+}
+
+.ui.message {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Improved form elements */
+.ui.input input, .ui.button {
+    border-radius: 8px;
+}
+
+.ui.input input:focus {
+    border-color: var(--button-hover);
+    box-shadow: 0 0 0 2px rgba(var(--button-hover-rgb), 0.1);
+}
+
+/* Loading animations */
+.ui.indicating.progress .bar {
+    background: linear-gradient(45deg, var(--button-bg) 25%, var(--button-hover) 75%);
+    background-size: 200% 200%;
+    animation: progress-pulse 2s ease infinite;
+}
+
+@keyframes progress-pulse {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
 
 .ui.segment {
     background-color: var(--card-bg);
@@ -124,15 +191,16 @@ body {
 /* Responsive improvements */
 @media screen and (max-width: 768px) {
     .theme-toggle {
-        top: 1rem;  /* Keep at top even on mobile */
+        top: 1rem;
         left: 1rem;
         bottom: auto;
+        z-index: 1002;
     }
     
     .ui.container {
-        margin: 1rem !important;
+        margin: 0.5rem !important;
         width: 100% !important;
-        padding: 0 1rem;
+        padding: 0 0.5rem;
         overflow-x: hidden;
     }
     
@@ -140,6 +208,18 @@ body {
         display: block;
         overflow-x: auto;
         white-space: nowrap;
+        font-size: 0.9em;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .ui.table td {
+        padding: 0.5em !important;
+    }
+
+    .ui.table th {
+        padding: 0.7em 0.5em !important;
+        font-weight: 600;
     }
     
     .ui.tiny.buttons {
@@ -151,18 +231,53 @@ body {
     
     .ui.statistics {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 0.75rem;
         width: 100%;
+        padding: 0.5rem;
+    }
+    
+    .ui.statistics .statistic {
+        padding: 0.75rem !important;
+        margin: 0 !important;
+    }
+    
+    .ui.statistics .statistic .value {
+        font-size: 1.5rem !important;
+    }
+    
+    .ui.statistics .statistic .label {
+        font-size: 0.85rem !important;
     }
     
     .ui.modal {
         width: 95% !important;
         margin: 0 auto !important;
+        max-height: 90vh;
+        overflow-y: auto;
     }
     
     input, button, .ui.button {
         min-height: 44px;
+        border-radius: 8px !important;
+    }
+
+    .server-status-container {
+        top: 0.5rem;
+        right: 0.5rem;
+        gap: 0.5rem;
+    }
+
+    .batch-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .batch-actions .ui.button {
+        margin: 0 !important;
+        padding: 0.5em !important;
+        font-size: 0.9em;
     }
 }
 
