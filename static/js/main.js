@@ -435,15 +435,18 @@ let selectedModels = new Set();
 
 window.selectAllModels = function(checkbox) {
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
+    const isChecked = checkbox.checked;
+    
+    selectedModels.clear(); // Réinitialiser la sélection
+    
     checkboxes.forEach(cb => {
-        cb.checked = checkbox.checked;
+        cb.checked = isChecked;
         const modelName = cb.getAttribute('data-model-name');
-        if (checkbox.checked) {
+        if (isChecked) {
             selectedModels.add(modelName);
-        } else {
-            selectedModels.delete(modelName);
         }
     });
+    
     updateCompareButton();
 };
 
@@ -654,6 +657,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+// Fonction pour ajouter un paramètre dans la modale de configuration
+window.addParameter = function() {
+    const parametersList = document.querySelector('.parameters-list');
+    const newItem = document.createElement('div');
+    newItem.className = 'parameter-item';
+    
+    const paramCount = document.querySelectorAll('.parameter-item').length + 1;
+    
+    newItem.innerHTML = `
+        <div class="ui fluid input">
+            <input type="text" placeholder="Clé" class="param-key" />
+        </div>
+        <div class="ui fluid input">
+            <input type="text" placeholder="Valeur" class="param-value" />
+        </div>
+        <button class="ui icon button red" onclick="this.parentElement.remove()">
+            <i class="trash icon"></i>
+        </button>
+    `;
+    
+    parametersList.appendChild(newItem);
+};
 
 // Server status check interval
 setInterval(checkServerStatus, 30000);
