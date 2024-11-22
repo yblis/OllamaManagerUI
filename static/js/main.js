@@ -429,6 +429,102 @@ async function refreshStats() {
     }
 }
 
+// Toggle all model checkboxes
+window.toggleAllModels = function() {
+    const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
+    const masterCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
+    const isChecked = masterCheckbox.checked;
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = isChecked;
+    });
+};
+
+// Compare selected models
+window.compareSelectedModels = function() {
+    const selectedCheckboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]:checked');
+    const selectedModels = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.modelName);
+    
+    if (selectedModels.length < 2) {
+        showMessage('Erreur', 'Veuillez sélectionner au moins deux modèles à comparer', true);
+        return;
+    }
+    
+    // Populate comparison modal
+    const comparisonContainer = document.getElementById('modelComparison');
+    comparisonContainer.innerHTML = selectedModels.map(model => `
+        <div class="eight wide column">
+            <div class="ui segment">
+                <h3 class="ui header">${model}</h3>
+                <div class="ui list model-details" id="details-${model}">
+                    <div class="item">Chargement des détails...</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Show the modal
+    $('#comparisonModal').modal('show');
+    
+    // Fetch and display details for each model
+    selectedModels.forEach(async (model) => {
+        try {
+            const response = await fetch(`/api/models/${model}/details`, {
+                headers: { 'X-Ollama-URL': ollamaUrl }
+            });
+            const details = await response.json();
+            
+            document.getElementById(`details-${model}`).innerHTML = `
+                <div class="item">
+                    <div class="header">Format</div>
+                    <div class="description">${details.format || 'N/A'}</div>
+                </div>
+                <div class="item">
+                    <div class="header">Famille</div>
+                    <div class="description">${details.family || 'N/A'}</div>
+                </div>
+                <div class="item">
+                    <div class="header">Taille des paramètres</div>
+                    <div class="description">${details.parameter_size || 'N/A'}</div>
+                </div>
+            `;
+        } catch (error) {
+            document.getElementById(`details-${model}`).innerHTML = `
+                <div class="item error-message">
+                    Erreur lors du chargement des détails : ${error.message}
+                </div>
+            `;
+        }
+    });
+};
+
+// Format bytes to human readable size
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// Refresh all data
+function refreshAll() {
+    refreshLocalModels();
+    refreshRunningModels();
+    refreshStats();
+    checkServerStatus();
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    refreshAll();
+    // Check status and refresh data every 30 seconds
+    setInterval(refreshAll, 30000);
+});
 async function refreshAll() {
     await Promise.all([
         refreshLocalModels(),
