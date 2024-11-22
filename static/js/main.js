@@ -15,61 +15,33 @@ if (window.location.hostname !== 'localhost') {
         .catch(console.error);
 }
 
-// Central status management
-const StatusManager = {
-    element: null,
-    timeout: null,
-    lastStatus: null,
-    initialConnectionMade: false,
-    messageTypes: {
-        running: { class: 'positive', icon: 'check circle', text: 'Le serveur Ollama est en cours d\'exécution' },
-        stopped: { class: 'negative', icon: 'times circle', text: 'Le serveur Ollama est arrêté' },
-        error: { class: 'negative', icon: 'times circle', text: 'Erreur de connexion au serveur' }
-    },
-
-    init() {
-        this.element = document.getElementById('serverStatus');
-        this.lastStatus = null;
-        this.initialConnectionMade = false;
-    },
-
-    showStatus(type, customText = null, forceShow = false) {
-        if (!this.element) this.init();
-        
-        const config = this.messageTypes[type];
-        if (!config) return;
-
-        // Only show status if it's different from last status or forced
-        if (type !== this.lastStatus || forceShow) {
-            clearTimeout(this.timeout);
-            this.element.classList.remove('fade-out');
-            this.element.className = `ui tiny ${config.class} message status-message`;
-            this.element.innerHTML = `<i class="${config.icon} icon"></i>${customText || config.text}`;
-
-            // Only set fade-out for initial successful connection
-            if (type === 'running' && !this.initialConnectionMade) {
-                this.timeout = setTimeout(() => {
-                    this.element.classList.add('fade-out');
-                }, 5000);
-                this.initialConnectionMade = true;
-            }
-
-            this.lastStatus = type;
-        }
-    }
-};
-
 async function checkServerStatus() {
     try {
         const response = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
         const data = await response.json();
-        // Pass forceShow as true for the first connection
-        StatusManager.showStatus(data.status, null, !StatusManager.initialConnectionMade);
+        
+        const statusElement = document.getElementById('serverStatus');
+        statusElement.classList.remove('fade-out');
+        
+        if (data.status === 'running') {
+            statusElement.className = 'ui tiny positive message status-message';
+            statusElement.innerHTML = '<i class="check circle icon"></i>Le serveur Ollama est en cours d\'exécution';
+        } else {
+            statusElement.className = 'ui tiny negative message status-message';
+            statusElement.innerHTML = '<i class="times circle icon"></i>Le serveur Ollama est arrêté';
+        }
+        
+        // Start fadeout after 5 seconds
+        setTimeout(() => {
+            statusElement.classList.add('fade-out');
+        }, 5000);
     } catch (error) {
         console.error('Error checking server status:', error);
-        StatusManager.showStatus('error', null, !StatusManager.initialConnectionMade);
+        const statusElement = document.getElementById('serverStatus');
+        statusElement.className = 'ui tiny negative message';
+        statusElement.innerHTML = '<i class="times circle icon"></i>Erreur de connexion au serveur';
     }
 }
 
@@ -119,7 +91,7 @@ window.stopModel = async function(modelName) {
             throw new Error(data.error || 'Échec de l\'arrêt du modèle');
         }
         
-        StatusManager.showStatus('running', `Modèle ${modelName} arrêté avec succès`);
+        showMessage('Succès', `Modèle ${modelName} arrêté avec succès`);
         await refreshRunningModels();  // Refresh only running models table
     } catch (error) {
         showMessage('Erreur', error.message, true);
