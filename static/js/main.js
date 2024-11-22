@@ -31,13 +31,14 @@ async function checkServerStatus() {
         
         const data = await response.json();
         statusDot.className = 'status-indicator ' + (data.status === 'running' ? 'online' : 'offline');
+        
+        // Update status check interval
+        setTimeout(checkServerStatus, 5000);
     } catch (error) {
         const statusDot = document.getElementById('statusDot');
         if (statusDot) {
             statusDot.className = 'status-indicator offline';
         }
-    } finally {
-        // Update status check interval
         setTimeout(checkServerStatus, 5000);
     }
 }
@@ -428,73 +429,12 @@ window.refreshRunningModels = async function() {
     }
 };
 
-// Pull Model function
-async function pullModel() {
-    const modelNameInput = document.getElementById('modelNameInput');
-    const modelName = modelNameInput.value.trim();
-    if (!modelName) {
-        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
-        return;
-    }
-
-    const progress = document.getElementById('pullProgress');
-    progress.style.display = 'block';
-    
+async function refreshStats() {
     try {
-        const response = await fetch('/api/models/pull', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Ollama-URL': ollamaUrl
-            },
-            body: JSON.stringify({ name: modelName })
+        const response = await fetch('/api/models/stats', {
+            headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Échec du téléchargement du modèle');
-        }
-        
-        const data = await response.json();
-        showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
-        modelNameInput.value = '';
-        await refreshAll();
-    } catch (error) {
-        showMessage('Erreur', error.message, true);
-    } finally {
-        progress.style.display = 'none';
-    }
-}
-
-// Settings management
-function showSettings() {
-    const ollamaUrlInput = document.getElementById('ollamaUrl');
-    if (ollamaUrlInput) {
-        ollamaUrlInput.value = ollamaUrl;
-    }
-    $('#settingsModal').modal('show');
-}
-
-// Save settings
-async function saveSettings() {
-    const newUrl = document.getElementById('ollamaUrl').value.trim();
-    if (newUrl) {
-        ollamaUrl = newUrl;
-        localStorage.setItem('ollamaUrl', ollamaUrl);
-        $('#settingsModal').modal('hide');
-        await checkServerStatus();
-        await refreshAll();
-        showMessage('Succès', 'Configuration sauvegardée avec succès');
-    }
-}
-
-// Refresh all data
-async function refreshAll() {
-    await Promise.all([
-        refreshLocalModels(),
-        refreshRunningModels()
-    ]);
-}
+        if (!response.ok) throw new Error('Failed to fetch stats');
         
         const stats = await response.json();
         document.getElementById('overallStats').innerHTML = `

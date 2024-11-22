@@ -357,7 +357,54 @@ body {
     font-size: 1.2em;
 }
 
+/* Styles pour centrer les statistiques globales */
+#overallStats.ui.statistics {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    margin: 1rem auto;
+    max-width: 1200px;
+}
 
+#overallStats.ui.statistics .statistic {
+    margin: 0 !important;
+    padding: 1rem;
+    text-align: center;
+    flex: 1;
+    min-width: 150px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* Ajustements pour le mode sombre */
+[data-theme="dark"] #overallStats.ui.statistics .statistic {
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+}
+
+/* Responsivité mobile */
+@media screen and (max-width: 768px) {
+    #overallStats.ui.statistics {
+        padding: 1rem 0.5rem;
+        gap: 1rem;
+    }
+    
+    #overallStats.ui.statistics .statistic {
+        padding: 0.75rem;
+        min-width: 130px;
+    }
+    
+    #overallStats.ui.statistics .statistic > .value {
+        font-size: 1.75rem !important;
+    }
+    
+    #overallStats.ui.statistics .statistic > .label {
+        font-size: 0.9rem !important;
+    }
+}
 /* Smooth theme transitions */
 [data-theme="dark"] {
 /* Styles spécifiques pour les modales en mode sombre */
