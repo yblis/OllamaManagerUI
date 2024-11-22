@@ -9,6 +9,16 @@
     --button-hover: #cacbcd;
     --button-text: #000000;
     --nav-bg: #f8f9fa;
+    --modal-bg: #ffffff;
+    --modal-header: #f8f9fa;
+    --input-bg: #ffffff;
+    --input-text: #000000;
+    --input-border: #ddd;
+    --message-success-bg: #21ba45;
+    --message-error-bg: #db2828;
+    --message-text: #ffffff;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --hover-bg: #f5f5f5;
 }
 
 [data-theme="dark"] {
@@ -21,6 +31,16 @@
     --button-hover: #4d4d4d;
     --button-text: #ffffff;
     --nav-bg: #2d2d2d;
+    --modal-bg: #2d2d2d;
+    --modal-header: #1a1a1a;
+    --input-bg: #3d3d3d;
+    --input-text: #ffffff;
+    --input-border: #555;
+    --message-success-bg: #1b8b35;
+    --message-error-bg: #b32121;
+    --message-text: #ffffff;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --hover-bg: #363636;
 }
 
 /* Apply theme colors */
@@ -77,6 +97,76 @@ body {
 /* Improved form elements */
 .ui.input input, .ui.button {
     border-radius: 8px;
+}
+/* Dark mode enhancements */
+.ui.modal {
+    background-color: var(--modal-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.ui.modal > .header {
+    background-color: var(--modal-header);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ui.input input {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-color: var(--input-border);
+}
+
+.ui.input input:focus {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-color: var(--button-hover);
+}
+
+.ui.message {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.ui.positive.message {
+    background-color: var(--message-success-bg);
+    color: var(--message-text);
+}
+
+.ui.negative.message {
+    background-color: var(--message-error-bg);
+    color: var(--message-text);
+}
+
+.ui.table tr:hover {
+    background-color: var(--hover-bg);
+}
+
+.ui.search-results {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.ui.search-results .item:hover {
+    background-color: var(--hover-bg);
+}
+
+.ui.statistics .statistic {
+    background-color: var(--card-bg);
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+/* Improve checkbox contrast in dark mode */
+[data-theme="dark"] .ui.checkbox input:checked ~ label:before {
+    background-color: var(--button-hover);
+    border-color: var(--button-hover);
+}
+
+[data-theme="dark"] .ui.checkbox label:before {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
 }
 
 .ui.input input:focus {
