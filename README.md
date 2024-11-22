@@ -9,7 +9,7 @@ Une interface web pour gérer vos modèles Ollama, construite avec Flask et Sema
 - Gestion des modèles (téléchargement, suppression, configuration)
 - Mode sombre/clair
 - Interface responsive
-- Statistiques d'utilisation des modèles
+- Statistiques individuelles des modèles
 - Configuration des modèles
 - Opérations par lots
 - Comparaison de modèles
