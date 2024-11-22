@@ -19,6 +19,8 @@ if (window.location.hostname !== 'localhost') {
 const StatusManager = {
     element: null,
     timeout: null,
+    lastStatus: null,
+    initialConnectionMade: false,
     messageTypes: {
         running: { class: 'positive', icon: 'check circle', text: 'Le serveur Ollama est en cours d\'exécution' },
         stopped: { class: 'negative', icon: 'times circle', text: 'Le serveur Ollama est arrêté' },
@@ -27,22 +29,33 @@ const StatusManager = {
 
     init() {
         this.element = document.getElementById('serverStatus');
+        this.lastStatus = null;
+        this.initialConnectionMade = false;
     },
 
-    showStatus(type, customText = null) {
+    showStatus(type, customText = null, forceShow = false) {
         if (!this.element) this.init();
         
         const config = this.messageTypes[type];
         if (!config) return;
 
-        clearTimeout(this.timeout);
-        this.element.classList.remove('fade-out');
-        this.element.className = `ui tiny ${config.class} message status-message`;
-        this.element.innerHTML = `<i class="${config.icon} icon"></i>${customText || config.text}`;
+        // Only show status if it's different from last status or forced
+        if (type !== this.lastStatus || forceShow) {
+            clearTimeout(this.timeout);
+            this.element.classList.remove('fade-out');
+            this.element.className = `ui tiny ${config.class} message status-message`;
+            this.element.innerHTML = `<i class="${config.icon} icon"></i>${customText || config.text}`;
 
-        this.timeout = setTimeout(() => {
-            this.element.classList.add('fade-out');
-        }, 5000);
+            // Only set fade-out for initial successful connection
+            if (type === 'running' && !this.initialConnectionMade) {
+                this.timeout = setTimeout(() => {
+                    this.element.classList.add('fade-out');
+                }, 5000);
+                this.initialConnectionMade = true;
+            }
+
+            this.lastStatus = type;
+        }
     }
 };
 
@@ -52,10 +65,11 @@ async function checkServerStatus() {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
         const data = await response.json();
-        StatusManager.showStatus(data.status);
+        // Pass forceShow as true for the first connection
+        StatusManager.showStatus(data.status, null, !StatusManager.initialConnectionMade);
     } catch (error) {
         console.error('Error checking server status:', error);
-        StatusManager.showStatus('error');
+        StatusManager.showStatus('error', null, !StatusManager.initialConnectionMade);
     }
 }
 
