@@ -1,13 +1,13 @@
-<!-- Model Config Modal -->
+<!-- Modal de Configuration du Modèle -->
 <div class="ui modal" id="configModal">
-    <div class="header">Model Configuration</div>
+    <div class="header">Configuration du Modèle</div>
     <div class="content">
         <div id="selectedModels" class="ui list">
-            <!-- Selected models will be listed here -->
+            <!-- Les modèles sélectionnés seront listés ici -->
         </div>
         <form class="ui form">
             <div class="field">
-                <label>System Prompt</label>
+                <label>Prompt Système</label>
                 <textarea id="systemPrompt" rows="3"></textarea>
             </div>
             <div class="field">
@@ -15,18 +15,18 @@
                 <textarea id="template" rows="3"></textarea>
             </div>
             <div class="field">
-                <label>Parameters</label>
-                <div id="parameters" class="ui segments">
-                    <!-- Parameters will be populated here -->
+                <label>Paramètres</label>
+                <div class="parameters-list">
+                    <!-- Les paramètres seront ajoutés ici -->
                 </div>
                 <button type="button" class="ui small primary button" onclick="addParameter()">
-                    <i class="plus icon"></i> Add Parameter
+                    <i class="plus icon"></i> Ajouter un Paramètre
                 </button>
             </div>
         </form>
     </div>
     <div class="actions">
-        <div class="ui negative button">Cancel</div>
-        <div class="ui positive button" onclick="saveModelConfig()">Save</div>
+        <div class="ui cancel button">Annuler</div>
+        <div class="ui positive button" onclick="saveModelConfig()">Enregistrer</div>
     </div>
 </div>

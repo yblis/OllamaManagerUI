@@ -816,6 +816,75 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 // Fonction pour ajouter un paramètre dans la modale de configuration
+// Fonction pour sauvegarder la configuration du modèle
+window.saveModelConfig = async function() {
+    const selectedModels = document.querySelectorAll('#selectedModels .item');
+    const systemPrompt = document.getElementById('systemPrompt').value;
+    const template = document.getElementById('template').value;
+    const parameterItems = document.querySelectorAll('.parameter-item');
+    
+    const parameters = {};
+    parameterItems.forEach(item => {
+        const key = item.querySelector('.param-key').value;
+        const value = item.querySelector('.param-value').value;
+        if (key && value) {
+            parameters[key] = value;
+        }
+    });
+
+    const results = [];
+    for (const modelDiv of selectedModels) {
+        const modelName = modelDiv.textContent.trim();
+        try {
+            const response = await fetch('/api/models/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Ollama-URL': ollamaUrl
+                },
+                body: JSON.stringify({
+                    name: modelName,
+                    system: systemPrompt,
+                    template: template,
+                    parameters: parameters
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Échec de la mise à jour de la configuration');
+            }
+
+            results.push({
+                model: modelName,
+                success: true,
+                message: 'Configuration mise à jour avec succès'
+            });
+        } catch (error) {
+            results.push({
+                model: modelName,
+                success: false,
+                message: error.message
+            });
+        }
+    }
+
+    // Afficher les résultats dans la modale de résultats par lots
+    document.getElementById('batchResults').innerHTML = results.map(result => `
+        <div class="item batch-results-item ${result.success ? 'success' : 'error'}">
+            <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
+            <div class="content">
+                <div class="header">${result.model}</div>
+                <div class="description">${result.message}</div>
+            </div>
+        </div>
+    `).join('');
+
+    $('#configModal').modal('hide');
+    $('#batchResultsModal').modal('show');
+    refreshAll();
+};
+
 window.addParameter = function() {
     const parametersList = document.querySelector('.parameters-list');
     const newItem = document.createElement('div');
