@@ -431,13 +431,19 @@ window.refreshRunningModels = async function() {
 
 async function refreshStats() {
     try {
+        const statsElement = document.getElementById('overallStats');
+        if (!statsElement) {
+            console.debug('Stats element not found, skipping refresh');
+            return;
+        }
+
         const response = await fetch('/api/models/stats', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
         if (!response.ok) throw new Error('Failed to fetch stats');
         
         const stats = await response.json();
-        document.getElementById('overallStats').innerHTML = `
+        statsElement.innerHTML = `
             <div class="statistic">
                 <div class="value">${stats.total_operations || 0}</div>
                 <div class="label">Opérations Totales</div>
