@@ -869,9 +869,14 @@ window.saveModelConfig = async function() {
         }
     }
 
-    // Afficher les résultats dans la modale de résultats par lots
-    document.getElementById('batchResults').innerHTML = results.map(result => `
-        <div class="item batch-results-item ${result.success ? 'success' : 'error'}">
+    // Afficher un message de résultat
+    const allSuccess = results.every(r => r.success);
+    
+    // Créer un message de notification
+    const message = document.createElement('div');
+    message.className = `ui message ${allSuccess ? 'positive' : 'negative'}`;
+    message.innerHTML = results.map(result => `
+        <div class="item">
             <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
             <div class="content">
                 <div class="header">${result.model}</div>
@@ -879,29 +884,43 @@ window.saveModelConfig = async function() {
             </div>
         </div>
     `).join('');
-
+    
+    // Ajouter le message à la page
+    const container = document.querySelector('.ui.container');
+    container.insertBefore(message, container.firstChild);
+    
+    // Fermer la modale et rafraîchir les données
     $('#configModal').modal('hide');
-    $('#batchResultsModal').modal('show');
+    
+    // Supprimer le message après 5 secondes
+    setTimeout(() => message.remove(), 5000);
+    
+    // Rafraîchir la liste des modèles
     refreshAll();
 };
 
 window.addParameter = function() {
     const parametersList = document.querySelector('.parameters-list');
     const newItem = document.createElement('div');
-    newItem.className = 'parameter-item';
-    
-    const paramCount = document.querySelectorAll('.parameter-item').length + 1;
+    newItem.className = 'ui segment parameter-item';
     
     newItem.innerHTML = `
-        <div class="ui fluid input">
-            <input type="text" placeholder="Clé" class="param-key" />
+        <div class="ui two fields">
+            <div class="field">
+                <div class="ui fluid input">
+                    <input type="text" placeholder="Clé" class="param-key" />
+                </div>
+            </div>
+            <div class="field">
+                <div class="ui fluid input">
+                    <input type="text" placeholder="Valeur" class="param-value" />
+                </div>
+            </div>
         </div>
-        <div class="ui fluid input">
-            <input type="text" placeholder="Valeur" class="param-value" />
-        </div>
-        <button class="ui icon button red" onclick="this.parentElement.remove()">
+        <button class="ui right floated icon button red tiny" onclick="this.closest('.parameter-item').remove()">
             <i class="trash icon"></i>
         </button>
+        <div class="clearfix"></div>
     `;
     
     parametersList.appendChild(newItem);
