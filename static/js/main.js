@@ -784,8 +784,23 @@ function formatBytes(bytes, decimals = 2) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialiser le thème
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
+    
+    // Initialiser les gestionnaires d'événements pour la configuration
+    const configModal = document.getElementById('configModal');
+    if (configModal) {
+        const saveButton = configModal.querySelector('.ui.positive.button');
+        if (saveButton) {
+            saveButton.onclick = saveModelConfig;
+        }
+        
+        const addParamButton = configModal.querySelector('button[onclick="addParameter()"]');
+        if (addParamButton) {
+            addParamButton.onclick = addParameter;
+        }
+    }
     
     checkServerStatus();
     refreshAll();
@@ -816,7 +831,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 function showMessage(message, type = 'info') {
-    const messagesContainer = document.getElementById('configMessages');
+    let messagesContainer = document.getElementById('configMessages');
+    
+    // Si le conteneur n'existe pas, le créer dans la modale
+    if (!messagesContainer) {
+        messagesContainer = document.createElement('div');
+        messagesContainer.id = 'configMessages';
+        messagesContainer.className = 'ui messages';
+        
+        const modal = document.getElementById('configModal');
+        if (modal) {
+            const content = modal.querySelector('.content');
+            if (content) {
+                content.appendChild(messagesContainer);
+            }
+        }
+    }
+    
+    // Vérifier à nouveau si nous avons un conteneur valide
     if (messagesContainer) {
         messagesContainer.innerHTML = `
             <div class="ui ${type} message">
@@ -826,6 +858,15 @@ function showMessage(message, type = 'info') {
                 </div>
             </div>
         `;
+        
+        // Nettoyer le message après 5 secondes si ce n'est pas une erreur
+        if (type !== 'error') {
+            setTimeout(() => {
+                if (messagesContainer && messagesContainer.parentNode) {
+                    messagesContainer.innerHTML = '';
+                }
+            }, 5000);
+        }
     }
 }
 
