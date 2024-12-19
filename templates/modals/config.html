@@ -2,6 +2,9 @@
 <div class="ui modal" id="configModal">
     <div class="header">Configuration du Modèle</div>
     <div class="content">
+        <div id="configMessages" class="ui messages">
+            <!-- Les messages de statut seront affichés ici -->
+        </div>
         <div id="selectedModels" class="ui list">
             <!-- Les modèles sélectionnés seront listés ici -->
         </div>
@@ -16,20 +19,17 @@
             </div>
             <div class="field">
                 <label>Paramètres</label>
-                <div class="ui segments parameters-list">
+                <div id="parameters" class="ui segments parameters-list">
                     <!-- Les paramètres seront ajoutés ici -->
                 </div>
+                <button type="button" class="ui small primary button" id="addParameterBtn">
+                    <i class="plus icon"></i> Ajouter un Paramètre
+                </button>
             </div>
-            <button type="button" class="ui small primary button" onclick="addParameter()">
-                <i class="plus icon"></i> Ajouter un Paramètre
-            </button>
         </form>
-        <div id="configMessages" class="ui messages">
-            <!-- Les messages de statut seront affichés ici -->
-        </div>
     </div>
     <div class="actions">
         <button class="ui cancel button">Annuler</button>
-        <button class="ui positive button" onclick="saveModelConfig()">Enregistrer</button>
+        <button class="ui positive button" id="saveConfigBtn">Enregistrer</button>
     </div>
 </div>

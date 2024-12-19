@@ -830,49 +830,172 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-function showMessage(message, type = 'info') {
-    let messagesContainer = document.getElementById('configMessages');
-    
-    // Si le conteneur n'existe pas, le créer dans la modale
-    if (!messagesContainer) {
-        messagesContainer = document.createElement('div');
-        messagesContainer.id = 'configMessages';
-        messagesContainer.className = 'ui messages';
+// Gestionnaire de configuration des modèles
+class ModelConfigManager {
+    constructor() {
+        this.modal = document.getElementById('configModal');
+        this.messagesContainer = document.getElementById('configMessages');
+        this.form = document.getElementById('modelConfigForm');
+        this.parametersContainer = document.getElementById('parameters');
         
-        const modal = document.getElementById('configModal');
-        if (modal) {
-            const content = modal.querySelector('.content');
-            if (content) {
-                content.appendChild(messagesContainer);
+        // Lier les gestionnaires d'événements
+        this.bindEvents();
+    }
+    
+    bindEvents() {
+        const saveBtn = document.getElementById('saveConfigBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveConfig());
+        }
+        
+        const addParamBtn = document.getElementById('addParameterBtn');
+        if (addParamBtn) {
+            addParamBtn.addEventListener('click', () => this.addParameter());
+        }
+    }
+    
+    showMessage(message, type = 'info') {
+        if (this.messagesContainer) {
+            this.messagesContainer.innerHTML = `
+                <div class="ui ${type} message">
+                    <i class="${type === 'error' ? 'times' : 'info'} circle icon"></i>
+                    <div class="content">
+                        <p>${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            if (type !== 'error') {
+                setTimeout(() => {
+                    if (this.messagesContainer) {
+                        this.messagesContainer.innerHTML = '';
+                    }
+                }, 5000);
             }
         }
     }
     
-    // Vérifier à nouveau si nous avons un conteneur valide
-    if (messagesContainer) {
-        messagesContainer.innerHTML = `
-            <div class="ui ${type} message">
-                <i class="${type === 'error' ? 'times' : 'info'} circle icon"></i>
-                <div class="content">
-                    <p>${message}</p>
+    addParameter() {
+        if (this.parametersContainer) {
+            const paramDiv = document.createElement('div');
+            paramDiv.className = 'ui segment parameter-item';
+            paramDiv.innerHTML = `
+                <div class="two fields">
+                    <div class="field">
+                        <input type="text" class="param-key" placeholder="Clé">
+                    </div>
+                    <div class="field">
+                        <div class="ui action input">
+                            <input type="text" class="param-value" placeholder="Valeur">
+                            <button type="button" class="ui icon button" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                                <i class="trash icon"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+            this.parametersContainer.appendChild(paramDiv);
+        }
+    }
+    
+    async saveConfig() {
+        const selectedModels = document.querySelectorAll('#selectedModels .item');
+        if (!selectedModels.length) {
+            this.showMessage('Veuillez sélectionner au moins un modèle', 'error');
+            return;
+        }
+
+        const systemPrompt = document.getElementById('systemPrompt')?.value || '';
+        const template = document.getElementById('template')?.value || '';
+        const parameterItems = document.querySelectorAll('.parameter-item');
         
-        // Nettoyer le message après 5 secondes si ce n'est pas une erreur
-        if (type !== 'error') {
-            setTimeout(() => {
-                if (messagesContainer && messagesContainer.parentNode) {
-                    messagesContainer.innerHTML = '';
+        const parameters = {};
+        parameterItems.forEach(item => {
+            const key = item.querySelector('.param-key')?.value;
+            const value = item.querySelector('.param-value')?.value;
+            if (key && value) {
+                parameters[key] = value;
+            }
+        });
+
+        try {
+            const results = [];
+            for (const modelDiv of selectedModels) {
+                const modelName = modelDiv.textContent.trim();
+                try {
+                    const response = await fetch('/api/models/config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Ollama-URL': ollamaUrl
+                        },
+                        body: JSON.stringify({
+                            name: modelName,
+                            system: systemPrompt,
+                            template: template,
+                            parameters: parameters
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Échec de la mise à jour de la configuration');
+                    }
+
+                    results.push({
+                        model: modelName,
+                        success: true,
+                        message: 'Configuration mise à jour avec succès'
+                    });
+                } catch (error) {
+                    console.error(`Erreur pour ${modelName}:`, error);
+                    results.push({
+                        model: modelName,
+                        success: false,
+                        message: error.message
+                    });
                 }
-            }, 5000);
+            }
+
+            const allSuccess = results.every(r => r.success);
+            this.showMessage(
+                results.map(r => `${r.model}: ${r.message}`).join('\n'),
+                allSuccess ? 'success' : 'error'
+            );
+
+            if (allSuccess) {
+                setTimeout(() => {
+                    $(this.modal).modal('hide');
+                    refreshAll();
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde:', error);
+            this.showMessage('Une erreur est survenue lors de la sauvegarde', 'error');
         }
     }
 }
 
-// Fonction pour ajouter un paramètre dans la modale de configuration
-// Fonction pour sauvegarder la configuration du modèle
-window.saveModelConfig = async function() {
+// Initialiser le gestionnaire de configuration
+let configManager;
+document.addEventListener('DOMContentLoaded', () => {
+    configManager = new ModelConfigManager();
+});
+
+// Fonction globale pour ajouter un paramètre (appelée depuis le HTML)
+window.addParameter = function() {
+    if (configManager) {
+        configManager.addParameter();
+    }
+};
+
+// Fonction globale pour sauvegarder la configuration (appelée depuis le HTML)
+window.saveModelConfig = function() {
+    if (configManager) {
+        configManager.saveConfig();
+    }
+};
     const form = document.getElementById('modelConfigForm');
     const messagesContainer = document.getElementById('configMessages');
     if (!form || !messagesContainer) {
