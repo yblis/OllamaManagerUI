@@ -822,6 +822,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 // Fonction pour ajouter un paramètre dans la modale de configuration
+// Fonction pour sauvegarder la configuration d'un modèle
+window.saveModelConfig = async function() {
+    const selectedModels = document.querySelectorAll('#selectedModels .item');
+    const systemPrompt = document.getElementById('systemPrompt').value;
+    const template = document.getElementById('template').value;
+    
+    // Récupérer tous les paramètres
+    const parameters = {};
+    document.querySelectorAll('#parameters .ui.segment').forEach(segment => {
+        const inputs = segment.querySelectorAll('input');
+        if (inputs.length === 2) {
+            const key = inputs[0].value.trim();
+            const value = inputs[1].value.trim();
+            if (key && value) {
+                parameters[key] = value;
+            }
+        }
+    });
+
+    // Pour chaque modèle sélectionné
+    for (const modelDiv of selectedModels) {
+        const modelName = modelDiv.textContent.trim();
+        try {
+            const response = await fetch(`/api/models/${modelName}/config`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Ollama-URL': ollamaUrl
+                },
+                body: JSON.stringify({
+                    system: systemPrompt,
+                    template: template,
+                    parameters: parameters
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Échec de la sauvegarde de la configuration');
+            }
+
+            showMessage('Succès', `Configuration du modèle ${modelName} sauvegardée avec succès`);
+        } catch (error) {
+            showMessage('Erreur', `Erreur lors de la sauvegarde de la configuration pour ${modelName}: ${error.message}`, true);
+            return;
+        }
+    }
+
+    $('#configModal').modal('hide');
+    refreshAll();
+};
 window.addParameter = function() {
     const parametersList = document.querySelector('.parameters-list');
     const newItem = document.createElement('div');
