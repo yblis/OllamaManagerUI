@@ -784,23 +784,8 @@ function formatBytes(bytes, decimals = 2) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialiser le thème
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
-    
-    // Initialiser les gestionnaires d'événements pour la configuration
-    const configModal = document.getElementById('configModal');
-    if (configModal) {
-        const saveButton = configModal.querySelector('.ui.positive.button');
-        if (saveButton) {
-            saveButton.onclick = saveModelConfig;
-        }
-        
-        const addParamButton = configModal.querySelector('button[onclick="addParameter()"]');
-        if (addParamButton) {
-            addParamButton.onclick = addParameter;
-        }
-    }
     
     checkServerStatus();
     refreshAll();
@@ -830,290 +815,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-// Gestionnaire de configuration des modèles
-class ModelConfigManager {
-    constructor() {
-        this.modal = document.getElementById('configModal');
-        this.messagesContainer = document.getElementById('configMessages');
-        this.form = document.getElementById('modelConfigForm');
-        this.parametersContainer = document.getElementById('parameters');
-        
-        // Lier les gestionnaires d'événements
-        this.bindEvents();
-    }
-    
-    bindEvents() {
-        const saveBtn = document.getElementById('saveConfigBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => this.saveConfig());
-        }
-        
-        const addParamBtn = document.getElementById('addParameterBtn');
-        if (addParamBtn) {
-            addParamBtn.addEventListener('click', () => this.addParameter());
-        }
-    }
-    
-    showMessage(message, type = 'info') {
-        if (this.messagesContainer) {
-            this.messagesContainer.innerHTML = `
-                <div class="ui ${type} message">
-                    <i class="${type === 'error' ? 'times' : 'info'} circle icon"></i>
-                    <div class="content">
-                        <p>${message}</p>
-                    </div>
-                </div>
-            `;
-            
-            if (type !== 'error') {
-                setTimeout(() => {
-                    if (this.messagesContainer) {
-                        this.messagesContainer.innerHTML = '';
-                    }
-                }, 5000);
-            }
-        }
-    }
-    
-    addParameter() {
-        if (this.parametersContainer) {
-            const paramDiv = document.createElement('div');
-            paramDiv.className = 'ui segment parameter-item';
-            paramDiv.innerHTML = `
-                <div class="two fields">
-                    <div class="field">
-                        <input type="text" class="param-key" placeholder="Clé">
-                    </div>
-                    <div class="field">
-                        <div class="ui action input">
-                            <input type="text" class="param-value" placeholder="Valeur">
-                            <button type="button" class="ui icon button" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
-                                <i class="trash icon"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            this.parametersContainer.appendChild(paramDiv);
-        }
-    }
-    
-    async saveConfig() {
-        const selectedModels = document.querySelectorAll('#selectedModels .item');
-        if (!selectedModels.length) {
-            this.showMessage('Veuillez sélectionner au moins un modèle', 'error');
-            return;
-        }
-
-        const systemPrompt = document.getElementById('systemPrompt')?.value || '';
-        const template = document.getElementById('template')?.value || '';
-        const parameterItems = document.querySelectorAll('.parameter-item');
-        
-        const parameters = {};
-        parameterItems.forEach(item => {
-            const key = item.querySelector('.param-key')?.value;
-            const value = item.querySelector('.param-value')?.value;
-            if (key && value) {
-                parameters[key] = value;
-            }
-        });
-
-        try {
-            const results = [];
-            for (const modelDiv of selectedModels) {
-                const modelName = modelDiv.textContent.trim();
-                try {
-                    const response = await fetch('/api/models/config', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Ollama-URL': ollamaUrl
-                        },
-                        body: JSON.stringify({
-                            name: modelName,
-                            system: systemPrompt,
-                            template: template,
-                            parameters: parameters
-                        })
-                    });
-
-                    const data = await response.json();
-                    
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Échec de la mise à jour de la configuration');
-                    }
-
-                    results.push({
-                        model: modelName,
-                        success: true,
-                        message: 'Configuration mise à jour avec succès'
-                    });
-                } catch (error) {
-                    console.error(`Erreur pour ${modelName}:`, error);
-                    results.push({
-                        model: modelName,
-                        success: false,
-                        message: error.message
-                    });
-                }
-            }
-
-            const allSuccess = results.every(r => r.success);
-            this.showMessage(
-                results.map(r => `${r.model}: ${r.message}`).join('\n'),
-                allSuccess ? 'success' : 'error'
-            );
-
-            if (allSuccess) {
-                setTimeout(() => {
-                    $(this.modal).modal('hide');
-                    refreshAll();
-                }, 1500);
-            }
-        } catch (error) {
-            console.error('Erreur lors de la sauvegarde:', error);
-            this.showMessage('Une erreur est survenue lors de la sauvegarde', 'error');
-        }
-    }
-}
-
-// Initialiser le gestionnaire de configuration
-let configManager;
-document.addEventListener('DOMContentLoaded', () => {
-    configManager = new ModelConfigManager();
-});
-
-// Fonction globale pour ajouter un paramètre (appelée depuis le HTML)
-window.addParameter = function() {
-    if (configManager) {
-        configManager.addParameter();
-    }
-};
-
-// Fonction globale pour sauvegarder la configuration (appelée depuis le HTML)
-window.saveModelConfig = function() {
-    if (configManager) {
-        configManager.saveConfig();
-    }
-};
-    const form = document.getElementById('modelConfigForm');
-    const messagesContainer = document.getElementById('configMessages');
-    if (!form || !messagesContainer) {
-        console.error('Éléments du formulaire non trouvés');
-        return;
-    }
-
-    const selectedModels = document.querySelectorAll('#selectedModels .item');
-    if (!selectedModels.length) {
-        showMessage('Veuillez sélectionner au moins un modèle', 'error');
-        return;
-    }
-
-    const systemPrompt = document.getElementById('systemPrompt').value;
-    const template = document.getElementById('template').value;
-    const parameterItems = document.querySelectorAll('.parameter-item');
-    
-    const parameters = {};
-    parameterItems.forEach(item => {
-        const key = item.querySelector('.param-key')?.value;
-        const value = item.querySelector('.param-value')?.value;
-        if (key && value) {
-            parameters[key] = value;
-        }
-    });
-
-    try {
-        const results = [];
-        for (const modelDiv of selectedModels) {
-            const modelName = modelDiv.textContent.trim();
-            try {
-                const response = await fetch('/api/models/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: modelName,
-                        system: systemPrompt,
-                        template: template,
-                        parameters: parameters
-                    })
-                });
-
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || 'Échec de la mise à jour de la configuration');
-                }
-
-                results.push({
-                    model: modelName,
-                    success: true,
-                    message: 'Configuration mise à jour avec succès'
-                });
-            } catch (error) {
-                console.error(`Erreur pour ${modelName}:`, error);
-                results.push({
-                    model: modelName,
-                    success: false,
-                    message: error.message
-                });
-            }
-        }
-
-        const allSuccess = results.every(r => r.success);
-        const message = `
-            <div class="ui ${allSuccess ? 'positive' : 'negative'} message">
-                ${results.map(result => `
-                    <div class="item">
-                        <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
-                        <div class="content">
-                            <div class="header">${result.model}</div>
-                            <div class="description">${result.message}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        // Afficher le message dans la modale
-        messagesContainer.innerHTML = message;
-
-        if (allSuccess) {
-            // Fermer la modale après un court délai en cas de succès
-            setTimeout(() => {
-                $('#configModal').modal('hide');
-                refreshAll();
-            }, 1500);
-        }
-    } catch (error) {
-        console.error('Erreur lors de la sauvegarde:', error);
-        showMessage('Une erreur est survenue lors de la sauvegarde', 'error');
-    }
-};
-
+// Fonction pour ajouter un paramètre dans la modale de configuration
 window.addParameter = function() {
     const parametersList = document.querySelector('.parameters-list');
     const newItem = document.createElement('div');
-    newItem.className = 'ui segment parameter-item';
+    newItem.className = 'parameter-item';
+    
+    const paramCount = document.querySelectorAll('.parameter-item').length + 1;
     
     newItem.innerHTML = `
-        <div class="ui two fields">
-            <div class="field">
-                <div class="ui fluid input">
-                    <input type="text" placeholder="Clé" class="param-key" />
-                </div>
-            </div>
-            <div class="field">
-                <div class="ui fluid input">
-                    <input type="text" placeholder="Valeur" class="param-value" />
-                </div>
-            </div>
+        <div class="ui fluid input">
+            <input type="text" placeholder="Clé" class="param-key" />
         </div>
-        <button class="ui right floated icon button red tiny" onclick="this.closest('.parameter-item').remove()">
+        <div class="ui fluid input">
+            <input type="text" placeholder="Valeur" class="param-value" />
+        </div>
+        <button class="ui icon button red" onclick="this.parentElement.remove()">
             <i class="trash icon"></i>
         </button>
-        <div class="clearfix"></div>
     `;
     
     parametersList.appendChild(newItem);
