@@ -192,6 +192,30 @@ def get_model_config(model_name):
         return jsonify({'error': config['error']}), 500
     return jsonify(config)
 
+
+@app.route('/api/models/<model_name>/config', methods=['POST'])
+@with_error_handling
+def save_model_config(model_name):
+    """Save model configuration"""
+    if not request.is_json:
+        return jsonify({'error': 'Content-Type must be application/json'}), 400
+        
+    data = request.json
+    result = ollama_client.save_model_config(
+        model_name,
+        system=data.get('system'),
+        template=data.get('template'),
+        parameters=data.get('parameters')
+    )
+    
+    if not result.get('success'):
+        return jsonify({
+            'error': result.get('error', 'Erreur inconnue'),
+            'status': 'error'
+        }), 500
+        
+    return jsonify(result)
+
 @app.errorhandler(Exception)
 def handle_error(error):
     print(f"Unhandled error: {str(error)}")

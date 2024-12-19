@@ -199,3 +199,46 @@ class OllamaClient:
         system_line = modelfile[start:].split('\n')[0]
         system = system_line.split('SYSTEM', 1)[1].strip()
         return system
+
+
+def save_model_config(self, model_name, system=None, template=None, parameters=None):
+    """Save model configuration by creating a new custom model"""
+    try:
+        # Get existing model config
+        current_config = self.get_model_config(model_name)
+        if 'error' in current_config:
+            return {'error': current_config['error']}
+            
+        # Build Modelfile content
+        modelfile = f"FROM {model_name}\n\n"
+        
+        # Add system prompt if provided
+        if system:
+            modelfile += f'SYSTEM """\n{system}\n"""\n\n'
+            
+        # Add template if provided    
+        if template:
+            modelfile += f'TEMPLATE """\n{template}\n"""\n\n'
+            
+        # Add parameters if provided
+        if parameters:
+            for key, value in parameters.items():
+                modelfile += f'PARAMETER {key} {value}\n'
+        
+        # Create new model using Ollama API
+        response = self._handle_request(
+            requests.post,
+            'api/create',
+            json={
+                'name': model_name,
+                'modelfile': modelfile
+            }
+        )
+        
+        if 'error' in response:
+            return {'success': False, 'error': response['error']}
+            
+        return {'success': True, 'message': f'Configuration du modèle {model_name} mise à jour avec succès'}
+        
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
