@@ -34,22 +34,55 @@ def with_error_handling(f):
 @app.before_request
 def before_request():
     global ollama_client
-    base_url = request.headers.get('X-Ollama-URL') or os.environ.get('OLLAMA_SERVER_URL')
+    # Utiliser l'URL de l'environnement en priorité
+    base_url = os.environ.get('OLLAMA_SERVER_URL')
+    if not base_url:
+        # Si pas d'URL dans l'environnement, utiliser celle du header
+        base_url = request.headers.get('X-Ollama-URL')
+        if base_url:
+            os.environ['OLLAMA_SERVER_URL'] = base_url
+            
     if base_url:
-        print(f"Using Ollama server URL: {base_url}")
+        if not base_url.startswith(('http://', 'https://')):
+            base_url = f'http://{base_url}'
+        base_url = base_url.rstrip('/')
         ollama_client = OllamaClient(base_url=base_url)
     else:
-        print("Warning: No Ollama server URL provided")
+        print("Avertissement: Aucune URL de serveur Ollama fournie")
 
 @app.route('/')
 def index():
     return render_template('index.html', server_status=False)
 
-@app.route('/api/server/url')
-def get_server_url():
-    """Get the Ollama server URL from environment"""
-    url = os.environ.get('OLLAMA_SERVER_URL')
-    return jsonify({'url': url}) if url else jsonify({'error': 'No server URL configured'}), 404
+@app.route('/api/server/url', methods=['GET', 'POST'])
+def manage_server_url():
+    """Get or set the Ollama server URL"""
+    if request.method == 'POST':
+        if not request.is_json:
+            return jsonify({'error': 'Le contenu doit être au format JSON'}), 400
+            
+        url = request.json.get('url')
+        if not url:
+            return jsonify({'error': 'L\'URL du serveur est requise'}), 400
+            
+        # Valider l'URL
+        if not url.startswith(('http://', 'https://')):
+            url = f'http://{url}'
+            
+        # S'assurer que l'URL n'a pas de slash final
+        url = url.rstrip('/')
+            
+        os.environ['OLLAMA_SERVER_URL'] = url
+        global ollama_client
+        ollama_client = OllamaClient(base_url=url)
+        
+        return jsonify({
+            'message': 'URL du serveur mise à jour avec succès',
+            'url': url
+        })
+    else:
+        url = os.environ.get('OLLAMA_SERVER_URL')
+        return jsonify({'url': url}) if url else jsonify({'error': 'Aucune URL de serveur configurée'}), 404
 
 @app.route('/api/server/status')
 @with_error_handling

@@ -815,88 +815,117 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+function showMessage(message, type = 'info') {
+    const messagesContainer = document.getElementById('configMessages');
+    if (messagesContainer) {
+        messagesContainer.innerHTML = `
+            <div class="ui ${type} message">
+                <i class="${type === 'error' ? 'times' : 'info'} circle icon"></i>
+                <div class="content">
+                    <p>${message}</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
 // Fonction pour ajouter un paramètre dans la modale de configuration
 // Fonction pour sauvegarder la configuration du modèle
 window.saveModelConfig = async function() {
+    const form = document.getElementById('modelConfigForm');
+    const messagesContainer = document.getElementById('configMessages');
+    if (!form || !messagesContainer) {
+        console.error('Éléments du formulaire non trouvés');
+        return;
+    }
+
     const selectedModels = document.querySelectorAll('#selectedModels .item');
+    if (!selectedModels.length) {
+        showMessage('Veuillez sélectionner au moins un modèle', 'error');
+        return;
+    }
+
     const systemPrompt = document.getElementById('systemPrompt').value;
     const template = document.getElementById('template').value;
     const parameterItems = document.querySelectorAll('.parameter-item');
     
     const parameters = {};
     parameterItems.forEach(item => {
-        const key = item.querySelector('.param-key').value;
-        const value = item.querySelector('.param-value').value;
+        const key = item.querySelector('.param-key')?.value;
+        const value = item.querySelector('.param-value')?.value;
         if (key && value) {
             parameters[key] = value;
         }
     });
 
-    const results = [];
-    for (const modelDiv of selectedModels) {
-        const modelName = modelDiv.textContent.trim();
-        try {
-            const response = await fetch('/api/models/config', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Ollama-URL': ollamaUrl
-                },
-                body: JSON.stringify({
-                    name: modelName,
-                    system: systemPrompt,
-                    template: template,
-                    parameters: parameters
-                })
-            });
+    try {
+        const results = [];
+        for (const modelDiv of selectedModels) {
+            const modelName = modelDiv.textContent.trim();
+            try {
+                const response = await fetch('/api/models/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: modelName,
+                        system: systemPrompt,
+                        template: template,
+                        parameters: parameters
+                    })
+                });
 
-            if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Échec de la mise à jour de la configuration');
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Échec de la mise à jour de la configuration');
+                }
+
+                results.push({
+                    model: modelName,
+                    success: true,
+                    message: 'Configuration mise à jour avec succès'
+                });
+            } catch (error) {
+                console.error(`Erreur pour ${modelName}:`, error);
+                results.push({
+                    model: modelName,
+                    success: false,
+                    message: error.message
+                });
             }
-
-            results.push({
-                model: modelName,
-                success: true,
-                message: 'Configuration mise à jour avec succès'
-            });
-        } catch (error) {
-            results.push({
-                model: modelName,
-                success: false,
-                message: error.message
-            });
         }
-    }
 
-    // Afficher un message de résultat
-    const allSuccess = results.every(r => r.success);
-    
-    // Créer un message de notification
-    const message = document.createElement('div');
-    message.className = `ui message ${allSuccess ? 'positive' : 'negative'}`;
-    message.innerHTML = results.map(result => `
-        <div class="item">
-            <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
-            <div class="content">
-                <div class="header">${result.model}</div>
-                <div class="description">${result.message}</div>
+        const allSuccess = results.every(r => r.success);
+        const message = `
+            <div class="ui ${allSuccess ? 'positive' : 'negative'} message">
+                ${results.map(result => `
+                    <div class="item">
+                        <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
+                        <div class="content">
+                            <div class="header">${result.model}</div>
+                            <div class="description">${result.message}</div>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
-        </div>
-    `).join('');
-    
-    // Ajouter le message à la page
-    const container = document.querySelector('.ui.container');
-    container.insertBefore(message, container.firstChild);
-    
-    // Fermer la modale et rafraîchir les données
-    $('#configModal').modal('hide');
-    
-    // Supprimer le message après 5 secondes
-    setTimeout(() => message.remove(), 5000);
-    
-    // Rafraîchir la liste des modèles
-    refreshAll();
+        `;
+
+        // Afficher le message dans la modale
+        messagesContainer.innerHTML = message;
+
+        if (allSuccess) {
+            // Fermer la modale après un court délai en cas de succès
+            setTimeout(() => {
+                $('#configModal').modal('hide');
+                refreshAll();
+            }, 1500);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde:', error);
+        showMessage('Une erreur est survenue lors de la sauvegarde', 'error');
+    }
 };
 
 window.addParameter = function() {
