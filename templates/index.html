@@ -11,26 +11,30 @@
     </button>
 </div>
 
-    
-    <!-- Pull Model Form -->
-    <div class="ui segment">
-        <h3 class="ui header">Télécharger un Nouveau Modèle</h3>
-        <div class="ui action input fluid">
-            <input type="text" id="modelNameInput" placeholder="Entrez le nom du modèle (ex: llama2:7b)">
-            <button class="ui primary button" onclick="pullModel()">Télécharger</button>
+<!-- Pull Model Form -->
+<div class="ui segment">
+    <h3 class="ui header">Télécharger un Nouveau Modèle</h3>
+    <div class="ui search">
+        <div class="ui icon input fluid">
+            <input type="text" 
+                   id="modelNameInput" 
+                   class="prompt"
+                   placeholder="Entrez le nom du modèle (ex: llama2:7b)"
+                   autocomplete="off">
+            <i class="search icon"></i>
         </div>
-        <!-- Add progress bar -->
-        <div id="pullProgress" class="ui indicating progress" style="display: none;">
-            <div class="bar progress"></div>
-            <div class="label">Démarrage du téléchargement...</div>
-        </div>
-        <!-- Add search results section -->
-        <div class="ui search-results" style="margin-top: 1rem; display: none;">
-            <div class="ui relaxed divided list" id="searchResults">
-                <!-- Search results will be displayed here -->
-            </div>
+        <div class="results" id="searchResults">
+            <!-- Les résultats de recherche seront affichés ici -->
         </div>
     </div>
+    <div class="ui hidden divider"></div>
+    <button class="ui primary button fluid" onclick="pullModel()">Télécharger</button>
+    <!-- Add progress bar -->
+    <div id="pullProgress" class="ui indicating progress" style="display: none;">
+        <div class="bar progress"></div>
+        <div class="label">Démarrage du téléchargement...</div>
+    </div>
+</div>
 
     <!-- Overall Usage Statistics
     <div class="ui segment">
