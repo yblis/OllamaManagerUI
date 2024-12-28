@@ -3,10 +3,10 @@ let searchTimeout = null;
 
 function initModelSearch() {
     const modelInput = document.getElementById('modelNameInput');
-    const resultsContainer = document.getElementById('searchResults');
+    const resultsContainer = document.querySelector('.results');
 
-    if (!modelInput || !resultsContainer) {
-        console.error('Elements de recherche non trouvés');
+    if (!modelInput) {
+        console.error('Element de recherche non trouvé: modelNameInput');
         return;
     }
 
@@ -19,8 +19,10 @@ function initModelSearch() {
         }
 
         // Cacher les résultats si la requête est vide
-        if (query.length === 0) {
-            resultsContainer.style.display = 'none';
+        if (!query) {
+            if (resultsContainer) {
+                resultsContainer.style.display = 'none';
+            }
             return;
         }
 
@@ -39,9 +41,9 @@ function initModelSearch() {
 }
 
 async function searchModels(query) {
-    const resultsContainer = document.getElementById('searchResults');
+    const resultsContainer = document.querySelector('.results');
     if (!resultsContainer) {
-        console.error('Container de résultats non trouvé');
+        console.error('Container de résultats non trouvé: .results');
         return;
     }
 
@@ -62,14 +64,16 @@ async function searchModels(query) {
         displaySearchResults(data.models);
     } catch (error) {
         console.error('Erreur lors de la recherche:', error);
-        resultsContainer.style.display = 'none';
+        if (resultsContainer) {
+            resultsContainer.style.display = 'none';
+        }
     }
 }
 
 function displaySearchResults(models) {
-    const resultsContainer = document.getElementById('searchResults');
+    const resultsContainer = document.querySelector('.results');
     if (!resultsContainer) {
-        console.error('Container de résultats non trouvé');
+        console.error('Container de résultats non trouvé: .results');
         return;
     }
 
@@ -107,7 +111,7 @@ function displaySearchResults(models) {
 
 function selectModel(modelName) {
     const modelInput = document.getElementById('modelNameInput');
-    const resultsContainer = document.getElementById('searchResults');
+    const resultsContainer = document.querySelector('.results');
 
     if (modelInput && modelName) {
         modelInput.value = modelName;

@@ -19,19 +19,19 @@ async function checkServerStatus() {
     try {
         const statusDot = document.getElementById('statusDot');
         if (!statusDot) return;
-        
+
         const response = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        
+
         if (!response.ok) {
             statusDot.className = 'status-indicator offline';
             return;
         }
-        
+
         const data = await response.json();
         statusDot.className = 'status-indicator ' + (data.status === 'running' ? 'online' : 'offline');
-        
+
         // Update status check interval
         setTimeout(checkServerStatus, 5000);
     } catch (error) {
@@ -76,7 +76,7 @@ window.stopModel = async function(modelName) {
     if (!confirm(`Êtes-vous sûr de vouloir arrêter le modèle ${modelName} ?`)) {
         return;
     }
-    
+
     try {
         const response = await fetch('/api/models/stop', {
             method: 'POST',
@@ -86,12 +86,12 @@ window.stopModel = async function(modelName) {
             },
             body: JSON.stringify({ name: modelName })
         });
-        
+
         if (!response.ok) {
             const data = await response.json();
             throw new Error(data.error || 'Échec de l\'arrêt du modèle');
         }
-        
+
         showMessage('Succès', `Modèle ${modelName} arrêté avec succès`);
         await refreshRunningModels();  // Refresh only running models table
     } catch (error) {
@@ -234,95 +234,9 @@ function toggleTheme() {
     setTheme(newTheme);
 }
 
-// Model search and pull
-let searchTimeout = null;
 
-window.searchModels = async function(input) {
-    clearTimeout(searchTimeout);
-    const searchResults = document.querySelector('.ui.search-results');
-    const searchResultsList = document.getElementById('searchResults');
-    
-    if (!input.value.trim()) {
-        searchResults.style.display = 'none';
-        return;
-    }
+// Model search and pull  (Removed)
 
-    searchTimeout = setTimeout(async () => {
-        try {
-            const response = await fetch('/api/models/search', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Ollama-URL': ollamaUrl
-                },
-                body: JSON.stringify({ keyword: input.value.trim() })
-            });
-            
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            
-            searchResultsList.innerHTML = data.models.map(model => `
-                <div class="item">
-                    <div class="content">
-                        <div class="header">${model.name}</div>
-                        <div class="description">
-                            ${model.tags.map(tag => `
-                                <button class="ui tiny basic button" onclick="selectModel('${model.name}:${tag}')">
-                                    ${tag}
-                                </button>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            
-            searchResults.style.display = 'block';
-        } catch (error) {
-            showMessage('Erreur', error.message, true);
-        }
-    }, 300);
-};
-
-window.selectModel = function(modelName) {
-    document.getElementById('modelNameInput').value = modelName;
-    document.querySelector('.ui.search-results').style.display = 'none';
-};
-
-window.pullModel = async function() {
-    const modelName = document.getElementById('modelNameInput').value.trim();
-    if (!modelName) {
-        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
-        return;
-    }
-
-    const progress = document.getElementById('pullProgress');
-    progress.style.display = 'block';
-    
-    try {
-        const response = await fetch('/api/models/pull', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Ollama-URL': ollamaUrl
-            },
-            body: JSON.stringify({ name: modelName })
-        });
-        
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Échec du téléchargement du modèle');
-        }
-        
-        const data = await response.json();
-        showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
-        document.getElementById('modelNameInput').value = '';
-        refreshAll();
-    } catch (error) {
-        showMessage('Erreur', error.message, true);
-    } finally {
-        progress.style.display = 'none';
-    }
-};
 
 // Refresh functions
 window.refreshLocalModels = async function() {
@@ -337,7 +251,7 @@ window.refreshLocalModels = async function() {
             tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Serveur Ollama non connecté</td></tr>';
             return;
         }
-
+        
         const response = await fetch('/api/models', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
@@ -396,7 +310,7 @@ window.refreshRunningModels = async function() {
             tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Serveur Ollama non connecté</td></tr>';
             return;
         }
-
+        
         const response = await fetch('/api/models/running', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
@@ -436,7 +350,7 @@ async function refreshStats() {
             console.debug('Stats element not found, skipping refresh');
             return;
         }
-
+        
         const response = await fetch('/api/models/stats', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
@@ -583,6 +497,24 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshAll();
     // Check status and refresh data every 30 seconds
     setInterval(refreshAll, 30000);
+
+    // Initialize all modals
+    $('.ui.modal').modal({
+        closable: false
+    });
+
+    // Set up model name input events
+    const modelNameInput = document.getElementById('modelNameInput');
+    if (modelNameInput) {
+        modelNameInput.addEventListener('input', (e) => {
+            const searchResults = document.querySelector('.results');
+            if (searchResults) {
+                if (!e.target.value.trim()) {
+                    searchResults.style.display = 'none';
+                }
+            }
+        });
+    }
 });
 async function refreshAll() {
     await Promise.all([
@@ -595,7 +527,7 @@ async function refreshAll() {
 // Batch operations
 window.toggleModelSelection = function(checkbox, modelName) {
     // This function can be used to handle individual model selection
-let selectedModels = new Set();
+    let selectedModels = new Set();
 
 window.selectAllModels = function(checkbox) {
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
@@ -652,7 +584,7 @@ window.compareSelectedModels = async function() {
                 stats: modelStats
             });
         }
-
+        
         const comparisonContent = document.getElementById('modelComparison');
         comparisonContent.innerHTML = comparisons.map(model => `
             <div class="ui segment">
@@ -677,7 +609,7 @@ window.compareSelectedModels = async function() {
                 </div>
             </div>
         `).join('');
-
+        
         $('#compareModal').modal('show');
     } catch (error) {
         showMessage('Erreur', error.message, true);
@@ -702,7 +634,7 @@ window.batchConfigureModels = function() {
         showMessage('Erreur', 'Veuillez sélectionner au moins un modèle', true);
         return;
     }
-
+    
     const selectedModelNames = Array.from(selectedModels).map(checkbox => checkbox.getAttribute('data-model-name'));
     
     // Update selected models list in the modal
@@ -712,7 +644,7 @@ window.batchConfigureModels = function() {
             ${name}
         </div>
     `).join('');
-
+    
     // Show the config modal
     $('#configModal').modal('show');
 };
@@ -723,11 +655,11 @@ window.batchDeleteModels = async function() {
         showMessage('Erreur', 'Veuillez sélectionner au moins un modèle', true);
         return;
     }
-
+    
     if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedModels.length} modèle(s) ?`)) {
         return;
     }
-
+    
     const results = [];
     for (const checkbox of selectedModels) {
         const modelName = checkbox.getAttribute('data-model-name');
@@ -759,7 +691,7 @@ window.batchDeleteModels = async function() {
             });
         }
     }
-
+    
     // Show results in batch results modal
     document.getElementById('batchResults').innerHTML = results.map(result => `
         <div class="item batch-results-item ${result.success ? 'success' : 'error'}">
@@ -770,7 +702,7 @@ window.batchDeleteModels = async function() {
             </div>
         </div>
     `).join('');
-
+    
     $('#batchResultsModal').modal('show');
     refreshAll();
 };
@@ -800,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('.ui.modal').modal({
         closable: false
     });
-
+    
     // Attacher l'événement au checkbox "Tous Sélectionner"
     const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
     if (selectAllCheckbox) {
@@ -812,7 +744,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up model name input events
     const modelNameInput = document.getElementById('modelNameInput');
     if (modelNameInput) {
-        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
+        modelNameInput.addEventListener('input', (e) => {
+            const searchResults = document.querySelector('.results');
+            if (searchResults) {
+                if (!e.target.value.trim()) {
+                    searchResults.style.display = 'none';
+                }
+            }
+        });
         modelNameInput.addEventListener('blur', () => {
             // Delay hiding results to allow for clicks
             setTimeout(() => {
@@ -840,7 +779,7 @@ window.saveModelConfig = async function() {
             }
         }
     });
-
+    
     // Pour chaque modèle sélectionné
     for (const modelDiv of selectedModels) {
         const modelName = modelDiv.textContent.trim();
@@ -857,19 +796,19 @@ window.saveModelConfig = async function() {
                     parameters: parameters
                 })
             });
-
+            
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Échec de la sauvegarde de la configuration');
             }
-
+            
             showMessage('Succès', `Configuration du modèle ${modelName} sauvegardée avec succès`);
         } catch (error) {
             showMessage('Erreur', `Erreur lors de la sauvegarde de la configuration pour ${modelName}: ${error.message}`, true);
             return;
         }
     }
-
+    
     $('#configModal').modal('hide');
     refreshAll();
 };
