@@ -151,35 +151,27 @@ def pull_model():
 def search_models():
     keyword = request.json.get('keyword', '')
     try:
-        # Faire une requête à l'API de recherche Ollama
-        response = requests.get(f'https://ollama.com/api/search?q={keyword}')
-        response.raise_for_status()
-
-        search_results = response.json()
-
-        # Transformer les résultats au format attendu par le front-end
-        models = []
-        for result in search_results.get('models', []):
-            model_info = {
-                'name': result.get('name', ''),
-                'description': result.get('description', ''),
-                'tags': result.get('tags', []),
-                'model_size': result.get('size', ''),
-                'family': result.get('family', '')
-            }
-            models.append(model_info)
-
-        return jsonify({'models': models})
-    except requests.exceptions.RequestException as e:
-        return jsonify({
-            'error': f'Erreur lors de la recherche des modèles : {str(e)}',
-            'status': 'error'
-        }), 500
+        # Use curl to get models directly
+        result = subprocess.run(['curl', '-s', 'https://ollama.com/library'], capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
+            
+        # Extract model names using regex
+        pattern = r'(?<=<span>).*?(?=</span>)'
+        models = re.findall(pattern, result.stdout)
+        
+        # Filter models based on keyword
+        filtered_models = [model for model in models if keyword.lower() in model.lower()]
+        
+        # Common model size tags
+        size_tags = ['1b', '1.5b', '2b', '3b', '7b', '8b', '9b', '13b', '34b', '70b']
+        
+        # Prepare response with models and their tags
+        models_with_tags = [{'name': model, 'tags': size_tags} for model in filtered_models]
+        
+        return jsonify({'models': models_with_tags})
     except Exception as e:
-        return jsonify({
-            'error': str(e),
-            'status': 'error'
-        }), 500
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/models/stats', methods=['GET'])
 @with_error_handling
