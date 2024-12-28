@@ -1,59 +1,48 @@
-// Variable globale pour le timeout de recherche
-let searchTimeout = null;
+// search.js
+window.App = window.App || {};
 
-function initModelSearch() {
+App.searchTimeout = null;
+
+App.initModelSearch = function() {
     const modelInput = document.getElementById('modelNameInput');
-    const resultsContainer = document.querySelector('.results');
+    const resultsContainer = document.querySelector('.ui.search-results');
+    const searchResultsList = document.getElementById('searchResults');
 
-    if (!modelInput) {
-        console.error('Element de recherche non trouvé: modelNameInput');
+    if (!modelInput || !resultsContainer || !searchResultsList) {
+        console.error('Search elements not found.');
         return;
     }
 
     modelInput.addEventListener('input', function(e) {
         const query = e.target.value.trim();
-
-        // Annuler la recherche précédente
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
+        if (App.searchTimeout) {
+            clearTimeout(App.searchTimeout);
         }
-
-        // Cacher les résultats si la requête est vide
         if (!query) {
-            if (resultsContainer) {
-                resultsContainer.style.display = 'none';
-            }
+            resultsContainer.style.display = 'none';
             return;
         }
-
-        // Attendre que l'utilisateur arrête de taper
-        searchTimeout = setTimeout(() => {
-            searchModels(query);
+        App.searchTimeout = setTimeout(() => {
+            App.searchModels(query);
         }, 300);
     });
 
-    // Cacher les résultats quand on clique ailleurs
     document.addEventListener('click', function(e) {
-        if (resultsContainer && !e.target.closest('.ui.search')) {
+        if (!e.target.closest('.ui.search')) {
             resultsContainer.style.display = 'none';
         }
     });
-}
+};
 
-async function searchModels(query) {
-    const resultsContainer = document.querySelector('.results');
-    if (!resultsContainer) {
-        console.error('Container de résultats non trouvé: .results');
-        return;
-    }
+App.searchModels = async function(query) {
+    const resultsContainer = document.querySelector('.ui.search-results');
+    const searchResultsList = document.getElementById('searchResults');
 
     try {
-        const response = await fetch('/api/models/search', {
-            method: 'POST',
+        const response = await fetch(`${App.ollamaUrl}/api/v1/models?name=${encodeURIComponent(query)}`, {
             headers: {
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${App.apiToken}`
             },
-            body: JSON.stringify({ keyword: query })
         });
 
         if (!response.ok) {
@@ -61,57 +50,38 @@ async function searchModels(query) {
         }
 
         const data = await response.json();
-        displaySearchResults(data.models);
+        if (!data.models || data.models.length === 0) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+
+        searchResultsList.innerHTML = data.models.map(model => `
+            <div class="item">
+                <div class="content">
+                    <div class="header">${App.escapeHTML(model.name)}</div>
+                    <div class="description">
+                        ${model.tags ? model.tags.map(tag => `
+                            <button class="ui tiny basic button" data-model="${App.escapeHTML(model.name)}:${App.escapeHTML(tag)}">
+                                ${App.escapeHTML(tag)}
+                            </button>
+                        `).join('') : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        resultsContainer.style.display = 'block';
     } catch (error) {
-        console.error('Erreur lors de la recherche:', error);
+        App.showMessage('Error', error.message, true);
         if (resultsContainer) {
             resultsContainer.style.display = 'none';
         }
     }
-}
+};
 
-function displaySearchResults(models) {
-    const resultsContainer = document.querySelector('.results');
-    if (!resultsContainer) {
-        console.error('Container de résultats non trouvé: .results');
-        return;
-    }
-
-    if (!models || models.length === 0) {
-        resultsContainer.style.display = 'none';
-        return;
-    }
-
-    let html = '<div class="ui relaxed divided list">';
-
-    models.forEach(model => {
-        const name = model.name || '';
-        const description = model.description || '';
-        const modelSize = model.model_size || '';
-        const family = model.family || '';
-
-        html += `
-            <div class="item" onclick="selectModel('${name}')">
-                <div class="content">
-                    <div class="header">${name}</div>
-                    <div class="description">
-                        ${description}
-                        ${modelSize ? `<span class="ui tiny label">${modelSize}</span>` : ''}
-                        ${family ? `<span class="ui tiny label">${family}</span>` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    html += '</div>';
-    resultsContainer.innerHTML = html;
-    resultsContainer.style.display = 'block';
-}
-
-function selectModel(modelName) {
+App.selectModel = function(modelName) {
     const modelInput = document.getElementById('modelNameInput');
-    const resultsContainer = document.querySelector('.results');
+    const resultsContainer = document.querySelector('.ui.search-results');
 
     if (modelInput && modelName) {
         modelInput.value = modelName;
@@ -120,7 +90,6 @@ function selectModel(modelName) {
     if (resultsContainer) {
         resultsContainer.style.display = 'none';
     }
-}
+};
 
-// Initialiser la recherche au chargement de la page
-document.addEventListener('DOMContentLoaded', initModelSearch);
+document.addEventListener('DOMContentLoaded', App.initModelSearch);
