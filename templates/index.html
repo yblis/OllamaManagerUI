@@ -11,91 +11,101 @@
     </button>
 </div>
 
-<!-- Pull Model Form -->
-<div class="ui segment">
-    <h3 class="ui header" data-i18n="download_new_model">Télécharger un Nouveau Modèle</h3>
-    <div class="ui action input fluid">
-        <input type="text" id="modelNameInput" data-i18n="enter_model_name" placeholder="Entrez le nom du modèle (ex: llama2:7b)">
-        <button class="ui primary button" onclick="pullModel()" data-i18n="download">Télécharger</button>
-    </div>
-    <!-- Add progress bar -->
-    <div id="pullProgress" class="ui indicating progress" style="display: none;">
-        <div class="bar progress"></div>
-        <div class="label" data-i18n="downloading">Démarrage du téléchargement...</div>
-    </div>
-    <!-- Add search results section -->
-    <div class="ui search-results" style="margin-top: 1rem; display: none;">
-        <div class="ui relaxed divided list" id="searchResults">
-            <!-- Search results will be displayed here -->
+    
+    <!-- Pull Model Form -->
+    <div class="ui segment">
+        <h3 class="ui header">Télécharger un Nouveau Modèle</h3>
+        <div class="ui action input fluid">
+            <input type="text" id="modelNameInput" placeholder="Entrez le nom du modèle (ex: llama2:7b)">
+            <button class="ui primary button" onclick="pullModel()">Télécharger</button>
+        </div>
+        <!-- Add progress bar -->
+        <div id="pullProgress" class="ui indicating progress" style="display: none;">
+            <div class="bar progress"></div>
+            <div class="label">Démarrage du téléchargement...</div>
+        </div>
+        <!-- Add search results section -->
+        <div class="ui search-results" style="margin-top: 1rem; display: none;">
+            <div class="ui relaxed divided list" id="searchResults">
+                <!-- Search results will be displayed here -->
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Local Models -->
-<div class="ui segment">
-    <h3 class="ui header" data-i18n="local_models">Modèles Locaux</h3>
-    <div class="ui buttons batch-actions">
-        <button class="ui negative button" onclick="batchDeleteModels()">
-            <i class="trash icon"></i> <span data-i18n="delete_selection">Supprimer la Sélection</span>
-        </button>
-        <button class="ui teal button" onclick="batchConfigureModels()">
-            <i class="cog icon"></i> <span data-i18n="configure_selection">Configurer la Sélection</span>
-        </button>
-        <button class="ui olive button" onclick="compareSelectedModels()">
-            <i class="exchange icon"></i> <span data-i18n="compare_selection">Comparer la Sélection</span>
-        </button>
-        <button class="ui button" onclick="toggleAllModels()">
-            <i class="check square outline icon"></i> <span data-i18n="select_all">Tout Sélectionner</span>
-        </button>
-    </div>
-    <table class="ui celled table" id="localModels">
-        <thead>
-            <tr>
-                <th class="collapsing">
-                    <div class="ui fitted checkbox">
-                        <input type="checkbox" onclick="toggleAllModels()">
-                        <label></label>
-                    </div>
-                </th>
-                <th data-i18n="model_name">Nom du Modèle</th>
-                <th data-i18n="modified_date">Date de Modification</th>
-                <th data-i18n="size">Taille</th>
-                <th data-i18n="format">Format</th>
-                <th data-i18n="family">Famille</th>
-                <th data-i18n="parameters">Paramètres</th>
-                <th class="center aligned" data-i18n="actions">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Models will be populated here -->
-        </tbody>
-    </table>
-</div>
+    <!-- Overall Usage Statistics
+    <div class="ui segment">
+        <h3 class="ui header">Statistiques Globales d'Utilisation</h3>
+        <div id="overallStats" class="ui statistics">
+            Statistics will be populated here 
+        </div>
+    </div> -->
 
-<!-- Running Models -->
-<div class="ui segment">
-    <div class="ui clearing">
-        <h3 class="ui left floated header" data-i18n="running_models">Modèles en Cours d'Exécution</h3>
-        <button class="ui right floated button" onclick="refreshRunningModels()">
-            <i class="refresh icon"></i> <span data-i18n="refresh">Actualiser</span>
-        </button>
+    <!-- Local Models -->
+    <div class="ui segment">
+        <h3 class="ui header">Modèles Locaux</h3>
+        <div class="ui buttons batch-actions">
+            <button class="ui negative button" onclick="batchDeleteModels()">
+                <i class="trash icon"></i> Supprimer la Sélection
+            </button>
+            <button class="ui teal button" onclick="batchConfigureModels()">
+                <i class="cog icon"></i> Configurer la Sélection
+            </button>
+            <button class="ui olive button" onclick="compareSelectedModels()">
+                <i class="exchange icon"></i> Comparer la Sélection
+            </button>
+            <button class="ui button" onclick="toggleAllModels()">
+                <i class="check square outline icon"></i> Tout Sélectionner
+            </button>
+        </div>
+        <table class="ui celled table" id="localModels">
+            <thead>
+                <tr>
+                    <th class="collapsing">
+                        <div class="ui fitted checkbox">
+                            <input type="checkbox" onclick="toggleAllModels()">
+                            <label></label>
+                        </div>
+                    </th>
+                    <th>Nom du Modèle</th>
+                    <th>Date de Modification</th>
+                    <th>Taille</th>
+                    <th>Format</th>
+                    <th>Famille</th>
+                    <th>Paramètres</th>
+                    <th class="center aligned">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Models will be populated here -->
+            </tbody>
+        </table>
     </div>
-    <table class="ui celled table" id="runningModels">
-        <thead>
-            <tr>
-                <th data-i18n="model_name">Nom du Modèle</th>
-                <th data-i18n="modified_date">Date de Modification</th>
-                <th data-i18n="size">Taille</th>
-                <th data-i18n="format">Format</th>
-                <th data-i18n="family">Famille</th>
-                <th data-i18n="parameters">Paramètres</th>
-                <th class="center aligned" data-i18n="actions">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Running models will be populated here -->
-        </tbody>
-    </table>
+
+    <!-- Running Models -->
+    <div class="ui segment">
+        <div class="ui clearing">
+            <h3 class="ui left floated header">Modèles en Cours d'Exécution</h3>
+            <button class="ui right floated button" onclick="refreshRunningModels()">
+                <i class="refresh icon"></i> Actualiser
+            </button>
+        </div>
+        <table class="ui celled table" id="runningModels">
+            <thead>
+                <tr>
+                    <th>Nom du Modèle</th>
+                    <th>Date de Modification</th>
+                    <th>Taille</th>
+                    <th>Format</th>
+                    <th>Famille</th>
+                    <th>Paramètres</th>
+                    <th class="center aligned">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Running models will be populated here -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {% include "modals/settings.html" %}
@@ -108,7 +118,7 @@
 <div class="ui fullscreen modal" id="comparisonModal">
     <div class="header">
         <i class="exchange icon"></i>
-        <span data-i18n="compare_selection">Comparaison de Modèles</span>
+        Comparaison de Modèles
     </div>
     <div class="content">
         <div id="modelComparison" class="ui grid">
@@ -116,7 +126,7 @@
         </div>
     </div>
     <div class="actions">
-        <div class="ui positive button" data-i18n="close">Fermer</div>
+        <div class="ui positive button">Fermer</div>
     </div>
 </div>
 

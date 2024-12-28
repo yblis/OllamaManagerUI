@@ -2,31 +2,24 @@
 <div class="ui modal" id="settingsModal">
     <div class="header">
         <i class="cog icon"></i>
-        <span data-i18n="settings">Paramètres</span>
+        Paramètres
     </div>
     <div class="content">
         <form class="ui form">
             <div class="field">
-                <label data-i18n="server_url">URL du Serveur Ollama</label>
+                <label>URL du Serveur Ollama</label>
                 <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
             </div>
             <div class="field">
-                <label data-i18n="language">Langue</label>
-                <select class="ui dropdown" id="languageSelect" onchange="changeLanguage(this.value)">
-                    <option value="fr" data-i18n="french">Français</option>
-                    <option value="en" data-i18n="english">English</option>
-                </select>
-            </div>
-            <div class="field">
-                <label data-i18n="theme">Thème de l'interface</label>
-                <button class="ui circular icon button" onclick="toggleTheme()" type="button">
+                <label>Thème de l'interface</label>
+                <button class="ui circular icon button" onclick="toggleTheme()">
                     <i class="sun icon"></i>
                 </button>
             </div>
         </form>
     </div>
     <div class="actions">
-        <div class="ui cancel button" data-i18n="cancel">Annuler</div>
-        <div class="ui positive button" onclick="saveSettings()" data-i18n="save">Enregistrer</div>
+        <div class="ui cancel button">Annuler</div>
+        <div class="ui positive button" onclick="saveSettings()">Enregistrer</div>
     </div>
 </div>
