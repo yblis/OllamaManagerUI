@@ -4,6 +4,49 @@ let currentLang = localStorage.getItem('language') || 'fr';
 let searchTimeout = null;
 let selectedModels = new Set();
 
+// Global functions
+function showSettings() {
+    document.getElementById('ollamaUrl').value = ollamaUrl;
+    document.getElementById('languageSelect').value = currentLang;
+    $('#settingsModal').modal('show');
+}
+
+function saveSettings() {
+    const newUrl = document.getElementById('ollamaUrl').value.trim();
+    const newLang = document.getElementById('languageSelect').value;
+
+    if (newUrl) {
+        ollamaUrl = newUrl;
+        localStorage.setItem('ollamaUrl', ollamaUrl);
+    }
+
+    if (newLang !== currentLang) {
+        changeLanguage(newLang);
+    }
+
+    $('#settingsModal').modal('hide');
+    checkServerStatus();
+    refreshAll();
+}
+
+// Language management
+function changeLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('language', lang);
+    document.documentElement.setAttribute('lang', lang);
+
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (key) {
+            if (element.tagName === 'INPUT' && element.getAttribute('type') === 'text') {
+                element.placeholder = translations[lang][key] || key;
+            } else {
+                element.textContent = translations[lang][key] || key;
+            }
+        }
+    });
+}
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Set initial language
@@ -42,49 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
     checkServerStatus();
     setInterval(checkServerStatus, 30000);
 });
-
-// Language management
-function changeLanguage(lang) {
-    currentLang = lang;
-    localStorage.setItem('language', lang);
-    document.documentElement.setAttribute('lang', lang);
-
-    document.querySelectorAll('[data-i18n]').forEach(element => {
-        const key = element.getAttribute('data-i18n');
-        if (key) {
-            if (element.tagName === 'INPUT' && element.getAttribute('type') === 'text') {
-                element.placeholder = translations[lang][key] || key;
-            } else {
-                element.textContent = translations[lang][key] || key;
-            }
-        }
-    });
-}
-
-// Settings management
-function showSettings() {
-    document.getElementById('ollamaUrl').value = ollamaUrl;
-    document.getElementById('languageSelect').value = currentLang;
-    $('#settingsModal').modal('show');
-}
-
-function saveSettings() {
-    const newUrl = document.getElementById('ollamaUrl').value.trim();
-    const newLang = document.getElementById('languageSelect').value;
-
-    if (newUrl) {
-        ollamaUrl = newUrl;
-        localStorage.setItem('ollamaUrl', ollamaUrl);
-    }
-
-    if (newLang !== currentLang) {
-        changeLanguage(newLang);
-    }
-
-    $('#settingsModal').modal('hide');
-    checkServerStatus();
-    refreshAll();
-}
 
 // Theme management
 function setTheme(themeName) {
