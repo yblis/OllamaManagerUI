@@ -333,77 +333,53 @@ window.pullModel = async function() {
         }
     });
 
-    try {
-        const response = await fetch('/api/models/pull', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Ollama-URL': ollamaUrl
-            },
-            body: JSON.stringify({ name: modelName })
-        });
+    const xhr = new XMLHttpRequest();
 
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Échec du téléchargement du modèle');
+    // Setup progress handler
+    xhr.upload.onprogress = xhr.onprogress = function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            $(progress).progress('set percent', Math.round(percentComplete));
+            $(progress).progress('set label', `Téléchargement en cours: ${Math.round(percentComplete)}%`);
+        } else {
+            $(progress).progress('set label', `Téléchargement en cours: ${formatBytes(e.loaded)} reçus`);
         }
+    };
 
-        const contentLength = response.headers.get('Content-Length');
-        const total = parseInt(contentLength, 10);
-        let loaded = 0;
-
-        // Créer un nouveau ReadableStream
-        const stream = new ReadableStream({
-            start(controller) {
-                const reader = response.body.getReader();
-
-                async function push() {
-                    try {
-                        while (true) {
-                            const {done, value} = await reader.read();
-
-                            if (done) {
-                                controller.close();
-                                break;
-                            }
-
-                            loaded += value.length;
-                            const percent = (loaded / total) * 100;
-
-                            // Update progress bar
-                            $(progress).progress('set percent', Math.round(percent));
-                            $(progress).progress('set label', `Téléchargement en cours: ${Math.round(percent)}%`);
-
-                            controller.enqueue(value);
-                        }
-                    } catch (error) {
-                        controller.error(error);
-                    }
-                }
-
-                push();
-            }
-        });
-
-        // Attendre que le stream soit complètement lu
-        await new Response(stream).blob();
-
-        // Téléchargement terminé avec succès
-        $(progress).progress('set percent', 100);
-        $(progress).progress('set label', 'Téléchargement terminé');
-
-        showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
-        document.getElementById('modelNameInput').value = '';
-        refreshAll();
-    } catch (error) {
-        $(progress).progress('set percent', 0);
-        $(progress).progress('set label', 'Erreur de téléchargement');
-        showMessage('Erreur', error.message, true);
-    } finally {
+    // Setup completion handler
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            $(progress).progress('set percent', 100);
+            $(progress).progress('set label', 'Téléchargement terminé');
+            showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
+            document.getElementById('modelNameInput').value = '';
+            refreshAll();
+        } else {
+            const error = JSON.parse(xhr.responseText);
+            $(progress).progress('set percent', 0);
+            $(progress).progress('set label', 'Erreur de téléchargement');
+            showMessage('Erreur', error.error || 'Échec du téléchargement du modèle', true);
+        }
         setTimeout(() => {
             progress.style.display = 'none';
         }, 2000);
-    }
+    };
+
+    // Setup error handler
+    xhr.onerror = function() {
+        $(progress).progress('set percent', 0);
+        $(progress).progress('set label', 'Erreur de téléchargement');
+        showMessage('Erreur', 'Erreur de connexion au serveur', true);
+        setTimeout(() => {
+            progress.style.display = 'none';
+        }, 2000);
+    };
+
+    // Send request
+    xhr.open('POST', '/api/models/pull', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-Ollama-URL', ollamaUrl);
+    xhr.send(JSON.stringify({ name: modelName }));
 };
 
 
@@ -916,7 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Set up model name input events
-    const modelNameInput = document.getElementById('modelNameInput');
+    const modelNameInput = document.getElementById('modelNameInput);
     if (modelNameInput) {
         modelNameInput.addEventListener('input', (e) => searchModels(e.target));
         modelNameInput.addEventListener('blur', () => {
