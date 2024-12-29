@@ -71,6 +71,81 @@ window.showMessage = function(title, message, isError = false) {
     $('#messageModal').modal('show');
 };
 
+// Pull Model Function
+window.pullModel = function() {
+    const modelName = document.getElementById('modelNameInput').value.trim();
+    if (!modelName) {
+        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
+        return;
+    }
+
+    const progress = document.getElementById('pullProgress');
+    progress.style.display = 'block';
+
+    // Initialize progress bar with Semantic UI
+    $(progress).progress({
+        percent: 0,
+        text: {
+            active: 'Démarrage du téléchargement...',
+            success: 'Téléchargement terminé',
+            error: 'Erreur de téléchargement'
+        }
+    });
+
+    const xhr = new XMLHttpRequest();
+    let eventSource = null;
+
+    try {
+        eventSource = new EventSource('/api/models/pull');
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            if (data.status === 'downloading') {
+                $(progress).progress('set percent', Math.round(data.progress));
+                $(progress).progress('set label', `Téléchargement en cours: ${Math.round(data.progress)}%`);
+            } else if (data.status === 'success') {
+                $(progress).progress('set percent', 100);
+                $(progress).progress('set label', 'Téléchargement terminé');
+                showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
+                document.getElementById('modelNameInput').value = '';
+                refreshAll();
+                eventSource.close();
+            } else if (data.status === 'error') {
+                $(progress).progress('set percent', 0);
+                $(progress).progress('set label', 'Erreur de téléchargement');
+                showMessage('Erreur', data.error || 'Erreur lors du téléchargement', true);
+                eventSource.close();
+            }
+        };
+
+        eventSource.onerror = function() {
+            $(progress).progress('set percent', 0);
+            $(progress).progress('set label', 'Erreur de téléchargement');
+            showMessage('Erreur', 'Erreur de connexion au serveur', true);
+            eventSource.close();
+        };
+
+        // Send POST request to initiate download
+        xhr.open('POST', '/api/models/pull', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-Ollama-URL', ollamaUrl);
+        xhr.send(JSON.stringify({ name: modelName }));
+
+    } catch (error) {
+        if (eventSource) {
+            eventSource.close();
+        }
+        $(progress).progress('set percent', 0);
+        $(progress).progress('set label', 'Erreur de téléchargement');
+        showMessage('Erreur', error.message, true);
+    } finally {
+        setTimeout(() => {
+            progress.style.display = 'none';
+        }, 2000);
+    }
+};
+
 // Model management functions
 window.stopModel = async function(modelName) {
     if (!confirm(`Êtes-vous sûr de vouloir arrêter le modèle ${modelName} ?`)) {
@@ -313,75 +388,6 @@ window.selectModel = function(modelId) {
     document.querySelector('.ui.search-results').style.display = 'none';
 };
 
-window.pullModel = async function() {
-    const modelName = document.getElementById('modelNameInput').value.trim();
-    if (!modelName) {
-        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
-        return;
-    }
-
-    const progress = document.getElementById('pullProgress');
-    progress.style.display = 'block';
-
-    // Initialize progress bar with Semantic UI
-    $(progress).progress({
-        percent: 0,
-        text: {
-            active: 'Démarrage du téléchargement...',
-            success: 'Téléchargement terminé',
-            error: 'Erreur de téléchargement'
-        }
-    });
-
-    const xhr = new XMLHttpRequest();
-
-    // Setup progress handler
-    xhr.upload.onprogress = xhr.onprogress = function(e) {
-        if (e.lengthComputable) {
-            const percentComplete = (e.loaded / e.total) * 100;
-            $(progress).progress('set percent', Math.round(percentComplete));
-            $(progress).progress('set label', `Téléchargement en cours: ${Math.round(percentComplete)}%`);
-        } else {
-            $(progress).progress('set label', `Téléchargement en cours: ${formatBytes(e.loaded)} reçus`);
-        }
-    };
-
-    // Setup completion handler
-    xhr.onload = function() {
-        if (xhr.status === 200) {
-            $(progress).progress('set percent', 100);
-            $(progress).progress('set label', 'Téléchargement terminé');
-            showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
-            document.getElementById('modelNameInput').value = '';
-            refreshAll();
-        } else {
-            const error = JSON.parse(xhr.responseText);
-            $(progress).progress('set percent', 0);
-            $(progress).progress('set label', 'Erreur de téléchargement');
-            showMessage('Erreur', error.error || 'Échec du téléchargement du modèle', true);
-        }
-        setTimeout(() => {
-            progress.style.display = 'none';
-        }, 2000);
-    };
-
-    // Setup error handler
-    xhr.onerror = function() {
-        $(progress).progress('set percent', 0);
-        $(progress).progress('set label', 'Erreur de téléchargement');
-        showMessage('Erreur', 'Erreur de connexion au serveur', true);
-        setTimeout(() => {
-            progress.style.display = 'none';
-        }, 2000);
-    };
-
-    // Send request
-    xhr.open('POST', '/api/models/pull', true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('X-Ollama-URL', ollamaUrl);
-    xhr.send(JSON.stringify({ name: modelName }));
-};
-
 
 // Refresh functions
 window.refreshLocalModels = async function() {
@@ -483,19 +489,14 @@ window.refreshRunningModels = async function() {
         const data = await response.json();
         const tbody = document.querySelector('#runningModels tbody');
 
-        // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
+        // Trier les modèles par date de création
         const modelsWithDate = data.models.map(model => {
             const createdAt = new Date(model.created_at);
-            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
             return {
                 ...model,
-                formattedDate,
                 createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
             };
         });
-
-        // Trier les modèles par date de création
-        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
 
         tbody.innerHTML = modelsWithDate.map(model => `
             <tr>
@@ -892,7 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Set up model name input events
-    const modelNameInput = document.getElementById('modelNameInput);
+    const modelNameInput = document.getElementById('modelNameInput');
     if (modelNameInput) {
         modelNameInput.addEventListener('input', (e) => searchModels(e.target));
         modelNameInput.addEventListener('blur', () => {
@@ -905,8 +906,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Function to add a parameter in the config modal
-// Function to save the configuration of a model
-window.saveModelConfig = async function() {
+// Function to save the configuration of a modelwindow.saveModelConfig = async function() {
     const selectedModels = document.querySelectorAll('#selectedModels .item');
     const systemPrompt = document.getElementById('systemPrompt').value;
     const template = document.getElementById('template').value;

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, Response
 from ollama_client import OllamaClient
 import traceback
 import requests
@@ -45,6 +45,67 @@ def before_request():
 def index():
     return render_template('index.html', server_status=False)
 
+@app.route('/api/models/pull', methods=['POST'])
+@with_error_handling
+def pull_model():
+    model_name = request.json.get('name')
+    if not model_name:
+        return jsonify({
+            'error': 'Le nom du modèle est requis',
+            'status': 'validation_error'
+        }), 400
+
+    def generate_progress():
+        try:
+            url = f'{ollama_client.base_url}/api/pull'
+            response = requests.post(
+                url, 
+                headers=ollama_client._get_headers(),
+                json={'name': model_name},
+                stream=True
+            )
+
+            response.raise_for_status()
+            total_size = None
+            current_size = 0
+
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+
+                        # Si nous avons un statut de progression
+                        if 'total' in data and 'completed' in data:
+                            total_size = data['total']
+                            current_size = data['completed']
+                            progress = (current_size / total_size) * 100 if total_size else 0
+
+                            yield json.dumps({
+                                'status': 'downloading',
+                                'progress': progress,
+                                'current': current_size,
+                                'total': total_size
+                            }) + '\n'
+
+                        # Si nous avons un message de succès
+                        elif data.get('status') == 'success':
+                            yield json.dumps({
+                                'status': 'success',
+                                'message': f'Successfully pulled model {model_name}'
+                            }) + '\n'
+                            break
+
+                    except json.JSONDecodeError:
+                        continue
+
+        except requests.exceptions.RequestException as e:
+            yield json.dumps({
+                'status': 'error',
+                'error': str(e)
+            }) + '\n'
+
+    return Response(generate_progress(), mimetype='text/event-stream')
+
 @app.route('/api/server/url')
 def get_server_url():
     """Get the Ollama server URL from environment"""
@@ -78,14 +139,14 @@ def get_running_models():
 def stop_model():
     if not request.is_json:
         return jsonify({'error': 'Content-Type must be application/json'}), 400
-        
+
     model_name = request.json.get('name')
     if not model_name:
         return jsonify({
             'error': 'Le nom du modèle est requis',
             'status': 'validation_error'
         }), 400
-    
+
     result = ollama_client.stop_model(model_name)
     if not result.get('success'):
         return jsonify({
@@ -103,117 +164,13 @@ def delete_model():
             'error': 'Le nom du modèle est requis',
             'status': 'validation_error'
         }), 400
-    
+
     result = ollama_client.delete_model(model_name)
     if not result.get('success'):
         return jsonify({
             'error': result.get('error', 'Erreur inconnue'),
             'status': 'error'
         }), 500
-    return jsonify(result)
-
-@app.route('/api/models/pull', methods=['POST'])
-@with_error_handling
-def pull_model():
-    model_name = request.json.get('name')
-    if not model_name:
-        return jsonify({
-            'error': 'Le nom du modèle est requis',
-            'status': 'validation_error'
-        }), 400
-        
-    try:
-        url = f'{ollama_client.base_url}/api/pull'
-        response = requests.post(url, 
-            headers=ollama_client._get_headers(),
-            json={'name': model_name},
-            stream=True)
-        
-        response.raise_for_status()
-        
-        # Process the streaming response
-        for line in response.iter_lines():
-            if line:
-                try:
-                    data = json.loads(line)
-                    # If we get a success status, break the loop
-                    if data.get('status') == 'success':
-                        break
-                except json.JSONDecodeError:
-                    continue
-                    
-        return jsonify({'success': True, 'message': f'Successfully pulled model {model_name}'})
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/models/search', methods=['POST'])
-@with_error_handling
-def search_models():
-    keyword = request.json.get('keyword', '')
-    try:
-        # Use curl to get models directly
-        result = subprocess.run(['curl', '-s', 'https://ollama.com/library'], capture_output=True, text=True)
-        if result.returncode != 0:
-            return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
-            
-        # Extract model names using regex
-        pattern = r'(?<=<span>).*?(?=</span>)'
-        models = re.findall(pattern, result.stdout)
-        
-        # Filter models based on keyword
-        filtered_models = [model for model in models if keyword.lower() in model.lower()]
-        
-        # Common model size tags
-        size_tags = ['1b', '1.5b', '2b', '3b', '7b', '8b', '9b', '13b', '34b', '70b']
-        
-        # Prepare response with models and their tags
-        models_with_tags = [{'name': model, 'tags': size_tags} for model in filtered_models]
-        
-        return jsonify({'models': models_with_tags})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/models/stats', methods=['GET'])
-@with_error_handling
-def get_all_model_stats():
-    stats = ollama_client.get_model_stats()
-    return jsonify(stats)
-
-@app.route('/api/models/<model_name>/stats', methods=['GET'])
-@with_error_handling
-def get_model_stats(model_name):
-    return jsonify(ollama_client.get_model_stats(model_name))
-
-@app.route('/api/models/<model_name>/config', methods=['GET'])
-@with_error_handling
-def get_model_config(model_name):
-    config = ollama_client.get_model_config(model_name)
-    if 'error' in config:
-        return jsonify({'error': config['error']}), 500
-    return jsonify(config)
-
-
-@app.route('/api/models/<model_name>/config', methods=['POST'])
-@with_error_handling
-def save_model_config(model_name):
-    """Save model configuration"""
-    if not request.is_json:
-        return jsonify({'error': 'Content-Type must be application/json'}), 400
-        
-    data = request.json
-    result = ollama_client.save_model_config(
-        model_name,
-        system=data.get('system'),
-        template=data.get('template'),
-        parameters=data.get('parameters')
-    )
-    
-    if not result.get('success'):
-        return jsonify({
-            'error': result.get('error', 'Erreur inconnue'),
-            'status': 'error'
-        }), 500
-        
     return jsonify(result)
 
 @app.errorhandler(Exception)
