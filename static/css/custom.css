@@ -1006,3 +1006,52 @@ body {
 #modelComparison .ui.tiny.statistics .statistic > .label {
     font-size: 0.8rem !important;
 }
+
+/* Zone de recherche de modèles - Mode sombre */
+[data-theme="dark"] .ui.action.input input {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--input-border);
+}
+
+[data-theme="dark"] .ui.action.input input:focus {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-color: #2185d0;
+}
+
+[data-theme="dark"] .ui.search-results {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .ui.search-results .item {
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.8rem;
+    transition: background-color 0.2s ease;
+}
+
+[data-theme="dark"] .ui.search-results .item:last-child {
+    border-bottom: none;
+}
+
+[data-theme="dark"] .ui.search-results .item:hover {
+    background-color: var(--hover-bg);
+    cursor: pointer;
+}
+
+[data-theme="dark"] .ui.search-results .item .header {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+[data-theme="dark"] .ui.search-results .item .description {
+    color: var(--text-primary);
+    opacity: 0.8;
+}
+
+/* Amélioration de la visibilité du placeholder en mode sombre */
+[data-theme="dark"] .ui.action.input input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
