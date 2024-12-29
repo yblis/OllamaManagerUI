@@ -981,20 +981,22 @@ window.saveModelConfig = async function() {
     refreshAll();
 };
 window.addParameter = function() {
-    const parametersList = document.querySelector('.parameters-list');
+    const parametersList = document.getElementById('parametersList');
+    if (!parametersList) {
+        console.error('Element parametersList not found');
+        return;
+    }
+
     const newItem = document.createElement('div');
-    newItem.className = 'parameter-item';
-
-    const paramCount = document.querySelectorAll('.parameter-item').length + 1;
-
+    newItem.className = 'fields parameter-item';
     newItem.innerHTML = `
-        <div class="ui fluid input">
-            <input type="text" placeholder="Clé" class="param-key" />
+        <div class="field">
+            <input type="text" class="parameter-key" placeholder="Nom du paramètre">
         </div>
-        <div class="ui fluid input">
-            <input type="text" placeholder="Valeur" class="param-value" />
+        <div class="field">
+            <input type="text" class="parameter-value" placeholder="Valeur">
         </div>
-        <button class="ui icon button red" onclick="this.parentElement.remove()">
+        <button class="ui icon button negative" onclick="this.closest('.parameter-item').remove()">
             <i class="trash icon"></i>
         </button>
     `;
