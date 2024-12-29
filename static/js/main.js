@@ -348,51 +348,56 @@ window.pullModel = async function() {
             throw new Error(data.error || 'Échec du téléchargement du modèle');
         }
 
-        const reader = response.body.getReader();
         const contentLength = response.headers.get('Content-Length');
-        let receivedLength = 0;
-        let lastUpdate = Date.now();
-        const UPDATE_INTERVAL = 100; // Update every 100ms maximum
+        const total = parseInt(contentLength, 10);
+        let loaded = 0;
 
-        while (true) {
-            const { done, value } = await reader.read();
+        // Créer un nouveau ReadableStream
+        const stream = new ReadableStream({
+            start(controller) {
+                const reader = response.body.getReader();
 
-            if (done) {
-                $(progress).progress({
-                    percent: 100,
-                    text: {
-                        success: 'Téléchargement terminé'
+                async function push() {
+                    try {
+                        while (true) {
+                            const {done, value} = await reader.read();
+
+                            if (done) {
+                                controller.close();
+                                break;
+                            }
+
+                            loaded += value.length;
+                            const percent = (loaded / total) * 100;
+
+                            // Update progress bar
+                            $(progress).progress('set percent', Math.round(percent));
+                            $(progress).progress('set label', `Téléchargement en cours: ${Math.round(percent)}%`);
+
+                            controller.enqueue(value);
+                        }
+                    } catch (error) {
+                        controller.error(error);
                     }
-                });
-                break;
-            }
-
-            receivedLength += value.length;
-            const now = Date.now();
-
-            // Update progress bar at most every 100ms
-            if (now - lastUpdate >= UPDATE_INTERVAL) {
-                if (contentLength) {
-                    const percentage = (receivedLength / parseInt(contentLength, 10)) * 100;
-                    $(progress).progress('set percent', Math.round(percentage));
-                    $(progress).progress('set label', `Téléchargement en cours: ${Math.round(percentage)}%`);
-                } else {
-                    $(progress).progress('set label', `Téléchargement en cours: ${formatBytes(receivedLength)} reçus`);
                 }
-                lastUpdate = now;
+
+                push();
             }
-        }
+        });
+
+        // Attendre que le stream soit complètement lu
+        await new Response(stream).blob();
+
+        // Téléchargement terminé avec succès
+        $(progress).progress('set percent', 100);
+        $(progress).progress('set label', 'Téléchargement terminé');
 
         showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
         document.getElementById('modelNameInput').value = '';
         refreshAll();
     } catch (error) {
-        $(progress).progress({
-            percent: 0,
-            text: {
-                error: 'Erreur de téléchargement'
-            }
-        });
+        $(progress).progress('set percent', 0);
+        $(progress).progress('set label', 'Erreur de téléchargement');
         showMessage('Erreur', error.message, true);
     } finally {
         setTimeout(() => {
