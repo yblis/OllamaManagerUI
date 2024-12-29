@@ -321,11 +321,10 @@ window.pullModel = async function() {
     }
 
     const progress = document.getElementById('pullProgress');
-    const progressBar = progress.querySelector('.bar');
-    const progressLabel = progress.querySelector('.label');
     progress.style.display = 'block';
-    progressBar.style.width = '0%';
-    progressLabel.textContent = 'Démarrage du téléchargement...';
+    $(progress).progress({
+        percent: 0
+    });
 
     try {
         const response = await fetch('/api/models/pull', {
@@ -350,8 +349,12 @@ window.pullModel = async function() {
             const { done, value } = await reader.read();
 
             if (done) {
-                progressBar.style.width = '100%';
-                progressLabel.textContent = 'Téléchargement terminé';
+                $(progress).progress({
+                    percent: 100,
+                    text: {
+                        success: 'Téléchargement terminé'
+                    }
+                });
                 break;
             }
 
@@ -359,10 +362,18 @@ window.pullModel = async function() {
 
             if (contentLength) {
                 const percentage = (receivedLength / parseInt(contentLength, 10)) * 100;
-                progressBar.style.width = percentage + '%';
-                progressLabel.textContent = `Téléchargement en cours: ${Math.round(percentage)}%`;
+                $(progress).progress({
+                    percent: Math.round(percentage),
+                    text: {
+                        active: `Téléchargement en cours: ${Math.round(percentage)}%`
+                    }
+                });
             } else {
-                progressLabel.textContent = `Téléchargement en cours: ${formatBytes(receivedLength)} reçus`;
+                $(progress).progress({
+                    text: {
+                        active: `Téléchargement en cours: ${formatBytes(receivedLength)} reçus`
+                    }
+                });
             }
         }
 
@@ -370,8 +381,12 @@ window.pullModel = async function() {
         document.getElementById('modelNameInput').value = '';
         refreshAll();
     } catch (error) {
-        progressBar.style.width = '0%';
-        progressLabel.textContent = 'Erreur de téléchargement';
+        $(progress).progress({
+            percent: 0,
+            text: {
+                error: 'Erreur de téléchargement'
+            }
+        });
         showMessage('Erreur', error.message, true);
     } finally {
         setTimeout(() => {
@@ -905,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to add a parameter in the config modal
 // Function to save the configuration of a model
 window.saveModelConfig = async function() {
-    const selectedModels = documentquerySelectorAll('#selectedModels .item');
+    const selectedModels = document.querySelectorAll('#selectedModels .item');
     const systemPrompt = document.getElementById('systemPrompt').value;
     const template = document.getElementById('template').value;
 
