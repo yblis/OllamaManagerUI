@@ -19,19 +19,19 @@ async function checkServerStatus() {
     try {
         const statusDot = document.getElementById('statusDot');
         if (!statusDot) return;
-        
+
         const response = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        
+
         if (!response.ok) {
             statusDot.className = 'status-indicator offline';
             return;
         }
-        
+
         const data = await response.json();
         statusDot.className = 'status-indicator ' + (data.status === 'running' ? 'online' : 'offline');
-        
+
         // Update status check interval
         setTimeout(checkServerStatus, 5000);
     } catch (error) {
@@ -76,7 +76,7 @@ window.stopModel = async function(modelName) {
     if (!confirm(`Êtes-vous sûr de vouloir arrêter le modèle ${modelName} ?`)) {
         return;
     }
-    
+
     try {
         const response = await fetch('/api/models/stop', {
             method: 'POST',
@@ -86,12 +86,12 @@ window.stopModel = async function(modelName) {
             },
             body: JSON.stringify({ name: modelName })
         });
-        
+
         if (!response.ok) {
             const data = await response.json();
             throw new Error(data.error || 'Échec de l\'arrêt du modèle');
         }
-        
+
         showMessage('Succès', `Modèle ${modelName} arrêté avec succès`);
         await refreshRunningModels();  // Refresh only running models table
     } catch (error) {
@@ -106,20 +106,20 @@ window.showModelConfig = async function(modelName) {
         });
         if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
         const config = await response.json();
-        
+
         document.getElementById('selectedModels').innerHTML = `
             <div class="item">
                 <i class="cube icon"></i>
                 ${modelName}
             </div>
         `;
-        
+
         document.getElementById('systemPrompt').value = config.system || '';
         document.getElementById('template').value = config.template || '';
-        
+
         const parametersContainer = document.getElementById('parameters');
         parametersContainer.innerHTML = '';
-        
+
         Object.entries(config.parameters || {}).forEach(([key, value]) => {
             parametersContainer.innerHTML += `
                 <div class="ui segment">
@@ -134,7 +134,7 @@ window.showModelConfig = async function(modelName) {
                 </div>
             `;
         });
-        
+
         $('#configModal').modal('show');
     } catch (error) {
         showMessage('Erreur', error.message, true);
@@ -148,7 +148,7 @@ window.showModelStats = async function(modelName) {
         });
         if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
         const stats = await response.json();
-        
+
         document.getElementById('modelStats').innerHTML = `
             <div class="ui statistics">
                 <div class="statistic">
@@ -168,7 +168,7 @@ window.showModelStats = async function(modelName) {
                     <div class="label">Durée Totale</div>
                 </div>
             </div>
-            
+
             <div class="ui segment">
                 <h4 class="ui header">Opérations par Type</h4>
                 <div class="ui list">
@@ -184,7 +184,7 @@ window.showModelStats = async function(modelName) {
                 </div>
             </div>
         `;
-        
+
         $('#statsModal').modal('show');
     } catch (error) {
         showMessage('Erreur', error.message, true);
@@ -195,7 +195,7 @@ window.deleteModel = async function(modelName) {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer le modèle ${modelName} ?`)) {
         return;
     }
-    
+
     try {
         const response = await fetch('/api/models/delete', {
             method: 'POST',
@@ -205,12 +205,12 @@ window.deleteModel = async function(modelName) {
             },
             body: JSON.stringify({ name: modelName })
         });
-        
+
         if (!response.ok) {
             const data = await response.json();
             throw new Error(data.error || 'Échec de la suppression du modèle');
         }
-        
+
         showMessage('Succès', `Modèle ${modelName} supprimé avec succès`);
         refreshAll();
     } catch (error) {
@@ -237,11 +237,11 @@ function toggleTheme() {
 // Model search and pull
 let searchTimeout = null;
 
-window.searchModels = async function(input) {
+window.searchModels = function(input) {
     clearTimeout(searchTimeout);
     const searchResults = document.querySelector('.ui.search-results');
     const searchResultsList = document.getElementById('searchResults');
-    
+
     if (!input.value.trim()) {
         searchResults.style.display = 'none';
         return;
@@ -249,33 +249,57 @@ window.searchModels = async function(input) {
 
     searchTimeout = setTimeout(async () => {
         try {
-            const response = await fetch('/api/models/search', {
-                method: 'POST',
+            const query = input.value.trim();
+            const words = query.toLowerCase().split(/\s+/); // Sépare par espaces
+
+            const url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}`;
+
+            const response = await fetch(url, {
+                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-Ollama-URL': ollamaUrl
-                },
-                body: JSON.stringify({ keyword: input.value.trim() })
+                    'Content-Type': 'application/json'
+                }
             });
-            
+
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            
-            searchResultsList.innerHTML = data.models.map(model => `
-                <div class="item">
+
+            // Filtre uniquement si 'gguf' est dans les tags ET que tous les mots de la recherche se trouvent dans l'ID
+            const ggufModels = data.filter(model => {
+                if (!model.tags?.includes('gguf')) return false;
+                const modelIdLower = model.id.toLowerCase();
+                return words.every(word => modelIdLower.includes(word));
+            });
+
+            if (!ggufModels.length) {
+                searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
+                searchResults.style.display = 'block';
+                return;
+            }
+
+            // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
+            const modelsWithDate = ggufModels.map(model => {
+                const createdAt = new Date(model.createdAt);
+                const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
+                return {
+                    ...model,
+                    formattedDate,
+                    createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
+                };
+            });
+
+            // Trier les modèles par date de création
+            modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
+
+            searchResultsList.innerHTML = modelsWithDate.map(model => `
+                <div class="item" style="cursor: pointer;" onclick="selectModel('${model.id}')">
                     <div class="content">
-                        <div class="header">${model.name}</div>
-                        <div class="description">
-                            ${model.tags.map(tag => `
-                                <button class="ui tiny basic button" onclick="selectModel('${model.name}:${tag}')">
-                                    ${tag}
-                                </button>
-                            `).join('')}
-                        </div>
+                        <div class="header">${model.id}</div>
+                        <div class="description">Créé le: ${model.createdAt}</div>
                     </div>
                 </div>
             `).join('');
-            
+
             searchResults.style.display = 'block';
         } catch (error) {
             showMessage('Erreur', error.message, true);
@@ -283,8 +307,9 @@ window.searchModels = async function(input) {
     }, 300);
 };
 
-window.selectModel = function(modelName) {
-    document.getElementById('modelNameInput').value = modelName;
+window.selectModel = function(modelId) {
+    const modelInput = document.getElementById('modelNameInput');
+    modelInput.value = `hf.co/${modelId}`;
     document.querySelector('.ui.search-results').style.display = 'none';
 };
 
@@ -297,7 +322,8 @@ window.pullModel = async function() {
 
     const progress = document.getElementById('pullProgress');
     progress.style.display = 'block';
-    
+    progress.value = 0; // départ à 0
+
     try {
         const response = await fetch('/api/models/pull', {
             method: 'POST',
@@ -307,13 +333,47 @@ window.pullModel = async function() {
             },
             body: JSON.stringify({ name: modelName })
         });
-        
+
         if (!response.ok) {
             const data = await response.json();
             throw new Error(data.error || 'Échec du téléchargement du modèle');
         }
-        
-        const data = await response.json();
+
+        // Récupère la taille totale annoncée
+        const contentLength = response.headers.get('Content-Length');
+        if (!contentLength) {
+            // Si l'API ne fournit pas la taille, on ne peut pas calculer la progression
+            showMessage('Info', 'Le serveur ne fournit pas la progression de téléchargement', false);
+            return;
+        }
+
+        const total = parseInt(contentLength, 10);
+        let loaded = 0;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let receivedLength = 0; // total length of received chunks
+        let chunks = []; // array of received binary chunks (comprises of array buffers)
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                break; // Téléchargement terminé
+            }
+            chunks.push(value);
+            receivedLength += value.length;
+            const percent = Math.round((receivedLength / total) * 100);
+            progress.value = percent; // Mettre à jour la barre de progression
+        }
+
+        // Concatenate chunks and decode into text
+        let chunksAll = new Uint8Array(receivedLength);
+        let position = 0;
+        for (let chunk of chunks) {
+            chunksAll.set(chunk, position);
+            position += chunk.length;
+        }
+        const result = decoder.decode(chunksAll);
+
         showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
         document.getElementById('modelNameInput').value = '';
         refreshAll();
@@ -324,6 +384,7 @@ window.pullModel = async function() {
     }
 };
 
+
 // Refresh functions
 window.refreshLocalModels = async function() {
     try {
@@ -331,7 +392,7 @@ window.refreshLocalModels = async function() {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
         const serverStatus = await serverStatusResponse.json();
-        
+
         if (serverStatus.status !== 'running') {
             const tbody = document.querySelector('#localModels tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Serveur Ollama non connecté</td></tr>';
@@ -346,10 +407,25 @@ window.refreshLocalModels = async function() {
             tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Impossible de récupérer les modèles</td></tr>';
             return;
         }
-        
+
         const data = await response.json();
         const tbody = document.querySelector('#localModels tbody');
-        tbody.innerHTML = data.models.map(model => `
+
+        // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
+        const modelsWithDate = data.models.map(model => {
+            const createdAt = new Date(model.created_at);
+            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
+            return {
+                ...model,
+                formattedDate,
+                createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
+            };
+        });
+
+        // Trier les modèles par date de création
+        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
+
+        tbody.innerHTML = modelsWithDate.map(model => `
             <tr>
                 <td class="collapsing">
                     <div class="ui fitted checkbox">
@@ -358,7 +434,7 @@ window.refreshLocalModels = async function() {
                     </div>
                 </td>
                 <td>${model.name}</td>
-                <td>${new Date(model.modified_at).toLocaleString()}</td>
+                <td>${model.createdAt}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -390,7 +466,7 @@ window.refreshRunningModels = async function() {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
         const serverStatus = await serverStatusResponse.json();
-        
+
         if (serverStatus.status !== 'running') {
             const tbody = document.querySelector('#runningModels tbody');
             tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Serveur Ollama non connecté</td></tr>';
@@ -405,13 +481,28 @@ window.refreshRunningModels = async function() {
             tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Impossible de récupérer les modèles en cours d\'exécution</td></tr>';
             return;
         }
-        
+
         const data = await response.json();
         const tbody = document.querySelector('#runningModels tbody');
-        tbody.innerHTML = data.models.map(model => `
+
+        // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
+        const modelsWithDate = data.models.map(model => {
+            const createdAt = new Date(model.created_at);
+            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
+            return {
+                ...model,
+                formattedDate,
+                createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
+            };
+        });
+
+        // Trier les modèles par date de création
+        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
+
+        tbody.innerHTML = modelsWithDate.map(model => `
             <tr>
                 <td>${model.name}</td>
-                <td>${new Date(model.modified_at).toLocaleString()}</td>
+                <td>${model.createdAt}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -441,7 +532,7 @@ async function refreshStats() {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
         if (!response.ok) throw new Error('Failed to fetch stats');
-        
+
         const stats = await response.json();
         statsElement.innerHTML = `
             <div class="statistic">
@@ -477,7 +568,7 @@ window.toggleTheme = function() {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-    
+
     // Update theme button icon
     const themeIcon = document.querySelector('.theme-toggle i');
     if (themeIcon) {
@@ -490,7 +581,7 @@ window.toggleAllModels = function() {
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
     const masterCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
     const isChecked = masterCheckbox.checked;
-    
+
     checkboxes.forEach(checkbox => {
         checkbox.checked = isChecked;
         if (checkbox.dataset.modelName) {
@@ -503,12 +594,12 @@ window.toggleAllModels = function() {
 window.compareSelectedModels = function() {
     const selectedCheckboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]:checked');
     const selectedModels = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.modelName);
-    
+
     if (selectedModels.length < 2) {
         showMessage('Erreur', 'Veuillez sélectionner au moins deux modèles à comparer', true);
         return;
     }
-    
+
     // Populate comparison modal
     const comparisonContainer = document.getElementById('modelComparison');
     comparisonContainer.innerHTML = selectedModels.map(model => `
@@ -521,10 +612,10 @@ window.compareSelectedModels = function() {
             </div>
         </div>
     `).join('');
-    
+
     // Show the modal
     $('#comparisonModal').modal('show');
-    
+
     // Fetch and display details for each model
     selectedModels.forEach(async (model) => {
         try {
@@ -532,7 +623,7 @@ window.compareSelectedModels = function() {
                 headers: { 'X-Ollama-URL': ollamaUrl }
             });
             const details = await response.json();
-            
+
             document.getElementById(`details-${model}`).innerHTML = `
                 <div class="item">
                     <div class="header">Format</div>
@@ -560,13 +651,13 @@ window.compareSelectedModels = function() {
 // Format bytes to human readable size
 function formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    
+
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
@@ -584,105 +675,98 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check status and refresh data every 30 seconds
     setInterval(refreshAll, 30000);
 });
-async function refreshAll() {
-    await Promise.all([
-        refreshLocalModels(),
-        refreshRunningModels(),
-        refreshStats()
-    ]);
-}
 
 // Batch operations
 window.toggleModelSelection = function(checkbox, modelName) {
     // This function can be used to handle individual model selection
-let selectedModels = new Set();
+    let selectedModels = new Set();
 
-window.selectAllModels = function(checkbox) {
-    const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
-    const isChecked = checkbox.checked;
-    
-    selectedModels.clear(); // Réinitialiser la sélection
-    
-    checkboxes.forEach(cb => {
-        cb.checked = isChecked;
-        const modelName = cb.getAttribute('data-model-name');
-        if (isChecked) {
+    window.selectAllModels = function(checkbox) {
+        const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
+        const isChecked = checkbox.checked;
+
+        selectedModels.clear(); // Réinitialiser la sélection
+
+        checkboxes.forEach(cb => {
+            cb.checked = isChecked;
+            const modelName = cb.getAttribute('data-model-name');
+            if (isChecked) {
+                selectedModels.add(modelName);
+            }
+        });
+
+        updateCompareButton();
+    };
+
+    window.toggleModelSelection = function(checkbox, modelName) {
+        if (checkbox.checked) {
             selectedModels.add(modelName);
+        } else {
+            selectedModels.delete(modelName);
+            // Décocher la case "Tous Sélectionner" si un modèle est décoché
+            document.querySelector('#selectAllCheckbox').checked = false;
         }
-    });
-    
-    updateCompareButton();
-};
+        updateCompareButton();
+    };
 
-window.toggleModelSelection = function(checkbox, modelName) {
-    if (checkbox.checked) {
-        selectedModels.add(modelName);
-    } else {
-        selectedModels.delete(modelName);
-        // Décocher la case "Tous Sélectionner" si un modèle est décoché
-        document.querySelector('#selectAllCheckbox').checked = false;
-    }
-    updateCompareButton();
-};
-
-function updateCompareButton() {
-    const compareButton = document.querySelector('#compareButton');
-    if (compareButton) {
-        compareButton.disabled = selectedModels.size < 2;
-    }
-}
-
-window.compareSelectedModels = async function() {
-    if (selectedModels.size < 2) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins 2 modèles à comparer', true);
-        return;
+    function updateCompareButton() {
+        const compareButton = document.querySelector('#compareButton');
+        if (compareButton) {
+            compareButton.disabled = selectedModels.size < 2;
+        }
     }
 
-    try {
-        const modelsArray = Array.from(selectedModels);
-        const comparisons = [];
-        
-        for (let i = 0; i < modelsArray.length; i++) {
-            const modelStats = await fetch(`/api/models/${modelsArray[i]}/stats`, {
-                headers: { 'X-Ollama-URL': ollamaUrl }
-            }).then(res => res.json());
-            
-            comparisons.push({
-                name: modelsArray[i],
-                stats: modelStats
-            });
+    window.compareSelectedModels = async function() {
+        if (selectedModels.size < 2) {
+            showMessage('Erreur', 'Veuillez sélectionner au moins 2 modèles à comparer', true);
+            return;
         }
 
-        const comparisonContent = document.getElementById('modelComparison');
-        comparisonContent.innerHTML = comparisons.map(model => `
-            <div class="ui segment">
-                <h3 class="ui header">${model.name}</h3>
-                <div class="ui statistics tiny">
-                    <div class="statistic">
-                        <div class="value">${model.stats.total_operations || 0}</div>
-                        <div class="label">Opérations</div>
-                    </div>
-                    <div class="statistic">
-                        <div class="value">${model.stats.total_prompt_tokens || 0}</div>
-                        <div class="label">Tokens Prompt</div>
-                    </div>
-                    <div class="statistic">
-                        <div class="value">${model.stats.total_completion_tokens || 0}</div>
-                        <div class="label">Tokens Complétion</div>
-                    </div>
-                    <div class="statistic">
-                        <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
-                        <div class="label">Durée</div>
+        try {
+            const modelsArray = Array.from(selectedModels);
+            const comparisons = [];
+
+            for (let i = 0; i < modelsArray.length; i++) {
+                const modelStats = await fetch(`/api/models/${modelsArray[i]}/stats`, {
+                    headers: { 'X-Ollama-URL': ollamaUrl }
+                }).then(res => res.json());
+
+                comparisons.push({
+                    name: modelsArray[i],
+                    stats: modelStats
+                });
+            }
+
+            const comparisonContent = document.getElementById('modelComparison');
+            comparisonContent.innerHTML = comparisons.map(model => `
+                <div class="ui segment">
+                    <h3 class="ui header">${model.name}</h3>
+                    <div class="ui statistics tiny">
+                        <div class="statistic">
+                            <div class="value">${model.stats.total_operations || 0}</div>
+                            <div class="label">Opérations</div>
+                        </div>
+                        <div class="statistic">
+                            <div class="value">${model.stats.total_prompt_tokens || 0}</div>
+                            <div class="label">Tokens Prompt</div>
+                        </div>
+                        <div class="statistic">
+                            <div class="value">${model.stats.total_completion_tokens || 0}</div>
+                            <div class="label">Tokens Complétion</div>
+                        </div>
+                        <div class="statistic">
+                            <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
+                            <div class="label">Durée</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
 
-        $('#compareModal').modal('show');
-    } catch (error) {
-        showMessage('Erreur', error.message, true);
-    }
-};
+            $('#compareModal').modal('show');
+        } catch (error) {
+            showMessage('Erreur', error.message, true);
+        }
+    };
     console.log(`Model ${modelName} ${checkbox.checked ? 'selected' : 'deselected'}`);
 };
 
@@ -690,7 +774,7 @@ window.toggleAllModels = function() {
     const checkboxes = document.querySelectorAll('#localModels input[type="checkbox"]');
     const headerCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
     const isChecked = headerCheckbox.checked;
-    
+
     checkboxes.forEach(checkbox => {
         checkbox.checked = isChecked;
     });
@@ -704,7 +788,7 @@ window.batchConfigureModels = function() {
     }
 
     const selectedModelNames = Array.from(selectedModels).map(checkbox => checkbox.getAttribute('data-model-name'));
-    
+
     // Update selected models list in the modal
     document.getElementById('selectedModels').innerHTML = selectedModelNames.map(name => `
         <div class="item">
@@ -740,12 +824,12 @@ window.batchDeleteModels = async function() {
                 },
                 body: JSON.stringify({ name: modelName })
             });
-            
+
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Échec de la suppression');
             }
-            
+
             results.push({
                 model: modelName,
                 success: true,
@@ -778,13 +862,13 @@ window.batchDeleteModels = async function() {
 // Utility functions
 function formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    
+
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
@@ -792,10 +876,10 @@ function formatBytes(bytes, decimals = 2) {
 document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
-    
+
     checkServerStatus();
     refreshAll();
-    
+
     // Initialize all modals
     $('.ui.modal').modal({
         closable: false
@@ -808,7 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectAllModels(this);
         });
     }
-    
+
     // Set up model name input events
     const modelNameInput = document.getElementById('modelNameInput');
     if (modelNameInput) {
@@ -821,14 +905,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-// Fonction pour ajouter un paramètre dans la modale de configuration
-// Fonction pour sauvegarder la configuration d'un modèle
+
+// Function to add a parameter in the config modal
+// Function to save the configuration of a model
 window.saveModelConfig = async function() {
     const selectedModels = document.querySelectorAll('#selectedModels .item');
     const systemPrompt = document.getElementById('systemPrompt').value;
     const template = document.getElementById('template').value;
-    
-    // Récupérer tous les paramètres
+
+    // Get all parameters
     const parameters = {};
     document.querySelectorAll('#parameters .ui.segment').forEach(segment => {
         const inputs = segment.querySelectorAll('input');
@@ -841,7 +926,7 @@ window.saveModelConfig = async function() {
         }
     });
 
-    // Pour chaque modèle sélectionné
+    // For each selected model
     for (const modelDiv of selectedModels) {
         const modelName = modelDiv.textContent.trim();
         try {
@@ -877,9 +962,9 @@ window.addParameter = function() {
     const parametersList = document.querySelector('.parameters-list');
     const newItem = document.createElement('div');
     newItem.className = 'parameter-item';
-    
+
     const paramCount = document.querySelectorAll('.parameter-item').length + 1;
-    
+
     newItem.innerHTML = `
         <div class="ui fluid input">
             <input type="text" placeholder="Clé" class="param-key" />
@@ -891,7 +976,7 @@ window.addParameter = function() {
             <i class="trash icon"></i>
         </button>
     `;
-    
+
     parametersList.appendChild(newItem);
 };
 

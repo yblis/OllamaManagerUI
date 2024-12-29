@@ -239,11 +239,16 @@ body {
     background-color: var(--card-bg);
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 4px var(--shadow-color);
+
+    /* Augmente légèrement la hauteur minimum */
+    min-height: 200px;  /* Ajuste la valeur selon tes préférences */
+    padding: 1rem;      /* Un peu plus de padding pour « aérer » */
 }
 
 .ui.search-results .item:hover {
     background-color: var(--hover-bg);
 }
+
 
 .ui.statistics .statistic {
     background-color: var(--card-bg);
