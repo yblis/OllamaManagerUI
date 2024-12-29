@@ -321,8 +321,11 @@ window.pullModel = async function() {
     }
 
     const progress = document.getElementById('pullProgress');
+    const progressBar = progress.querySelector('.bar');
+    const progressLabel = progress.querySelector('.label');
     progress.style.display = 'block';
-    progress.value = 0; // départ à 0
+    progressBar.style.width = '0%';
+    progressLabel.textContent = 'Démarrage du téléchargement...';
 
     try {
         const response = await fetch('/api/models/pull', {
@@ -339,48 +342,41 @@ window.pullModel = async function() {
             throw new Error(data.error || 'Échec du téléchargement du modèle');
         }
 
-        // Récupère la taille totale annoncée
-        const contentLength = response.headers.get('Content-Length');
-        if (!contentLength) {
-            // Si l'API ne fournit pas la taille, on ne peut pas calculer la progression
-            showMessage('Info', 'Le serveur ne fournit pas la progression de téléchargement', false);
-            return;
-        }
-
-        const total = parseInt(contentLength, 10);
-        let loaded = 0;
         const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let receivedLength = 0; // total length of received chunks
-        let chunks = []; // array of received binary chunks (comprises of array buffers)
+        const contentLength = response.headers.get('Content-Length');
+        let receivedLength = 0;
 
         while (true) {
             const { done, value } = await reader.read();
-            if (done) {
-                break; // Téléchargement terminé
-            }
-            chunks.push(value);
-            receivedLength += value.length;
-            const percent = Math.round((receivedLength / total) * 100);
-            progress.value = percent; // Mettre à jour la barre de progression
-        }
 
-        // Concatenate chunks and decode into text
-        let chunksAll = new Uint8Array(receivedLength);
-        let position = 0;
-        for (let chunk of chunks) {
-            chunksAll.set(chunk, position);
-            position += chunk.length;
+            if (done) {
+                progressBar.style.width = '100%';
+                progressLabel.textContent = 'Téléchargement terminé';
+                break;
+            }
+
+            receivedLength += value.length;
+
+            if (contentLength) {
+                const percentage = (receivedLength / parseInt(contentLength, 10)) * 100;
+                progressBar.style.width = percentage + '%';
+                progressLabel.textContent = `Téléchargement en cours: ${Math.round(percentage)}%`;
+            } else {
+                progressLabel.textContent = `Téléchargement en cours: ${formatBytes(receivedLength)} reçus`;
+            }
         }
-        const result = decoder.decode(chunksAll);
 
         showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
         document.getElementById('modelNameInput').value = '';
         refreshAll();
     } catch (error) {
+        progressBar.style.width = '0%';
+        progressLabel.textContent = 'Erreur de téléchargement';
         showMessage('Erreur', error.message, true);
     } finally {
-        progress.style.display = 'none';
+        setTimeout(() => {
+            progress.style.display = 'none';
+        }, 2000);
     }
 };
 
@@ -909,7 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to add a parameter in the config modal
 // Function to save the configuration of a model
 window.saveModelConfig = async function() {
-    const selectedModels = document.querySelectorAll('#selectedModels .item');
+    const selectedModels = documentquerySelectorAll('#selectedModels .item');
     const systemPrompt = document.getElementById('systemPrompt').value;
     const template = document.getElementById('template').value;
 
