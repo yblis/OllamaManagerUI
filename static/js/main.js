@@ -322,8 +322,15 @@ window.pullModel = async function() {
 
     const progress = document.getElementById('pullProgress');
     progress.style.display = 'block';
+
+    // Initialize progress bar with Semantic UI
     $(progress).progress({
-        percent: 0
+        percent: 0,
+        text: {
+            active: 'Démarrage du téléchargement...',
+            success: 'Téléchargement terminé',
+            error: 'Erreur de téléchargement'
+        }
     });
 
     try {
@@ -344,6 +351,8 @@ window.pullModel = async function() {
         const reader = response.body.getReader();
         const contentLength = response.headers.get('Content-Length');
         let receivedLength = 0;
+        let lastUpdate = Date.now();
+        const UPDATE_INTERVAL = 100; // Update every 100ms maximum
 
         while (true) {
             const { done, value } = await reader.read();
@@ -359,21 +368,18 @@ window.pullModel = async function() {
             }
 
             receivedLength += value.length;
+            const now = Date.now();
 
-            if (contentLength) {
-                const percentage = (receivedLength / parseInt(contentLength, 10)) * 100;
-                $(progress).progress({
-                    percent: Math.round(percentage),
-                    text: {
-                        active: `Téléchargement en cours: ${Math.round(percentage)}%`
-                    }
-                });
-            } else {
-                $(progress).progress({
-                    text: {
-                        active: `Téléchargement en cours: ${formatBytes(receivedLength)} reçus`
-                    }
-                });
+            // Update progress bar at most every 100ms
+            if (now - lastUpdate >= UPDATE_INTERVAL) {
+                if (contentLength) {
+                    const percentage = (receivedLength / parseInt(contentLength, 10)) * 100;
+                    $(progress).progress('set percent', Math.round(percentage));
+                    $(progress).progress('set label', `Téléchargement en cours: ${Math.round(percentage)}%`);
+                } else {
+                    $(progress).progress('set label', `Téléchargement en cours: ${formatBytes(receivedLength)} reçus`);
+                }
+                lastUpdate = now;
             }
         }
 
