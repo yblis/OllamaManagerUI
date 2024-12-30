@@ -599,16 +599,15 @@ window.toggleTheme = function() {
 };
 
 // Toggle all model checkboxes
-window.toggleAllModels = function() {
+window.selectAllModels = function() {
+    console.log(gettext('Upload a New Model'));
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
     const masterCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
-    const isChecked = masterCheckbox.checked;
+    // const isChecked = masterCheckbox.checked;
 
+    masterCheckbox.checked = true; // !isChecked;
     checkboxes.forEach(checkbox => {
-        checkbox.checked = isChecked;
-        if (checkbox.dataset.modelName) {
-            toggleModelSelection(checkbox, checkbox.dataset.modelName);
-        }
+        checkbox.checked = true; // !isChecked;
     });
 };
 

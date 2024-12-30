@@ -1,10 +1,10 @@
 <!-- Model Stats Modal -->
 <div class="ui modal" id="statsModal">
-    <div class="header">Model Statistics</div>
+    <div class="header">{{ txts.model_statistics | safe }}</div>
     <div class="content">
         <div id="modelStats"></div>
     </div>
     <div class="actions">
-        <div class="ui positive button">Close</div>
+        <div class="ui positive button">{{ txts.close | safe }}</div>
     </div>
 </div>

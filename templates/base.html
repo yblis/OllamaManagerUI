@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionnaire de Modèles Ollama</title>
-    
+    <title>{{ txts.page_title | safe }}</title>
+
+    <script src="{{ url_for('babel_catalog') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/status.css') }}">
     <!-- Semantic UI -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">

@@ -3,110 +3,120 @@
 {% block content %}
 <div style="display: flex; align-items: center; justify-content: space-between;">
     <div style="display: flex; align-items: center;">
-        <h1 class="ui title">Gestionnaire Ollama</h1>
+        <h1 class="ui title">{{ txts.ollama_manager | safe }}</h1>
         <span class="status-indicator" id="statusDot"></span>
+    </div>
+    <div class="ui language-selector ">
+        <div class="ui clearing">
+        {% for language in AVAILABLE_LANGUAGES.items() %}
+            {% if CURRENT_LANGUAGE == language[0] %}
+                {{ language[1] }}
+            {% else %}
+                <button class="right floated" onclick="window.location.href='{{ url_for('set_language', language=language[0]) }}'" >{{ language[1] }}</button>
+            {%  endif %}
+        {% endfor %}
+        </div>
     </div>
     <button class="ui button" onclick="showSettings()">
         <i class="cog icon"></i>
     </button>
 </div>
 
-    <!-- Pull Model Form -->
-    <div class="ui segment">
-        <h3 class="ui header">Télécharger un Nouveau Modèle</h3>
-        <div class="ui action input fluid">
-            <input type="text" id="modelNameInput" placeholder="Entrez le nom du modèle (ex: llama2:7b)">
-            <button class="ui primary button" onclick="pullModel()">Télécharger</button>
-        </div>
-        <!-- Add progress bar -->
-        <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
-            <div class="bar">
-                <div class="progress"></div>
-            </div>
-            <div class="label">Démarrage du téléchargement...</div>
-        </div>
-        <!-- Add search results section -->
-        <div class="ui search-results" style="margin-top: 1rem; display: none;">
-            <div class="ui relaxed divided list" id="searchResults">
-                <!-- Search results will be displayed here -->
-            </div>
-        </div>
+<!-- Pull Model Form -->
+<div class="ui segment">
+    <h3 class="ui header">{{ txts.upload_a_new_model | safe }}</h3>
+    <div class="ui action input fluid">
+        <input type="text" id="modelNameInput" placeholder="{{ txts.enter_the_model_name|safe }}">
+        <button class="ui primary button" onclick="pullModel()">{{ txts.upload|safe }}</button>
     </div>
-
-    <!-- Overall Usage Statistics
-    <div class="ui segment">
-        <h3 class="ui header">Statistiques Globales d'Utilisation</h3>
-        <div id="overallStats" class="ui statistics">
-            Statistics will be populated here 
+    <!-- Add progress bar -->
+    <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
+        <div class="bar">
+            <div class="progress"></div>
         </div>
-    </div> -->
-
-    <!-- Local Models -->
-    <div class="ui segment">
-        <h3 class="ui header">Modèles Locaux</h3>
-        <div class="ui buttons batch-actions">
-            <button class="ui negative button" onclick="batchDeleteModels()">
-                <i class="trash icon"></i> Supprimer la Sélection
-            </button>
-            <button class="ui teal button" onclick="batchConfigureModels()">
-                <i class="cog icon"></i> Configurer la Sélection
-            </button>
-            <button class="ui olive button" onclick="compareSelectedModels()">
-                <i class="exchange icon"></i> Comparer la Sélection
-            </button>
-            <button class="ui button" onclick="toggleAllModels()">
-                <i class="check square outline icon"></i> Tout Sélectionner
-            </button>
-        </div>
-        <table class="ui celled table" id="localModels">
-            <thead>
-                <tr>
-                    <th class="collapsing">
-                        <div class="ui fitted checkbox">
-                            <input type="checkbox" onclick="toggleAllModels()">
-                            <label></label>
-                        </div>
-                    </th>
-                    <th>Nom du Modèle</th>
-                    <th>Date de Modification</th>
-                    <th>Taille</th>
-                    <th>Format</th>
-                    <th>Famille</th>
-                    <th>Paramètres</th>
-                    <th class="center aligned">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Models will be populated here -->
-            </tbody>
-        </table>
+        <div class="label">{{ txts.starting_the_download|safe }}</div>
     </div>
-
-    <!-- Running Models -->
-    <div class="ui segment">
-        <div class="ui clearing">
-            <h3 class="ui left floated header">Modèles en Cours d'Exécution</h3>
-            <button class="ui right floated button" onclick="refreshRunningModels()">
-                <i class="refresh icon"></i> Actualiser
-            </button>
-        </div>
-        <table class="ui celled table" id="runningModels">
-            <thead>
-                <tr>
-                    <th>Nom du Modèle</th>
-                    <th>Date de Modification</th>
-                    <th>Taille</th>
-                    <th>Format</th>
-                    <th>Famille</th>
-                    <th>Paramètres</th>
-                    <th class="center aligned">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Running models will be populated here -->
-            </tbody>
-        </table>
+    <!-- Add search results section -->
+    <div class="ui search-results" style="margin-top: 1rem; display: none;">
+        <div class="ui relaxed divided list" id="searchResults">
+            <!-- Search results will be displayed here -->
+        </div>S
     </div>
+</div>
+
+<!-- {{ txts.overall_usage_statistics | safe }}
+<div class="ui segment">
+    <h3 class="ui header">{{ txts.global_usage_statistics | safe }}</h3>
+    <div id="overallStats" class="ui statistics">
+        {{ txts.statistics_populate_here | safe }}
+    </div>
+</div> -->
+
+<!-- Local Models -->
+<div class="ui segment">
+    <h3 class="ui header">{{ txts.local_models | safe }}</h3>
+    <div class="ui buttons batch-actions">
+        <button class="ui negative button" onclick="batchDeleteModels()">
+            <i class="trash icon"></i> {{ txts.delete_selection | safe }}
+        </button>
+        <button class="ui teal button" onclick="batchConfigureModels()">
+            <i class="cog icon"></i> {{ txts.configure_selection | safe }}
+        </button>
+        <button class="ui olive button" onclick="compareSelectedModels()">
+            <i class="exchange icon"></i> {{ txts.compare_selection | safe }}
+        </button>
+        <button class="ui button" onclick="selectAllModels()">
+            <i class="check square outline icon"></i> {{ txts.select_all | safe }}
+        </button>
+    </div>
+    <table class="ui celled table" id="localModels">
+        <thead>
+            <tr>
+                <th class="collapsing">
+                    <div class="ui fitted checkbox">
+                        <input aria-label="{{ txts.toggle_all_models | safe }}" type="checkbox" onclick="toggleAllModels()">
+                        <label></label>
+                    </div>
+                </th>
+                <th>{{ txts.model_name | safe }}</th>
+                <th>{{ txts.date_modified | safe }}</th>
+                <th>{{ txts.size | safe }}</th>
+                <th>{{ txts.format | safe }}</th>
+                <th>{{ txts.family | safe }}</th>
+                <th>{{ txts.parameters | safe }}</th>
+                <th class="center aligned">{{ txts.actions | safe }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Models will be populated here -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Running Models -->
+<div class="ui segment">
+    <div class="ui clearing">
+        <h3 class="ui left floated header">{{ txts.running_models | safe }}</h3>
+        <button class="ui right floated button" onclick="refreshRunningModels()">
+            <i class="refresh icon"></i> {{ txts.refresh | safe }}
+        </button>
+    </div>
+    <table class="ui celled table" id="runningModels">
+        <thead>
+            <tr>
+                <th>{{ txts.model_name | safe }}</th>
+                <th>{{ txts.date_modified | safe }}</th>
+                <th>{{ txts.size | safe }}</th>
+                <th>{{ txts.format | safe }}</th>
+                <th>{{ txts.family | safe }}</th>
+                <th>{{ txts.parameters | safe }}</th>
+                <th class="center aligned">{{ txts.actions | safe }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Running models will be populated here -->
+        </tbody>
+    </table>
 </div>
 
 {% include "modals/settings.html" %}
@@ -119,7 +129,7 @@
 <div class="ui fullscreen modal" id="comparisonModal">
     <div class="header">
         <i class="exchange icon"></i>
-        Comparaison de Modèles
+        {{  txts.model_comparison | safe }}
     </div>
     <div class="content">
         <div id="modelComparison" class="ui grid">
@@ -127,7 +137,7 @@
         </div>
     </div>
     <div class="actions">
-        <div class="ui positive button">Fermer</div>
+        <div class="ui positive button">{{  txts.close | safe }}</div>
     </div>
 </div>
 

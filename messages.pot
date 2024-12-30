@@ -1,0 +1,151 @@
+# Translations template for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-12-29 23:39-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: app.py:35
+msgid "Ollama Model Manager"
+msgstr ""
+
+#: app.py:36
+msgid "Ollama Manager"
+msgstr ""
+
+#: app.py:37
+msgid "Ollama Server URL"
+msgstr ""
+
+#: app.py:38
+msgid "Interface Theme"
+msgstr ""
+
+#: app.py:39
+msgid "Upload a New Model"
+msgstr ""
+
+#: app.py:40
+msgid "Toggle All Models"
+msgstr ""
+
+#: app.py:41
+msgid "Model Comparison"
+msgstr ""
+
+#: app.py:42
+msgid "Upload"
+msgstr ""
+
+#: app.py:43
+msgid "Save"
+msgstr ""
+
+#: app.py:44
+msgid "Cancel"
+msgstr ""
+
+#: app.py:45
+msgid "Close"
+msgstr ""
+
+#: app.py:46
+msgid "Message"
+msgstr ""
+
+#: app.py:47
+msgid "OK"
+msgstr ""
+
+#: app.py:48
+msgid "Running Models"
+msgstr ""
+
+#: app.py:49
+msgid "Starting the download..."
+msgstr ""
+
+#: app.py:50
+msgid "Enter the model name (ex: llama2:7b)"
+msgstr ""
+
+#: app.py:51
+msgid "Model Name"
+msgstr ""
+
+#: app.py:52
+msgid "Date Modified"
+msgstr ""
+
+#: app.py:53
+msgid "Size"
+msgstr ""
+
+#: app.py:54
+msgid "Format"
+msgstr ""
+
+#: app.py:55
+msgid "Family"
+msgstr ""
+
+#: app.py:56
+msgid "Parameters"
+msgstr ""
+
+#: app.py:57
+msgid "Actions"
+msgstr ""
+
+#: app.py:58
+msgid "Refresh"
+msgstr ""
+
+#: app.py:59
+msgid "Select All"
+msgstr ""
+
+#: app.py:60
+msgid "Compare Selected"
+msgstr ""
+
+#: app.py:61
+msgid "Configure Selected"
+msgstr ""
+
+#: app.py:62
+msgid "Delete Selected"
+msgstr ""
+
+#: app.py:63
+msgid "Overall Usage Statistics"
+msgstr ""
+
+#: app.py:64
+msgid "Global Usage Statistics"
+msgstr ""
+
+#: app.py:65
+msgid "Model Statistics"
+msgstr ""
+
+#: app.py:66
+msgid "Local Models"
+msgstr ""
+
+#: app.py:67
+msgid "Statistics will populate here"
+msgstr ""
+
