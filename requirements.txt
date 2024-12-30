@@ -1,6 +1,6 @@
 Flask==3.1.0
 Flask-Babel==4.0.0
-Flask-Babel-JS==1.0.2
+Flask-Babel-JS @ git+https://github.com/BornSupercharged/Flask-Babel-JS@master
 requests==2.32.3
 python-dotenv==1.0.0
 SQLAlchemy==2.0.36

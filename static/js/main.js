@@ -149,35 +149,36 @@ window.showModelStats = async function(modelName) {
         if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
         const stats = await response.json();
 
+        let operationsText = gettext('Operation(s)');
         document.getElementById('modelStats').innerHTML = `
             <div class="ui statistics">
                 <div class="statistic">
                     <div class="value">${stats.total_operations || 0}</div>
-                    <div class="label">Opérations Totales</div>
+                    <div class="label">`+gettext('Total Operations')+`</div>
                 </div>
                 <div class="statistic">
                     <div class="value">${stats.total_prompt_tokens || 0}</div>
-                    <div class="label">Tokens de Prompt</div>
+                    <div class="label">`+gettext('Total Prompt Tokens')+`</div>
                 </div>
                 <div class="statistic">
                     <div class="value">${stats.total_completion_tokens || 0}</div>
-                    <div class="label">Tokens de Complétion</div>
+                    <div class="label">`+gettext('Total Complete Tokens')+`</div>
                 </div>
                 <div class="statistic">
                     <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
-                    <div class="label">Durée Totale</div>
+                    <div class="label">`+gettext('Total Duration')+`</div>
                 </div>
             </div>
 
             <div class="ui segment">
-                <h4 class="ui header">Opérations par Type</h4>
+                <h4 class="ui header">`+gettext('Operations by Type')+`</h4>
                 <div class="ui list">
                     ${Object.entries(stats.operations_by_type || {}).map(([type, count]) => `
                         <div class="item">
                             <i class="right triangle icon"></i>
                             <div class="content">
                                 <div class="header">${type}</div>
-                                <div class="description">${count} opération(s)</div>
+                                <div class="description">${count} `+operationsText+`</div>
                             </div>
                         </div>
                     `).join('')}
@@ -192,7 +193,9 @@ window.showModelStats = async function(modelName) {
 };
 
 window.deleteModel = async function(modelName) {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le modèle ${modelName} ?`)) {
+    let deleteConfirmText = gettext('Are you sure you want to delete this model?');
+    if (!confirm(deleteConfirmText
+        + `\n${modelName}`)) {
         return;
     }
 
@@ -208,10 +211,11 @@ window.deleteModel = async function(modelName) {
 
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Échec de la suppression du modèle');
+            let failureText = gettext('Failed to delete the model');
+            throw new Error(data.error || failureText);
         }
 
-        showMessage('Succès', `Modèle ${modelName} supprimé avec succès`);
+        showMessage(gettext('Success'), gettext('Model')+` ${modelName} `+gettext('successfully deleted'));
         refreshAll();
     } catch (error) {
         showMessage('Erreur', error.message, true);
@@ -464,13 +468,13 @@ window.refreshLocalModels = async function() {
                 <td class="center aligned">
                     <div class="ui tiny buttons">
                         <button class="ui button" onclick="showModelConfig('${model.name}')">
-                            <i class="cog icon"></i> Config
+                            <i class="cog icon"></i> `+gettext('Config')+`
                         </button>
                         <button class="ui teal button" onclick="showModelStats('${model.name}')">
-                            <i class="chart bar icon"></i> Stats
+                            <i class="chart bar icon"></i> `+gettext('Stats')+`
                         </button>
                         <button class="ui negative button" onclick="deleteModel('${model.name}')">
-                            <i class="trash icon"></i> Supprimer
+                            <i class="trash icon"></i> `+gettext('Delete')+`
                         </button>
                     </div>
                 </td>
@@ -535,7 +539,7 @@ window.refreshRunningModels = async function() {
                     </button>
                 </td>
             </tr>
-        `).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
+        `).join('') || '<tr><td colspan="7" class="center aligned">'+gettext('No Models Running')+'</td></tr>';
     } catch (error) {
         console.error('Error refreshing running models:', error);
         showMessage('Erreur', error.message, true);
@@ -559,19 +563,19 @@ async function refreshStats() {
         statsElement.innerHTML = `
             <div class="statistic">
                 <div class="value">${stats.total_operations || 0}</div>
-                <div class="label">Opérations Totales</div>
+                <div class="label">`+gettext('Total Operations')+`</div>
             </div>
             <div class="statistic">
                 <div class="value">${stats.total_prompt_tokens || 0}</div>
-                <div class="label">Tokens de Prompt</div>
+                <div class="label">`+gettext('Total Prompt Tokens')+`</div>
             </div>
             <div class="statistic">
                 <div class="value">${stats.total_completion_tokens || 0}</div>
-                <div class="label">Tokens de Complétion</div>
+                <div class="label">`+gettext('Total Completion Tokens')+`</div>
             </div>
             <div class="statistic">
                 <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
-                <div class="label">Durée Totale</div>
+                <div class="label">`+gettext('Total Duration')+`</div>
             </div>
         `;
     } catch (error) {
@@ -766,19 +770,19 @@ window.toggleModelSelection = function(checkbox, modelName) {
                     <div class="ui statistics tiny">
                         <div class="statistic">
                             <div class="value">${model.stats.total_operations || 0}</div>
-                            <div class="label">Opérations</div>
+                            <div class="label">`+gettext('Total Operations')+`</div>
                         </div>
                         <div class="statistic">
                             <div class="value">${model.stats.total_prompt_tokens || 0}</div>
-                            <div class="label">Tokens Prompt</div>
+                            <div class="label">`+gettext('Total Prompt Tokens')+`</div>
                         </div>
                         <div class="statistic">
                             <div class="value">${model.stats.total_completion_tokens || 0}</div>
-                            <div class="label">Tokens Complétion</div>
+                            <div class="label">`+gettext('Total Completion Tokens')+`</div>
                         </div>
                         <div class="statistic">
                             <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
-                            <div class="label">Durée</div>
+                            <div class="label">`+gettext('Total Duration')+`</div>
                         </div>
                     </div>
                 </div>

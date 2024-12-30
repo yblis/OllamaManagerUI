@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-12-30 01:34-0600\n"
+"POT-Creation-Date: 2024-12-30 02:24-0600\n"
 "PO-Revision-Date: 2024-12-29 21:42-0600\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -18,7 +18,72 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: static/js/main.js:620
+#: static/js/main.js:152
+msgid "Operation(s)"
+msgstr "Opération(s)"
+
+#: static/js/main.js:157 static/js/main.js:566 static/js/main.js:773
+msgid "Total Operations"
+msgstr "Opérations Totales"
+
+#: static/js/main.js:161 static/js/main.js:570 static/js/main.js:777
+msgid "Total Prompt Tokens"
+msgstr "Tokens de Prompt"
+
+#: static/js/main.js:165
+msgid "Total Complete Tokens"
+msgstr "Tokens de Complétion"
+
+#: static/js/main.js:169 static/js/main.js:578 static/js/main.js:785
+msgid "Total Duration"
+msgstr "Durée Totale"
+
+#: static/js/main.js:174
+msgid "Operations by Type"
+msgstr "Opérations par Type"
+
+#: static/js/main.js:196
+msgid "Are you sure you want to delete this model?"
+msgstr "Êtes-vous sûr de vouloir supprimer le modèle?"
+
+#: static/js/main.js:214
+#, fuzzy
+msgid "Failed to delete the model"
+msgstr "Échec de la suppression du modèle"
+
+#: static/js/main.js:218
+msgid "Success"
+msgstr "Succès"
+
+#: static/js/main.js:218
+msgid "Model"
+msgstr "Modèle"
+
+#: static/js/main.js:218
+msgid "successfully deleted"
+msgstr "supprimé avec succès"
+
+#: static/js/main.js:471
+msgid "Config"
+msgstr "Config"
+
+#: static/js/main.js:474
+msgid "Stats"
+msgstr "Stats"
+
+#: static/js/main.js:477
+msgid "Delete"
+msgstr "Supprimer"
+
+#: static/js/main.js:542
+msgid "No Models Running"
+msgstr "Aucun Modèle en cours d'Exécution"
+
+#: static/js/main.js:574 static/js/main.js:781
+msgid "Total Completion Tokens"
+msgstr "Tokens de Complétion"
+
+#: static/js/main.js:624
 msgid "Please select at least two models to compare"
 msgstr "Veuillez sélectionner au moins deux modèles à comparer"
 
@@ -83,7 +148,6 @@ msgid "Toggle All Models"
 msgstr "Basculer tous les Modèles"
 
 #: templates/index.html:81 templates/index.html:107
-#, fuzzy
 msgid "Model Name"
 msgstr "Nom du Modèle"
 
@@ -104,7 +168,7 @@ msgid "Family"
 msgstr "Famille"
 
 #: templates/index.html:86 templates/index.html:112
-#: templates/modals/settings.html:5
+#: templates/modals/config.html:18 templates/modals/settings.html:5
 msgid "Parameters"
 msgstr "Paramètres"
 
@@ -128,6 +192,22 @@ msgstr "Comparaison de Modèles"
 #: templates/modals/stats.html:8
 msgid "Close"
 msgstr "Fermer"
+
+#: templates/modals/batch_results.html:3
+msgid "Batch Operation Results"
+msgstr "Résultats des Opérations par lots"
+
+#: templates/modals/config.html:3
+msgid "Model Configuration"
+msgstr "Configuration du Modèles"
+
+#: templates/modals/config.html:10
+msgid "System Prompt"
+msgstr "Invite Système"
+
+#: templates/modals/config.html:14
+msgid "Template"
+msgstr "Modèle"
 
 #: templates/modals/config.html:23
 msgid "Add Parameter"
@@ -158,7 +238,6 @@ msgid "Interface Theme"
 msgstr "Thème de l'interface"
 
 #: templates/modals/stats.html:3
-#, fuzzy
 msgid "Model Statistics"
 msgstr "Statistiques du Modèle"
 

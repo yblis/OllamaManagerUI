@@ -1,21 +1,21 @@
 <!-- Model Config Modal -->
 <div class="ui modal" id="configModal">
-    <div class="header">Model Configuration</div>
+    <div class="header">{{  gettext('Model Configuration') }}</div>
     <div class="content">
         <div id="selectedModels" class="ui list">
             <!-- Selected models will be listed here -->
         </div>
         <form class="ui form">
             <div class="field">
-                <label>System Prompt</label>
+                <label>{{ gettext('System Prompt') }}</label>
                 <textarea id="systemPrompt" rows="3"></textarea>
             </div>
             <div class="field">
-                <label>Template</label>
+                <label>{{ gettext('Template') }}</label>
                 <textarea id="template" rows="3"></textarea>
             </div>
             <div class="field">
-                <label>Parameters</label>
+                <label>{{ gettext('Parameters') }}</label>
                 <div id="parameters" class="ui segments">
                     <!-- Parameters will be populated here -->
                 </div>
