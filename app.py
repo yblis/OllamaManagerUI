@@ -31,42 +31,6 @@ babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
 babel_js = BabelJS(app)
 ollama_client = OllamaClient()
 
-txts = {
-    'page_title': lazy_gettext('Ollama Model Manager'),
-    'ollama_manager': lazy_gettext('Ollama Manager'),
-    'ollama_server_url': lazy_gettext('Ollama Server URL'),
-    'interface_theme': lazy_gettext('Interface Theme'),
-    'upload_a_new_model': lazy_gettext('Upload a New Model'),
-    'toggle_all_models': lazy_gettext('Toggle All Models'),
-    'model_comparison': lazy_gettext('Model Comparison'),
-    'upload': lazy_gettext('Upload'),
-    'save': lazy_gettext('Save'),
-    'cancel': lazy_gettext('Cancel'),
-    'close': lazy_gettext('Close'),
-    'message': lazy_gettext('Message'),
-    'ok': lazy_gettext('OK'),
-    'running_models': lazy_gettext('Running Models'),
-    'starting_the_download': lazy_gettext('Starting the download...'),
-    'enter_the_model_name': lazy_gettext('Enter the model name (ex: llama2:7b)'),
-    'model_name': lazy_gettext('Model Name'),
-    'date_modified': lazy_gettext('Date Modified'),
-    'size': lazy_gettext('Size'),
-    'format': lazy_gettext('Format'),
-    'family': lazy_gettext('Family'),
-    'parameters': lazy_gettext('Parameters'),
-    'actions': lazy_gettext('Actions'),
-    'refresh': lazy_gettext('Refresh'),
-    'select_all': lazy_gettext('Select All'),
-    'compare_selection': lazy_gettext('Compare Selected'),
-    'configure_selection': lazy_gettext('Configure Selected'),
-    'delete_selection': lazy_gettext('Delete Selected'),
-    'overall_usage_statistics': lazy_gettext('Overall Usage Statistics'),
-    'global_usage_statistics': lazy_gettext('Global Usage Statistics'),
-    'model_statistics': lazy_gettext('Model Statistics'),
-    'local_models': lazy_gettext('Local Models'),
-    'statistics_populate_here': lazy_gettext('Statistics will populate here'),
-}
-
 app.config['LANGUAGES'] =  {
     'en': 'English',
     'fr': 'French',
@@ -112,7 +76,7 @@ def before_request():
 
 @app.route('/')
 def index():
-    return render_template('index.html', server_status=False, txts=txts)
+    return render_template('index.html', server_status=False)
 
 @app.route('/language=<language>')
 def set_language(language=None):

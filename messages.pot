@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-12-29 23:39-0600\n"
+"POT-Creation-Date: 2024-12-30 01:06-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,135 +17,145 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: app.py:35
+#: static/js/main.js:620
+msgid "Please select at least two models to compare"
+msgstr ""
+
+#: templates/base.html:6
 msgid "Ollama Model Manager"
 msgstr ""
 
-#: app.py:36
+#: templates/index.html:6
 msgid "Ollama Manager"
 msgstr ""
 
-#: app.py:37
-msgid "Ollama Server URL"
-msgstr ""
-
-#: app.py:38
-msgid "Interface Theme"
-msgstr ""
-
-#: app.py:39
+#: templates/index.html:27
 msgid "Upload a New Model"
 msgstr ""
 
-#: app.py:40
-msgid "Toggle All Models"
-msgstr ""
-
-#: app.py:41
-msgid "Model Comparison"
-msgstr ""
-
-#: app.py:42
-msgid "Upload"
-msgstr ""
-
-#: app.py:43
-msgid "Save"
-msgstr ""
-
-#: app.py:44
-msgid "Cancel"
-msgstr ""
-
-#: app.py:45
-msgid "Close"
-msgstr ""
-
-#: app.py:46
-msgid "Message"
-msgstr ""
-
-#: app.py:47
-msgid "OK"
-msgstr ""
-
-#: app.py:48
-msgid "Running Models"
-msgstr ""
-
-#: app.py:49
-msgid "Starting the download..."
-msgstr ""
-
-#: app.py:50
+#: templates/index.html:29
 msgid "Enter the model name (ex: llama2:7b)"
 msgstr ""
 
-#: app.py:51
-msgid "Model Name"
+#: templates/index.html:30
+msgid "Upload"
 msgstr ""
 
-#: app.py:52
-msgid "Date Modified"
+#: templates/index.html:37
+msgid "Starting the download..."
 msgstr ""
 
-#: app.py:53
-msgid "Size"
-msgstr ""
-
-#: app.py:54
-msgid "Format"
-msgstr ""
-
-#: app.py:55
-msgid "Family"
-msgstr ""
-
-#: app.py:56
-msgid "Parameters"
-msgstr ""
-
-#: app.py:57
-msgid "Actions"
-msgstr ""
-
-#: app.py:58
-msgid "Refresh"
-msgstr ""
-
-#: app.py:59
-msgid "Select All"
-msgstr ""
-
-#: app.py:60
-msgid "Compare Selected"
-msgstr ""
-
-#: app.py:61
-msgid "Configure Selected"
-msgstr ""
-
-#: app.py:62
-msgid "Delete Selected"
-msgstr ""
-
-#: app.py:63
+#: templates/index.html:47
 msgid "Overall Usage Statistics"
 msgstr ""
 
-#: app.py:64
+#: templates/index.html:49
 msgid "Global Usage Statistics"
 msgstr ""
 
-#: app.py:65
-msgid "Model Statistics"
+#: templates/index.html:51
+msgid "Statistics will populate here"
 msgstr ""
 
-#: app.py:66
+#: templates/index.html:57
 msgid "Local Models"
 msgstr ""
 
-#: app.py:67
-msgid "Statistics will populate here"
+#: templates/index.html:60
+msgid "Delete Selected"
+msgstr ""
+
+#: templates/index.html:63
+msgid "Configure Selected"
+msgstr ""
+
+#: templates/index.html:66
+msgid "Compare Selected"
+msgstr ""
+
+#: templates/index.html:69
+msgid "Select All"
+msgstr ""
+
+#: templates/index.html:77
+msgid "Toggle All Models"
+msgstr ""
+
+#: templates/index.html:81 templates/index.html:107
+msgid "Model Name"
+msgstr ""
+
+#: templates/index.html:82 templates/index.html:108
+msgid "Date Modified"
+msgstr ""
+
+#: templates/index.html:83 templates/index.html:109
+msgid "Size"
+msgstr ""
+
+#: templates/index.html:84 templates/index.html:110
+msgid "Format"
+msgstr ""
+
+#: templates/index.html:85 templates/index.html:111
+msgid "Family"
+msgstr ""
+
+#: templates/index.html:86 templates/index.html:112
+#: templates/modals/settings.html:5
+msgid "Parameters"
+msgstr ""
+
+#: templates/index.html:87 templates/index.html:113
+msgid "Actions"
+msgstr ""
+
+#: templates/index.html:99
+msgid "Running Models"
+msgstr ""
+
+#: templates/index.html:101
+msgid "Refresh"
+msgstr ""
+
+#: templates/index.html:132
+msgid "Model Comparison"
+msgstr ""
+
+#: templates/index.html:140 templates/modals/batch_results.html:10
+#: templates/modals/stats.html:8
+msgid "Close"
+msgstr ""
+
+#: templates/modals/config.html:23
+msgid "Add Parameter"
+msgstr ""
+
+#: templates/modals/config.html:29 templates/modals/settings.html:22
+msgid "Cancel"
+msgstr ""
+
+#: templates/modals/config.html:30 templates/modals/settings.html:23
+msgid "Save"
+msgstr ""
+
+#: templates/modals/message.html:5
+msgid "Message"
+msgstr ""
+
+#: templates/modals/message.html:11
+msgid "OK"
+msgstr ""
+
+#: templates/modals/settings.html:10
+msgid "Ollama Server URL"
+msgstr ""
+
+#: templates/modals/settings.html:14
+msgid "Interface Theme"
+msgstr ""
+
+#: templates/modals/stats.html:3
+msgid "Model Statistics"
 msgstr ""
 

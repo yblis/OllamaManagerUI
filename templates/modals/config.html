@@ -20,13 +20,13 @@
                     <!-- Parameters will be populated here -->
                 </div>
                 <button type="button" class="ui small primary button" onclick="addParameter()">
-                    <i class="plus icon"></i> Add Parameter
+                    <i class="plus icon"></i> {{  gettext('Add Parameter') }}
                 </button>
             </div>
         </form>
     </div>
     <div class="actions">
-        <div class="ui negative button">Cancel</div>
-        <div class="ui positive button" onclick="saveModelConfig()">Save</div>
+        <div class="ui negative button">{{  gettext('Cancel') }}</div>
+        <div class="ui positive button" onclick="saveModelConfig()">{{  gettext('Save') }}</div>
     </div>
 </div>

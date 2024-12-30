@@ -2,16 +2,16 @@
 <div class="ui modal" id="settingsModal">
     <div class="header">
         <i class="cog icon"></i>
-        {{ txts.parameters | safe }}
+        {{ gettext('Parameters') }}
     </div>
     <div class="content">
         <form class="ui form">
             <div class="field">
-                <label>{{  txts.ollama_server_url|safe }}</label>
+                <label>{{  gettext('Ollama Server URL') }}</label>
                 <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
             </div>
             <div class="field">
-                <label>{{  txts.interface_theme|safe }}</label>
+                <label>{{  gettext('Interface Theme') }}</label>
                 <button class="ui circular icon button" onclick="toggleTheme()">
                     <i class="sun icon"></i>
                 </button>
@@ -19,7 +19,7 @@
         </form>
     </div>
     <div class="actions">
-        <div class="ui cancel button">{{ txts.cancel | safe }}</div>
-        <div class="ui positive button" onclick="saveSettings()">{{  txts.save|safe }}</div>
+        <div class="ui cancel button">{{ gettext('Cancel') }}</div>
+        <div class="ui positive button" onclick="saveSettings()">{{  gettext('Save') }}</div>
     </div>
 </div>

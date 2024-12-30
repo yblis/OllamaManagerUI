@@ -2,12 +2,12 @@
 <div class="ui modal" id="messageModal">
     <div class="header">
         <i class="info circle icon"></i>
-        <span id="modalTitle">{{ txts.message | safe }}</span>
+        <span id="modalTitle">{{ gettext('Message') }}</span>
     </div>
     <div class="content">
         <p id="modalMessage"></p>
     </div>
     <div class="actions">
-        <div class="ui positive button">{{ txts.ok | safe }}</div>
+        <div class="ui positive button">{{ gettext('OK') }}</div>
     </div>
 </div>

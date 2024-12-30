@@ -600,7 +600,7 @@ window.toggleTheme = function() {
 
 // Toggle all model checkboxes
 window.selectAllModels = function() {
-    console.log(gettext('Upload a New Model'));
+    console.log
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
     const masterCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
     // const isChecked = masterCheckbox.checked;
@@ -617,7 +617,8 @@ window.compareSelectedModels = function() {
     const selectedModels = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.modelName);
 
     if (selectedModels.length < 2) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins deux modèles à comparer', true);
+        let errorMessage = gettext('Please select at least two models to compare')
+        showMessage('Erreur', errorMessage, true);
         return;
     }
 
