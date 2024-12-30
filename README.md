@@ -1,6 +1,6 @@
 # Gestionnaire de Modèles Ollama
 
-![Interface du Gestionnaire de Modèles Ollama](image.png)
+![Interface du Gestionnaire de Modèles Ollama](attached_assets/image_1735502375301.png)
 
 ## Description
 Une interface web pour gérer vos modèles Ollama, construite avec Flask et Semantic UI.
@@ -50,6 +50,32 @@ L'application sera accessible à l'adresse http://localhost:5000
 - Gérez vos modèles via l'interface intuitive
 - Consultez les statistiques d'utilisation
 - Configurez vos modèles individuellement ou en lot
+
+## Python Virtual Environment
+```
+source venv/bin/activate
+```
+
+## Translations
+1. To generate the translation file for all the strings in the project
+```
+pybabel extract -F babel.cfg -k lazy_gettext -o messages.pot .
+```
+
+2. To create a brand new translation for a new language
+```
+pybabel init -i messages.pot -d translations -l fr
+```
+
+3. To update the translation file with new translations
+```
+pybabel update -i messages.pot -d translations
+```
+
+4. Re-compile the translations
+```
+pybabel compile -d translations
+```
 
 ## Contribution
 Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
