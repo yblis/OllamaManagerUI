@@ -77,20 +77,21 @@ window.changeLanguage = async function(lang) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ language: lang })
+            body: JSON.stringify({ language: lang }),
+            credentials: 'same-origin'  // Important: Include credentials for cookies
         });
 
         const data = await response.json();
+        console.log('Language change response:', data);
 
         if (!response.ok) {
             throw new Error(data.error || 'Failed to change language');
         }
 
-        console.log('Language change response:', data);
-
         if (data.success) {
-            // Force reload the page to apply new language
-            window.location.reload();
+            console.log('Language change successful, reloading page...');
+            // Force a hard reload to ensure new language is applied
+            window.location.href = window.location.href;
         } else {
             throw new Error(data.error || 'Unknown error occurred');
         }

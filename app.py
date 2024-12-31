@@ -11,6 +11,13 @@ import json
 from translations import t, get_translation, set_language, get_available_languages, DEFAULT_LANGUAGE
 
 app = Flask(__name__)
+# Use a more secure configuration for session cookies
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=86400  # 24 hours
+)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_key_123')  # Required for session
 ollama_client = OllamaClient()
 
@@ -39,9 +46,14 @@ def with_error_handling(f):
 @app.before_request
 def before_request():
     global ollama_client
+
+    # Debug: Print all session data
+    print("Current session data:", dict(session))
+
     # Initialize language if not set
     if 'language' not in session:
         session['language'] = DEFAULT_LANGUAGE
+        session.modified = True
         print(f"Initialized default language: {DEFAULT_LANGUAGE}")
 
     # First try to get URL from headers, then environment, then default
@@ -60,7 +72,10 @@ def before_request():
 
 @app.route('/')
 def index():
-    print(f"Current language: {session.get('language', 'Not set')}")
+    # Debug: Print current language and session info
+    print(f"Current language from session: {session.get('language', 'Not set')}")
+    print(f"All cookies: {request.cookies}")
+    print(f"Session cookie: {request.cookies.get('session')}")
     return render_template('index.html')
 
 @app.route('/api/language', methods=['POST'])
@@ -82,8 +97,13 @@ def change_language():
         if lang not in available_languages:
             return jsonify({'error': f'Invalid language code. Available languages: {", ".join(available_languages)}'}), 400
 
+        # Update session language
         session['language'] = lang
+        session.modified = True
+
+        # Debug: Print updated session data
         print(f"Language changed to: {lang}")
+        print("Updated session data:", dict(session))
 
         return jsonify({
             'success': True,
