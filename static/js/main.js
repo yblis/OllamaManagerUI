@@ -475,8 +475,8 @@ async function refreshLocalModels() {
         console.log('Received models data:', data.models); // Debug log
 
         tbody.innerHTML = data.models.map(model => {
-            console.log('Processing model:', model.name, 'created_at:', model.created_at); // Debug log
-            const date = new Date(model.created_at);
+            console.log('Processing model:', model.name, 'modified_at:', model.modified_at); // Debug log
+            const date = new Date(model.modified_at);
             const formattedDate = isNaN(date.getTime()) ? 'Date inconnue' : date.toLocaleDateString('fr-FR');
 
             return `
@@ -542,8 +542,8 @@ async function refreshRunningModels() {
         console.log('Received running models data:', data.models); // Debug log
 
         tbody.innerHTML = data.models.map(model => {
-            console.log('Processing running model:', model.name, 'created_at:', model.created_at); // Debug log
-            const date = new Date(model.created_at);
+            console.log('Processing running model:', model.name, 'modified_at:', model.modified_at); // Debug log
+            const date = new Date(model.modified_at);
             const formattedDate = isNaN(date.getTime()) ? 'Date inconnue' : date.toLocaleDateString('fr-FR');
 
             return `
@@ -924,7 +924,7 @@ function formatBytes(bytes, decimals = 2) {
 
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB','TB'];
 
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
