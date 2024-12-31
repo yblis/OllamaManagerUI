@@ -447,6 +447,26 @@ window.pullModel = async function() {
 
 
 // Refresh functions
+function formatDate(dateStr) {
+    if (!dateStr) return 'Date inconnue';
+
+    try {
+        // Parse the ISO date string
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return 'Date inconnue';
+
+        // Format date as DD/MM/YYYY
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch (error) {
+        console.error('Error formatting date:', dateStr, error);
+        return 'Date inconnue';
+    }
+}
+
 async function refreshLocalModels() {
     try {
         const serverStatusResponse = await fetch('/api/server/status', {
@@ -476,8 +496,7 @@ async function refreshLocalModels() {
 
         tbody.innerHTML = data.models.map(model => {
             console.log('Processing model:', model.name, 'modified_at:', model.modified_at); // Debug log
-            const date = new Date(model.modified_at);
-            const formattedDate = isNaN(date.getTime()) ? 'Date inconnue' : date.toLocaleDateString('fr-FR');
+            const formattedDate = formatDate(model.modified_at);
 
             return `
             <tr>
@@ -543,8 +562,7 @@ async function refreshRunningModels() {
 
         tbody.innerHTML = data.models.map(model => {
             console.log('Processing running model:', model.name, 'modified_at:', model.modified_at); // Debug log
-            const date = new Date(model.modified_at);
-            const formattedDate = isNaN(date.getTime()) ? 'Date inconnue' : date.toLocaleDateString('fr-FR');
+            const formattedDate = formatDate(model.modified_at);
 
             return `
             <tr>
