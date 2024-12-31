@@ -1001,11 +1001,11 @@ window.addParameter = function() {
     newSegment.innerHTML = `
         <div class="two fields">
             <div class="field">
-                <input type="text" class="parameter-key" placeholder="Parameter Name">
+                <input type="text" class="parameter-key" placeholder="`+gettext('Parameter Name')+`">
             </div>
             <div class="field">
                 <div class="ui right labeled input">
-                    <input type="text" class="parameter-value" placeholder="Value">
+                    <input type="text" class="parameter-value" placeholder="`+gettext('Value')+`">
                     <button class="ui icon button negative" onclick="removeParameter(this)">
                         <i class="trash icon"></i>
                     </button>
@@ -1027,7 +1027,7 @@ window.saveModelConfig = async function() {
     const selectedModelsList = document.getElementById('selectedModels');
     const modelItems = selectedModelsList.getElementsByClassName('item');
     if (modelItems.length === 0) {
-        showMessage('Error', 'No models selected', true);
+        showMessage(gettext('Error'), gettext('No models selected'), true);
         return;
     }
 
@@ -1063,14 +1063,15 @@ window.saveModelConfig = async function() {
 
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.error || `Failed to update config for ${modelName}`);
+            let failureText = gettext('Failed to save the configuration');
+            throw new Error(data.error || failureText+`: ${modelName}`);
         }
 
         $('#configModal').modal('hide');
-        showMessage('Success', 'Model configuration updated successfully');
+        showMessage(gettext('Success'), gettext('Model configuration') +` ${modelName} `+ gettext('saved successfully'));
         refreshAll();
     } catch (error) {
-        showMessage('Error', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 

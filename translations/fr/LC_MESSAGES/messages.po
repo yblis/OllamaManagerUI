@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-12-31 08:33-0600\n"
+"POT-Creation-Date: 2024-12-31 08:45-0600\n"
 "PO-Revision-Date: 2024-12-29 21:42-0600\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -27,6 +27,7 @@ msgid "Failed to stop the model"
 msgstr "Échec de l'arrêt du modèle"
 
 #: static/js/main.js:96 static/js/main.js:219 static/js/main.js:401
+#: static/js/main.js:1071
 msgid "Success"
 msgstr "Succès"
 
@@ -43,6 +44,7 @@ msgstr "arrêté avec succès"
 #: static/js/main.js:407 static/js/main.js:486 static/js/main.js:546
 #: static/js/main.js:625 static/js/main.js:761 static/js/main.js:807
 #: static/js/main.js:826 static/js/main.js:847 static/js/main.js:992
+#: static/js/main.js:1030 static/js/main.js:1074
 msgid "Error"
 msgstr "Erreur"
 
@@ -185,6 +187,30 @@ msgstr "Êtes-vous sûr de vouloir supprimer"
 #: static/js/main.js:852
 msgid "model(s)"
 msgstr "modèle(s)"
+
+#: static/js/main.js:1004
+msgid "Parameter Name"
+msgstr "Nom du paramètre"
+
+#: static/js/main.js:1008
+msgid "Value"
+msgstr "Valeur"
+
+#: static/js/main.js:1030
+msgid "No models selected"
+msgstr "Aucun modèle sélectionné"
+
+#: static/js/main.js:1066
+msgid "Failed to save the configuration"
+msgstr "Échec de la sauvegarde de la configuration"
+
+#: static/js/main.js:1071
+msgid "Model configuration"
+msgstr "Configuration du modèle"
+
+#: static/js/main.js:1071
+msgid "saved successfully"
+msgstr "sauvegardée avec succès"
 
 #: templates/base.html:6
 msgid "Ollama Model Manager"
@@ -336,18 +362,6 @@ msgstr "Thème de l'interface"
 msgid "Model Statistics"
 msgstr "Statistiques du Modèle"
 
-#~ msgid "Failed to save the configuration"
-#~ msgstr "Échec de la sauvegarde de la configuration"
-
-#~ msgid "Model configuration"
-#~ msgstr "Configuration du modèle"
-
-#~ msgid "saved successfully"
-#~ msgstr "sauvegardée avec succès"
-
 #~ msgid "Error saving configuration for"
 #~ msgstr "Erreur lors de la sauvegarde de la configuration pour"
-
-#~ msgid "Parameter name"
-#~ msgstr "Nom du paramètre"
 
