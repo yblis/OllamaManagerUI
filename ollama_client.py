@@ -28,7 +28,7 @@ class OllamaClient:
         """Generic method to handle requests with retry mechanism"""
         if endpoint.startswith('/'):
             endpoint = endpoint[1:]
-        
+
         url = f'{self.base_url}/{endpoint}'
         retries = 0
         last_error = None
@@ -38,11 +38,11 @@ class OllamaClient:
             try:
                 kwargs['timeout'] = kwargs.get('timeout', 30)
                 kwargs['headers'] = {**self._get_headers(), **kwargs.get('headers', {})}
-                
+
                 response = method(url, **kwargs)
                 if response.status_code == 404:
                     return {'models': []} if 'tags' in endpoint or 'ps' in endpoint else {}
-                    
+
                 response.raise_for_status()
                 return response.json() if response.content else {}
 
@@ -63,6 +63,68 @@ class OllamaClient:
 
         return {'error': last_error}
 
+    def save_model_config(self, model_name, system=None, template=None, parameters=None):
+        """Save model configuration by creating a new custom model"""
+        try:
+            # Build Modelfile content
+            modelfile = f"FROM {model_name}\n"
+
+            # Add parameters if provided
+            if parameters:
+                for key, value in parameters.items():
+                    modelfile += f'PARAMETER {key} {value}\n'
+
+            # Add system prompt if provided
+            if system:
+                modelfile += f'SYSTEM """{system}"""\n'
+
+            # Add template if provided    
+            if template:
+                modelfile += f'TEMPLATE """{template}"""\n'
+
+            print(f"Creating model with Modelfile:\n{modelfile}")  # Debug log
+
+            # Create new model using Ollama API with streaming response handling
+            url = f'{self.base_url}/api/create'
+            response = requests.post(
+                url,
+                headers=self._get_headers(),
+                json={
+                    'name': model_name,
+                    'modelfile': modelfile
+                },
+                stream=True
+            )
+
+            response.raise_for_status()
+
+            # Process the streaming response
+            error = None
+            status = None
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        if 'error' in data:
+                            error = data['error']
+                            break
+                        if 'status' in data:
+                            status = data['status']
+                            if status == 'success':
+                                break
+                    except json.JSONDecodeError:
+                        continue
+
+            if error:
+                return {'success': False, 'error': error}
+
+            return {'success': True, 'message': f'Configuration du modèle {model_name} mise à jour avec succès'}
+
+        except requests.exceptions.RequestException as e:
+            return {'success': False, 'error': str(e)}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
     def check_server(self):
         """Check if Ollama server is running with caching"""
         current_time = time.time()
@@ -73,7 +135,7 @@ class OllamaClient:
             if not self.base_url:
                 self._server_status = False
                 return False
-                
+
             response = requests.get(
                 f'{self.base_url}/api/tags',
                 headers=self._get_headers(),
@@ -108,7 +170,7 @@ class OllamaClient:
             running_models = self.list_running()
             if 'error' in running_models:
                 return {'success': False, 'error': running_models['error']}
-                
+
             if not any(model['name'] == model_name for model in running_models.get('models', [])):
                 return {'success': True, 'message': f'Le modèle {model_name} n\'est pas en cours d\'exécution'}
 
@@ -118,7 +180,7 @@ class OllamaClient:
                 'api/generate',
                 json={'model': model_name, 'prompt': '', 'keep_alive': '0s'}
             )
-            
+
             if 'error' in response:
                 return {'success': False, 'error': response['error']}
 
@@ -127,7 +189,7 @@ class OllamaClient:
             running_models = self.list_running()
             if 'error' in running_models:
                 return {'success': False, 'error': running_models['error']}
-                
+
             if not any(model['name'] == model_name for model in running_models.get('models', [])):
                 return {'success': True, 'message': f'Le modèle {model_name} a été arrêté avec succès'}
             else:
@@ -186,7 +248,7 @@ class OllamaClient:
         start = modelfile.find('TEMPLATE')
         if start == -1:
             return ""
-        
+
         template_line = modelfile[start:].split('\n')[0]
         template = template_line.split('"')[1] if '"' in template_line else ""
         return template
@@ -195,50 +257,7 @@ class OllamaClient:
         start = modelfile.find('SYSTEM')
         if start == -1:
             return ""
-        
+
         system_line = modelfile[start:].split('\n')[0]
         system = system_line.split('SYSTEM', 1)[1].strip()
         return system
-
-
-def save_model_config(self, model_name, system=None, template=None, parameters=None):
-    """Save model configuration by creating a new custom model"""
-    try:
-        # Get existing model config
-        current_config = self.get_model_config(model_name)
-        if 'error' in current_config:
-            return {'error': current_config['error']}
-            
-        # Build Modelfile content
-        modelfile = f"FROM {model_name}\n\n"
-        
-        # Add system prompt if provided
-        if system:
-            modelfile += f'SYSTEM """\n{system}\n"""\n\n'
-            
-        # Add template if provided    
-        if template:
-            modelfile += f'TEMPLATE """\n{template}\n"""\n\n'
-            
-        # Add parameters if provided
-        if parameters:
-            for key, value in parameters.items():
-                modelfile += f'PARAMETER {key} {value}\n'
-        
-        # Create new model using Ollama API
-        response = self._handle_request(
-            requests.post,
-            'api/create',
-            json={
-                'name': model_name,
-                'modelfile': modelfile
-            }
-        )
-        
-        if 'error' in response:
-            return {'success': False, 'error': response['error']}
-            
-        return {'success': True, 'message': f'Configuration du modèle {model_name} mise à jour avec succès'}
-        
-    except Exception as e:
-        return {'success': False, 'error': str(e)}

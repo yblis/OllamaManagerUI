@@ -17,16 +17,19 @@
             <div class="field">
                 <label>{{ gettext('Parameters') }}</label>
                 <div id="parameters" class="ui segments">
-                    <!-- Parameters will be populated here -->
+                    <!-- Parameters will be dynamically added here -->
                 </div>
-                <button type="button" class="ui small primary button" onclick="addParameter()">
-                    <i class="plus icon"></i> {{  gettext('Add Parameter') }}
-                </button>
+                <div class="ui basic segment">
+                    <button type="button" class="ui small primary labeled icon button" onclick="addParameter()">
+                        <i class="plus icon"></i>
+                        {{ gettext('Add Parameter') }}
+                    </button>
+                </div>
             </div>
         </form>
     </div>
     <div class="actions">
-        <div class="ui negative button">{{  gettext('Cancel') }}</div>
-        <div class="ui positive button" onclick="saveModelConfig()">{{  gettext('Save') }}</div>
+        <div class="ui cancel button">{{ gettext('Cancel') }}</div>
+        <div class="ui positive button" onclick="saveModelConfig()">{{ gettext('Save') }}</div>
     </div>
 </div>

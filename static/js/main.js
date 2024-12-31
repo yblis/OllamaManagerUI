@@ -277,7 +277,7 @@ window.searchModels = function(input) {
             });
 
             if (!ggufModels.length) {
-                searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
+                searchResultsList.innerHTML = '<div class="item">'+gettext('No models found')+'</div>';
                 searchResults.style.display = 'block';
                 return;
             }
@@ -605,7 +605,6 @@ window.toggleTheme = function() {
 
 // Toggle all model checkboxes
 window.selectAllModels = function() {
-    console.log
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
     const masterCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
     // const isChecked = masterCheckbox.checked;
@@ -701,6 +700,18 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshAll();
     // Check status and refresh data every 30 seconds
     setInterval(refreshAll, 30000);
+
+    // Set up model name input events
+    const modelNameInput = document.getElementById('modelNameInput');
+    if (modelNameInput) {
+        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
+        modelNameInput.addEventListener('blur', () => {
+            // Delay hiding results to allow for clicks
+            setTimeout(() => {
+                document.querySelector('.ui.search-results').style.display = 'none';
+            }, 200);
+        });
+    }
 });
 
 // Batch operations
@@ -912,108 +923,155 @@ document.addEventListener('DOMContentLoaded', () => {
     checkServerStatus();
     refreshAll();
 
-    // Initialize all modals
-    $('.ui.modal').modal({
-        closable: false
-    });
-
-    // Attacher l'événement au checkbox "Tous Sélectionner"
-    const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            selectAllModels(this);
-        });
-    }
-
-    // Set up model name input events
-    const modelNameInput = document.getElementById('modelNameInput');
-    if (modelNameInput) {
-        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
-        modelNameInput.addEventListener('blur', () => {
-            // Delay hiding results to allow for clicks
-            setTimeout(() => {
-                document.querySelector('.ui.search-results').style.display = 'none';
-            }, 200);
-        });
+    // Set up search input events
+    const searchInput = document.getElementById('modelSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
 });
 
-// Function to add a parameter in the config modal
-// Function to save the configuration of a model
-window.saveModelConfig = async function() {
-    const selectedModels = document.querySelectorAll('#selectedModels .item');
-    const systemPrompt = document.getElementById('systemPrompt').value;
-    const template = document.getElementById('template').value;
+// Function to debounce events
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
-    // Get all parameters
-    const parameters = {};
-    document.querySelectorAll('#parameters .ui.segment').forEach(segment => {
-        const inputs = segment.querySelectorAll('input');
-        if (inputs.length === 2) {
-            const key = inputs[0].value.trim();
-            const value = inputs[1].value.trim();
-            if (key && value) {
-                parameters[key] = value;
-            }
-        }
-    });
+// Function to handle search input
+async function handleSearch(e) {
+    const searchInput = e.target;
+    const query = searchInput.value.trim();
+    const searchResults = document.querySelector('.ui.search-results');
+    const searchResultsList = document.getElementById('searchResults');
 
-    // For each selected model
-    for (const modelDiv of selectedModels) {
-        const modelName = modelDiv.textContent.trim();
-        try {
-            const response = await fetch(`/api/models/${modelName}/config`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Ollama-URL': ollamaUrl
-                },
-                body: JSON.stringify({
-                    system: systemPrompt,
-                    template: template,
-                    parameters: parameters
-                })
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                let failureText = gettext('Failed to save the configuration');
-                throw new Error(data.error || failureText);
-            }
-
-            showMessage(gettext('Success'), gettext('Model configuration')+` ${modelName} `+gettext('saved successfully'));
-        } catch (error) {
-            showMessage(gettext('Error'), gettext('Error saving configuration for')+` ${modelName}: ${error.message}`, true);
-            return;
-        }
-    }
-
-    $('#configModal').modal('hide');
-    refreshAll();
-};
-
-window.addParameter = function() {
-    const parametersList = document.getElementById('parametersList');
-    if (!parametersList) {
-        console.error('Element parametersList not found');
+    if (!query) {
+        searchResults.style.display = 'none';
         return;
     }
 
-    const newItem = document.createElement('div');
-    newItem.className = 'fields parameter-item';
-    newItem.innerHTML = `
-        <div class="field">
-            <input type="text" class="parameter-key" placeholder="`+gettext('Parameter name')+`">
-        </div>
-        <div class="field">
-            <input type="text" class="parameter-value" placeholder="Valeur">
-        </div>
-        <button class="ui icon button negative" onclick="this.closest('.parameter-item').remove()">
-            <i class="trash icon"></i>
-        </button>
-    `;
+    try {
+        const words = query.toLowerCase().split(/\s+/);
+        const url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}`;
+        const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
 
-    parametersList.appendChild(newItem);
+        const ggufModels = data.filter(model => model.tags?.includes('gguf') && words.every(word => model.id.toLowerCase().includes(word)));
+
+        if (!ggufModels.length) {
+            searchResultsList.innerHTML = '<div class="item">'+gettext('No models found')+'</div>';
+            searchResults.style.display = 'block';
+            return;
+        }
+
+        const modelsWithDate = ggufModels.map(model => {
+            const createdAt = new Date(model.createdAt);
+            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
+            return { ...model, formattedDate, createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}` };
+        });
+
+        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
+
+        searchResultsList.innerHTML = modelsWithDate.map(model => `
+            <div class="item" style="cursor: pointer;" onclick="selectModel('${model.id}')">
+                <div class="content">
+                    <div class="header">${model.id}</div>
+                    <div class="description">`+gettext('Created on')+`: ${model.createdAt}</div>
+                </div>
+            </div>
+        `).join('');
+
+        searchResults.style.display = 'block';
+    } catch (error) {
+        showMessage(gettext('Error'), error.message, true);
+    }
+}
+
+// Function to add a parameter in the config modal
+window.addParameter = function() {
+    const parametersContainer = document.getElementById('parameters');
+    const newSegment = document.createElement('div');
+    newSegment.className = 'ui segment';
+    newSegment.innerHTML = `
+        <div class="two fields">
+            <div class="field">
+                <input type="text" class="parameter-key" placeholder="Parameter Name">
+            </div>
+            <div class="field">
+                <div class="ui right labeled input">
+                    <input type="text" class="parameter-value" placeholder="Value">
+                    <button class="ui icon button negative" onclick="removeParameter(this)">
+                        <i class="trash icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    parametersContainer.appendChild(newSegment);
+};
+
+window.removeParameter = function(button) {
+    const segment = button.closest('.ui.segment');
+    if (segment) {
+        segment.remove();
+    }
+};
+
+window.saveModelConfig = async function() {
+    const selectedModelsList = document.getElementById('selectedModels');
+    const modelItems = selectedModelsList.getElementsByClassName('item');
+    if (modelItems.length === 0) {
+        showMessage('Error', 'No models selected', true);
+        return;
+    }
+
+    // Get the model name from the first selected model
+    const modelName = modelItems[0].textContent.trim();
+
+    // Collect parameters
+    const parameters = {};
+    document.querySelectorAll('#parameters .ui.segment').forEach(segment => {
+        const keyInput = segment.querySelector('.parameter-key');
+        const valueInput = segment.querySelector('.parameter-value');
+        if (keyInput && valueInput && keyInput.value.trim()) {
+            parameters[keyInput.value.trim()] = valueInput.value.trim();
+        }
+    });
+
+    // Build the configuration object
+    const config = {
+        system: document.getElementById('systemPrompt').value.trim(),
+        template: document.getElementById('template').value.trim(),
+        parameters: parameters
+    };
+
+    try {
+        const response = await fetch(`/api/models/${modelName}/config`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Ollama-URL': ollamaUrl
+            },
+            body: JSON.stringify(config)
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || `Failed to update config for ${modelName}`);
+        }
+
+        $('#configModal').modal('hide');
+        showMessage('Success', 'Model configuration updated successfully');
+        refreshAll();
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
 };
 
 // Server status check interval
