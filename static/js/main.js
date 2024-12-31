@@ -495,7 +495,7 @@ window.refreshLocalModels = async function() {
                     </div>
                 </td>
                 <td>${model.name}</td>
-                <td>${model.createdAt}</td>
+                <td>${new Date(model.created_at * 1000).toLocaleDateString('fr-FR')}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -563,7 +563,7 @@ window.refreshRunningModels = async function() {
         tbody.innerHTML = modelsWithDate.map(model => `
             <tr>
                 <td>${model.name}</td>
-                <td>${model.createdAt}</td>
+                <td>${new Date(model.created_at * 1000).toLocaleDateString('fr-FR')}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
