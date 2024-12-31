@@ -447,7 +447,7 @@ window.pullModel = async function() {
 
 
 // Refresh functions
-window.refreshLocalModels = async function() {
+async function refreshLocalModels() {
     try {
         const serverStatusResponse = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
@@ -472,21 +472,7 @@ window.refreshLocalModels = async function() {
         const data = await response.json();
         const tbody = document.querySelector('#localModels tbody');
 
-        // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
-        const modelsWithDate = data.models.map(model => {
-            const createdAt = new Date(model.created_at);
-            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
-            return {
-                ...model,
-                formattedDate,
-                createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
-            };
-        });
-
-        // Trier les modèles par date de création
-        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
-
-        tbody.innerHTML = modelsWithDate.map(model => `
+        tbody.innerHTML = data.models.map(model => `
             <tr>
                 <td class="collapsing">
                     <div class="ui fitted checkbox">
@@ -495,7 +481,7 @@ window.refreshLocalModels = async function() {
                     </div>
                 </td>
                 <td>${model.name}</td>
-                <td>${new Date(model.created_at * 1000).toLocaleDateString('fr-FR')}</td>
+                <td>${new Date(model.created_at).toLocaleDateString('fr-FR')}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -519,9 +505,9 @@ window.refreshLocalModels = async function() {
         console.error('Error refreshing local models:', error);
         showMessage('Erreur', error.message, true);
     }
-};
+}
 
-window.refreshRunningModels = async function() {
+async function refreshRunningModels() {
     try {
         const serverStatusResponse = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
@@ -546,24 +532,10 @@ window.refreshRunningModels = async function() {
         const data = await response.json();
         const tbody = document.querySelector('#runningModels tbody');
 
-        // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
-        const modelsWithDate = data.models.map(model => {
-            const createdAt = new Date(model.created_at);
-            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
-            return {
-                ...model,
-                formattedDate,
-                createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
-            };
-        });
-
-        // Trier les modèles par date de création
-        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
-
-        tbody.innerHTML = modelsWithDate.map(model => `
+        tbody.innerHTML = data.models.map(model => `
             <tr>
                 <td>${model.name}</td>
-                <td>${new Date(model.created_at * 1000).toLocaleDateString('fr-FR')}</td>
+                <td>${new Date(model.created_at).toLocaleDateString('fr-FR')}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -579,7 +551,7 @@ window.refreshRunningModels = async function() {
         console.error('Error refreshing running models:', error);
         showMessage('Erreur', error.message, true);
     }
-};
+}
 
 async function refreshStats() {
     try {
