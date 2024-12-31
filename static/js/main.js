@@ -495,8 +495,8 @@ async function refreshLocalModels() {
         console.log('Received models data:', data.models); // Debug log
 
         tbody.innerHTML = data.models.map(model => {
-            console.log('Processing model:', model.name, 'modified_at:', model.modified_at); // Debug log
-            const formattedDate = formatDate(model.modified_at);
+            console.log('Processing model:', model.name, 'created_at:', model.created_at); // Debug log
+            const formattedDate = formatDate(model.created_at);
 
             return `
             <tr>
@@ -926,7 +926,7 @@ window.batchDeleteModels = async function() {
         <div class="item batch-results-item ${result.success ? 'success' : 'error'}">
             <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
                         <div class="content">
-                <div class="header">${result.model}</div>
+                <                <div class="header">${result.model}</div>
                 <div class="description">${result.message}</div>
             </div>
         </div>

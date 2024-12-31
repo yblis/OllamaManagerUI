@@ -160,7 +160,8 @@ class OllamaClient:
         for model in models:
             details = self.get_model_details(model['name'])
             if 'error' not in details:
-                model['modified_at'] = details.get('modified_at', model.get('modified_at', ''))
+                model['created_at'] = details.get('created_at', '')
+                model['modified_at'] = details.get('modified_at', '')
 
         return {'models': models}
 
@@ -281,8 +282,18 @@ class OllamaClient:
             if 'error' in response:
                 return {'error': response['error']}
 
+            # Parse model file to extract creation date
+            model_details = {}
+            modelfile = response.get('modelfile', '')
+            for line in modelfile.split('\n'):
+                if line.startswith('FROM'):
+                    # The base model line contains creation info
+                    model_details['created_at'] = response.get('created_at', '')
+                    break
+
             return {
                 'details': response.get('details', {}),
+                'created_at': response.get('created_at', ''),
                 'modified_at': response.get('modified_at', '')
             }
         except Exception as e:
