@@ -34,12 +34,19 @@ def with_error_handling(f):
 @app.before_request
 def before_request():
     global ollama_client
-    base_url = request.headers.get('X-Ollama-URL') or os.environ.get('OLLAMA_SERVER_URL')
-    if base_url:
-        print(f"Using Ollama server URL: {base_url}")
-        ollama_client = OllamaClient(base_url=base_url)
-    else:
-        print("Warning: No Ollama server URL provided")
+    # First try to get URL from headers, then environment, then default
+    base_url = request.headers.get('X-Ollama-URL')
+    if not base_url:
+        base_url = os.environ.get('OLLAMA_SERVER_URL', 'http://localhost:11434')
+
+    # Ensure URL has correct format
+    if base_url.endswith('/'):
+        base_url = base_url[:-1]
+    if not base_url.startswith('http'):
+        base_url = 'http://' + base_url
+
+    print(f"Using Ollama server URL: {base_url}")
+    ollama_client = OllamaClient(base_url=base_url)
 
 @app.route('/')
 def index():
@@ -48,8 +55,8 @@ def index():
 @app.route('/api/server/url')
 def get_server_url():
     """Get the Ollama server URL from environment"""
-    url = os.environ.get('OLLAMA_SERVER_URL')
-    return jsonify({'url': url}) if url else jsonify({'error': 'No server URL configured'}), 404
+    url = os.environ.get('OLLAMA_SERVER_URL', 'http://localhost:11434')
+    return jsonify({'url': url})
 
 @app.route('/api/server/status')
 @with_error_handling

@@ -908,37 +908,81 @@ function formatBytes(bytes, decimals = 2) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme') || ''light';
+    const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
 
     checkServerStatus();
-    refreshAll();
+refreshAll();
 
-    // Initialize all modals
-    $('.ui.modal').modal({
-        closable: false
-    });
-
-    // Attacher l'événement au checkbox "Tous Sélectionner"
-    const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            selectAllModels(this);
-        });
-    }
-
-    // Set up model name input events
-    const modelNameInput = document.getElementById('modelNameInput');
-    if (modelNameInput) {
-        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
-        modelNameInput.addEventListener('blur', () => {
-            // Delay hiding results to allow for clicks
-            setTimeout(() => {
-                document.querySelector('.ui.search-results').style.display = 'none';
-            }, 200);
-        });
+    // Set up search input events
+    const searchInput = document.getElementById('modelSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
 });
+
+// Function to debounce events
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Function to handle search input
+async function handleSearch(e) {
+    const searchInput = e.target;
+    const query = searchInput.value.trim();
+    const searchResults = document.querySelector('.ui.search-results');
+    const searchResultsList = document.getElementById('searchResults');
+
+    if (!query) {
+        searchResults.style.display = 'none';
+        return;
+    }
+
+    try {
+        const words = query.toLowerCase().split(/\s+/);
+        const url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}`;
+        const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        const ggufModels = data.filter(model => model.tags?.includes('gguf') && words.every(word => model.id.toLowerCase().includes(word)));
+
+        if (!ggufModels.length) {
+            searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
+            searchResults.style.display = 'block';
+            return;
+        }
+
+        const modelsWithDate = ggufModels.map(model => {
+            const createdAt = new Date(model.createdAt);
+            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
+            return { ...model, formattedDate, createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}` };
+        });
+
+        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
+
+        searchResultsList.innerHTML = modelsWithDate.map(model => `
+            <div class="item" style="cursor: pointer;" onclick="selectModel('${model.id}')">
+                <div class="content">
+                    <div class="header">${model.id}</div>
+                    <div class="description">Créé le: ${model.createdAt}</div>
+                </div>
+            </div>
+        `).join('');
+
+        searchResults.style.display = 'block';
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
+}
 
 // Function to add a parameter in the config modal
 window.addParameter = function() {
