@@ -451,16 +451,12 @@ function formatDate(dateStr) {
     if (!dateStr) return 'Date inconnue';
 
     try {
-        // Parse the ISO date string
+        // Parse the ISO date string with timezone
         const date = new Date(dateStr);
         if (isNaN(date.getTime())) return 'Date inconnue';
 
         // Format date as DD/MM/YYYY
-        return date.toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
     } catch (error) {
         console.error('Error formatting date:', dateStr, error);
         return 'Date inconnue';
@@ -526,7 +522,8 @@ async function refreshLocalModels() {
                     </div>
                 </td>
             </tr>
-        `}).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
+        `;
+        }).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
     } catch (error) {
         console.error('Error refreshing local models:', error);
         showMessage('Erreur', error.message, true);
@@ -578,7 +575,8 @@ async function refreshRunningModels() {
                     </button>
                 </td>
             </tr>
-        `}).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
+        `;
+        }).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
     } catch (error) {
         console.error('Error refreshing running models:', error);
         showMessage('Erreur', error.message, true);
