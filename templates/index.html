@@ -24,10 +24,10 @@
 
 <!-- Pull Model Form -->
 <div class="ui segment">
-    <h3 class="ui header">{{ gettext('Download a New Model') }}</h3>
+    <h3 class="ui header">{{ gettext('Search for a new model to download') }}</h3>
     <div class="ui action input fluid">
         <input type="text" id="modelNameInput" placeholder="{{ gettext('Enter the model name (ex: llama2:7b)') }}">
-        <button class="ui primary button" onclick="pullModel()">{{ gettext('Download') }}</button>
+        <button class="ui primary button" onclick="pullModel()">{{ gettext('Pull Down') }}</button>
     </div>
     <!-- Add progress bar -->
     <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
@@ -40,7 +40,7 @@
     <div class="ui search-results" style="margin-top: 1rem; display: none;">
         <div class="ui relaxed divided list" id="searchResults">
             <!-- Search results will be displayed here -->
-        </div>S
+        </div>
     </div>
 </div>
 
