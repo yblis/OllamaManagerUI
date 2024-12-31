@@ -917,91 +917,118 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up model name input events
     const modelNameInput = document.getElementById('modelNameInput');
-    if (modelNameInput) {
-        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
-        modelNameInput.addEventListener('blur', () => {
-            // Delay hiding results to allow for clicks
-            setTimeout(() => {
-                document.querySelector('.ui.search-results').style.display = 'none';
-            }, 200);
-        });
+        if (modelNameInput) {
+            modelNameInput.addEventListener('input', (e) => searchModels(e.target));
+            modelNameInput.addEventListener('blur', () => {
+                // Delay hiding results to allow for clicks
+                setTimeout(() => {
+                    document.querySelector('.ui.search-results').style.display = 'none';
+                }, 200);
+            });
+        }
     }
 });
 
 // Function to add a parameter in the config modal
+window.addParameter = function() {
+    const parametersContainer = document.getElementById('parameters');
+    const newParameterSegment = document.createElement('div');
+    newParameterSegment.className = 'ui segment';
+    newParameterSegment.innerHTML = `
+        <div class="two fields">
+            <div class="field">
+                <input type="text" placeholder="Parameter Name" class="parameter-name">
+            </div>
+            <div class="field">
+                <div class="ui right labeled input">
+                    <input type="text" placeholder="Value" class="parameter-value">
+                    <button class="ui icon button negative" onclick="this.closest('.segment').remove()">
+                        <i class="trash icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    parametersContainer.appendChild(newParameterSegment);
+};
+
 // Function to save the configuration of a model
 window.saveModelConfig = async function() {
-    const selectedModels = document.querySelectorAll('#selectedModels .item');
+    const selectedModels = Array.from(document.querySelectorAll('#selectedModels .item'))
+        .map(item => item.textContent.trim());
+
+    if (selectedModels.length === 0) {
+        showMessage('Error', 'No models selected', true);
+        return;
+    }
+
     const systemPrompt = document.getElementById('systemPrompt').value;
     const template = document.getElementById('template').value;
 
-    // Get all parameters
+    // Gather and validate parameters
     const parameters = {};
-    document.querySelectorAll('#parameters .ui.segment').forEach(segment => {
-        const inputs = segment.querySelectorAll('input');
-        if (inputs.length === 2) {
-            const key = inputs[0].value.trim();
-            const value = inputs[1].value.trim();
-            if (key && value) {
-                parameters[key] = value;
+    let hasValidationError = false;
+
+    document.querySelectorAll('#parameters .segment').forEach(segment => {
+        const nameInput = segment.querySelector('.parameter-name');
+        const valueInput = segment.querySelector('.parameter-value');
+
+        if (!nameInput || !valueInput) return;
+
+        // Reset previous error states
+        nameInput.classList.remove('error');
+        valueInput.classList.remove('error');
+
+        const name = nameInput.value.trim();
+        const value = valueInput.value.trim();
+
+        if (!name && value) {
+            hasValidationError = true;
+            nameInput.classList.add('error');
+        } else if (name) {
+            // Try to parse the value as a number if it looks like one
+            if (!isNaN(value) && value !== '') {
+                parameters[name] = parseFloat(value);
+            } else {
+                parameters[name] = value;
             }
         }
     });
 
-    // For each selected model
-    for (const modelDiv of selectedModels) {
-        const modelName = modelDiv.textContent.trim();
-        try {
+    if (hasValidationError) {
+        showMessage('Error', 'Please provide names for all parameters with values', true);
+        return;
+    }
+
+    const config = {
+        system: systemPrompt,
+        template: template,
+        parameters: parameters
+    };
+
+    try {
+        for (const modelName of selectedModels) {
             const response = await fetch(`/api/models/${modelName}/config`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Ollama-URL': ollamaUrl
                 },
-                body: JSON.stringify({
-                    system: systemPrompt,
-                    template: template,
-                    parameters: parameters
-                })
+                body: JSON.stringify(config)
             });
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Échec de la sauvegarde de la configuration');
+                throw new Error(data.error || `Failed to update config for ${modelName}`);
             }
-
-            showMessage('Succès', `Configuration du modèle ${modelName} sauvegardée avec succès`);
-        } catch (error) {
-            showMessage('Erreur', `Erreur lors de la sauvegarde de la configuration pour ${modelName}: ${error.message}`, true);
-            return;
         }
+
+        $('#configModal').modal('hide');
+        showMessage('Success', 'Model configuration(s) updated successfully');
+        refreshAll();
+    } catch (error) {
+        showMessage('Error', error.message, true);
     }
-
-    $('#configModal').modal('hide');
-    refreshAll();
-};
-window.addParameter = function() {
-    const parametersList = document.getElementById('parametersList');
-    if (!parametersList) {
-        console.error('Element parametersList not found');
-        return;
-    }
-
-    const newItem = document.createElement('div');
-    newItem.className = 'fields parameter-item';
-    newItem.innerHTML = `
-        <div class="field">
-            <input type="text" class="parameter-key" placeholder="Nom du paramètre">
-        </div>
-        <div class="field">
-            <input type="text" class="parameter-value" placeholder="Valeur">
-        </div>
-        <button class="ui icon button negative" onclick="this.closest('.parameter-item').remove()">
-            <i class="trash icon"></i>
-        </button>
-    `;
-
-    parametersList.appendChild(newItem);
 };
 
 // Server status check interval
