@@ -68,9 +68,10 @@ window.saveSettings = function() {
     }
 };
 
-// Add language change function after the saveSettings function
+// Update language change function
 window.changeLanguage = async function(lang) {
     try {
+        console.log(`Attempting to change language to: ${lang}`);
         const response = await fetch('/api/language', {
             method: 'POST',
             headers: {
@@ -79,14 +80,22 @@ window.changeLanguage = async function(lang) {
             body: JSON.stringify({ language: lang })
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-            const data = await response.json();
             throw new Error(data.error || 'Failed to change language');
         }
 
-        // Reload the page to apply new language
-        window.location.reload();
+        console.log('Language change response:', data);
+
+        if (data.success) {
+            // Force reload the page to apply new language
+            window.location.reload();
+        } else {
+            throw new Error(data.error || 'Unknown error occurred');
+        }
     } catch (error) {
+        console.error('Language change error:', error);
         showMessage('Error', error.message, true);
     }
 };

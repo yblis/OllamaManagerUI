@@ -8,7 +8,7 @@ import subprocess
 import re
 import os
 import json
-from translations import t, get_translation, set_language
+from translations import t, get_translation, set_language, get_available_languages, DEFAULT_LANGUAGE
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_key_123')  # Required for session
@@ -39,6 +39,11 @@ def with_error_handling(f):
 @app.before_request
 def before_request():
     global ollama_client
+    # Initialize language if not set
+    if 'language' not in session:
+        session['language'] = DEFAULT_LANGUAGE
+        print(f"Initialized default language: {DEFAULT_LANGUAGE}")
+
     # First try to get URL from headers, then environment, then default
     base_url = request.headers.get('X-Ollama-URL')
     if not base_url:
@@ -55,7 +60,41 @@ def before_request():
 
 @app.route('/')
 def index():
-    return render_template('index.html', server_status=False)
+    print(f"Current language: {session.get('language', 'Not set')}")
+    return render_template('index.html')
+
+@app.route('/api/language', methods=['POST'])
+def change_language():
+    """Change the application language"""
+    try:
+        if not request.is_json:
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+
+        data = request.json
+        lang = data.get('language')
+        if not lang:
+            return jsonify({'error': 'Language parameter is required'}), 400
+
+        available_languages = get_available_languages()
+        print(f"Available languages: {available_languages}")
+        print(f"Requested language: {lang}")
+
+        if lang not in available_languages:
+            return jsonify({'error': f'Invalid language code. Available languages: {", ".join(available_languages)}'}), 400
+
+        session['language'] = lang
+        print(f"Language changed to: {lang}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Language changed successfully',
+            'language': lang
+        })
+
+    except Exception as e:
+        print(f"Error changing language: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/server/url')
 def get_server_url():
@@ -68,20 +107,6 @@ def get_server_url():
 def server_status():
     status = ollama_client.check_server()
     return jsonify({'status': 'running' if status else 'stopped'})
-
-@app.route('/api/language', methods=['POST'])
-def change_language():
-    """Change the application language"""
-    if not request.is_json:
-        return jsonify({'error': 'Content-Type must be application/json'}), 400
-
-    lang = request.json.get('language')
-    if not lang:
-        return jsonify({'error': 'Language parameter is required'}), 400
-
-    if set_language(lang):
-        return jsonify({'success': True, 'message': 'Language changed successfully'})
-    return jsonify({'error': 'Invalid language code'}), 400
 
 @app.route('/api/models', methods=['GET'])
 @with_error_handling
@@ -217,7 +242,6 @@ def get_model_config(model_name):
     if 'error' in config:
         return jsonify({'error': config['error']}), 500
     return jsonify(config)
-
 
 @app.route('/api/models/<model_name>/config', methods=['POST'])
 @with_error_handling
