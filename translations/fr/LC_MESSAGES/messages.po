@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-12-30 02:24-0600\n"
+"POT-Creation-Date: 2024-12-31 04:18-0600\n"
 "PO-Revision-Date: 2024-12-29 21:42-0600\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -18,74 +18,190 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: static/js/main.js:152
-msgid "Operation(s)"
-msgstr "Opération(s)"
+#: static/js/main.js:76
+msgid "Are you sure you want to stop the model"
+msgstr "Êtes-vous sûr de vouloir arrêter le modèle"
 
-#: static/js/main.js:157 static/js/main.js:566 static/js/main.js:773
-msgid "Total Operations"
-msgstr "Opérations Totales"
+#: static/js/main.js:92
+msgid "Failed to stop the model"
+msgstr "Échec de l'arrêt du modèle"
 
-#: static/js/main.js:161 static/js/main.js:570 static/js/main.js:777
-msgid "Total Prompt Tokens"
-msgstr "Tokens de Prompt"
-
-#: static/js/main.js:165
-msgid "Total Complete Tokens"
-msgstr "Tokens de Complétion"
-
-#: static/js/main.js:169 static/js/main.js:578 static/js/main.js:785
-msgid "Total Duration"
-msgstr "Durée Totale"
-
-#: static/js/main.js:174
-msgid "Operations by Type"
-msgstr "Opérations par Type"
-
-#: static/js/main.js:196
-msgid "Are you sure you want to delete this model?"
-msgstr "Êtes-vous sûr de vouloir supprimer le modèle?"
-
-#: static/js/main.js:214
-#, fuzzy
-msgid "Failed to delete the model"
-msgstr "Échec de la suppression du modèle"
-
-#: static/js/main.js:218
+#: static/js/main.js:96 static/js/main.js:219 static/js/main.js:401
+#: static/js/main.js:984
 msgid "Success"
 msgstr "Succès"
 
-#: static/js/main.js:218
+#: static/js/main.js:96 static/js/main.js:219 static/js/main.js:401
 msgid "Model"
 msgstr "Modèle"
 
-#: static/js/main.js:218
+#: static/js/main.js:96
+msgid "stopped successfully"
+msgstr "arrêté avec succès"
+
+#: static/js/main.js:99 static/js/main.js:141 static/js/main.js:192
+#: static/js/main.js:222 static/js/main.js:310 static/js/main.js:324
+#: static/js/main.js:407 static/js/main.js:486 static/js/main.js:546
+#: static/js/main.js:626 static/js/main.js:750 static/js/main.js:796
+#: static/js/main.js:815 static/js/main.js:836 static/js/main.js:986
+msgid "Error"
+msgstr "Erreur"
+
+#: static/js/main.js:108 static/js/main.js:150
+msgid "HTTP Error Status"
+msgstr "Erreur HTTP Statut"
+
+#: static/js/main.js:153
+msgid "Operation(s)"
+msgstr "Opération(s)"
+
+#: static/js/main.js:158 static/js/main.js:567 static/js/main.js:776
+msgid "Total Operations"
+msgstr "Opérations Totales"
+
+#: static/js/main.js:162 static/js/main.js:571 static/js/main.js:780
+msgid "Total Prompt Tokens"
+msgstr "Tokens de Prompt"
+
+#: static/js/main.js:166
+msgid "Total Complete Tokens"
+msgstr "Tokens de Complétion"
+
+#: static/js/main.js:170 static/js/main.js:579 static/js/main.js:788
+msgid "Total Duration"
+msgstr "Durée Totale"
+
+#: static/js/main.js:175
+msgid "Operations by Type"
+msgstr "Opérations par Type"
+
+#: static/js/main.js:197
+msgid "Are you sure you want to delete this model?"
+msgstr "Êtes-vous sûr de vouloir supprimer le modèle?"
+
+#: static/js/main.js:215 static/js/main.js:861
+msgid "Failed to delete the model"
+msgstr "Échec de la suppression du modèle"
+
+#: static/js/main.js:219
 msgid "successfully deleted"
 msgstr "supprimé avec succès"
 
-#: static/js/main.js:471
+#: static/js/main.js:303
+msgid "Created on"
+msgstr "Créé le"
+
+#: static/js/main.js:324
+msgid "Please enter a model name"
+msgstr "Veuillez entrer un nom de modèle"
+
+#: static/js/main.js:335 templates/index.html:37
+msgid "Starting the download..."
+msgstr "Démarrage du téléchargement..."
+
+#: static/js/main.js:336 static/js/main.js:399
+msgid "Download complete"
+msgstr "Téléchargement terminé"
+
+#: static/js/main.js:337 static/js/main.js:406
+msgid "Error downloading"
+msgstr "Erreur de téléchargement"
+
+#: static/js/main.js:353
+msgid "Failed to download the model"
+msgstr "Échec du téléchargement du modèle"
+
+#: static/js/main.js:381
+msgid "Download progress"
+msgstr "Téléchargement en cours"
+
+#: static/js/main.js:401
+msgid "downloaded successfully"
+msgstr "téléchargé avec succès"
+
+#: static/js/main.js:425 static/js/main.js:499
+msgid "Ollama server not connected"
+msgstr "Serveur Ollama non connecté"
+
+#: static/js/main.js:434
+msgid "Unable to retrieve models"
+msgstr "Impossible de récupérer les modèles"
+
+#: static/js/main.js:472
 msgid "Config"
 msgstr "Config"
 
-#: static/js/main.js:474
+#: static/js/main.js:475
 msgid "Stats"
 msgstr "Stats"
 
-#: static/js/main.js:477
+#: static/js/main.js:478
 msgid "Delete"
 msgstr "Supprimer"
 
-#: static/js/main.js:542
+#: static/js/main.js:483
+msgid "No Models Installed"
+msgstr "Aucun Modèle Installé"
+
+#: static/js/main.js:508
+msgid "Unable to retrieve running models"
+msgstr "Impossible de récupérer les modèles en cours d'exécution"
+
+#: static/js/main.js:543
 msgid "No Models Running"
 msgstr "Aucun Modèle en cours d'Exécution"
 
-#: static/js/main.js:574 static/js/main.js:781
+#: static/js/main.js:561
+msgid "Failed to fetch stats"
+msgstr "Échec de la récupération des statistiques"
+
+#: static/js/main.js:575 static/js/main.js:784
 msgid "Total Completion Tokens"
 msgstr "Tokens de Complétion"
 
-#: static/js/main.js:624
+#: static/js/main.js:625 static/js/main.js:749
 msgid "Please select at least two models to compare"
 msgstr "Veuillez sélectionner au moins deux modèles à comparer"
+
+#: static/js/main.js:637
+msgid "Loading details..."
+msgstr "Chargement des détails..."
+
+#: static/js/main.js:671
+msgid "Error loading details"
+msgstr "Erreur lors du chargement des détails"
+
+#: static/js/main.js:815 static/js/main.js:836
+msgid "Please select at least one model"
+msgstr "Veuillez sélectionner au moins un modèle"
+
+#: static/js/main.js:840
+msgid "Are you sure you want to delete"
+msgstr "Êtes-vous sûr de vouloir supprimer"
+
+#: static/js/main.js:841
+msgid "model(s)"
+msgstr "modèle(s)"
+
+#: static/js/main.js:980
+msgid "Failed to save the configuration"
+msgstr "Échec de la sauvegarde de la configuration"
+
+#: static/js/main.js:984
+msgid "Model configuration"
+msgstr "Configuration du modèle"
+
+#: static/js/main.js:984
+msgid "saved successfully"
+msgstr "sauvegardée avec succès"
+
+#: static/js/main.js:986
+msgid "Error saving configuration for"
+msgstr "Erreur lors de la sauvegarde de la configuration pour"
+
+#: static/js/main.js:1006
+msgid "Parameter name"
+msgstr "Nom du paramètre"
 
 #: templates/base.html:6
 msgid "Ollama Model Manager"
@@ -96,7 +212,7 @@ msgid "Ollama Manager"
 msgstr "Gestionnaire Ollama"
 
 #: templates/index.html:27
-msgid "Upload a New Model"
+msgid "Download a New Model"
 msgstr "Télécharger un Nouveau Modèle"
 
 #: templates/index.html:29
@@ -104,12 +220,8 @@ msgid "Enter the model name (ex: llama2:7b)"
 msgstr "Entrez le nom du modèle (ex: llama2:7b)"
 
 #: templates/index.html:30
-msgid "Upload"
+msgid "Download"
 msgstr "Télécharger"
-
-#: templates/index.html:37
-msgid "Starting the download..."
-msgstr "Démarrage du téléchargement..."
 
 #: templates/index.html:47
 msgid "Overall Usage Statistics"

@@ -73,7 +73,7 @@ window.showMessage = function(title, message, isError = false) {
 
 // Model management functions
 window.stopModel = async function(modelName) {
-    if (!confirm(`Êtes-vous sûr de vouloir arrêter le modèle ${modelName} ?`)) {
+    if (!confirm(gettext('Are you sure you want to stop the model')+` ${modelName} ?`)) {
         return;
     }
 
@@ -89,13 +89,14 @@ window.stopModel = async function(modelName) {
 
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Échec de l\'arrêt du modèle');
+            let failureText = gettext('Failed to stop the model');
+            throw new Error(data.error || failureText);
         }
 
-        showMessage('Succès', `Modèle ${modelName} arrêté avec succès`);
+        showMessage(gettext('Success'), gettext('Model')+` ${modelName} `+gettext('stopped successfully'));
         await refreshRunningModels();  // Refresh only running models table
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -104,7 +105,7 @@ window.showModelConfig = async function(modelName) {
         const response = await fetch(`/api/models/${modelName}/config`, {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        if (!response.ok) throw new Error( gettext('HTTP Error Status')+`: ${response.status}`);
         const config = await response.json();
 
         document.getElementById('selectedModels').innerHTML = `
@@ -137,7 +138,7 @@ window.showModelConfig = async function(modelName) {
 
         $('#configModal').modal('show');
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -146,7 +147,7 @@ window.showModelStats = async function(modelName) {
         const response = await fetch(`/api/models/${modelName}/stats`, {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        if (!response.ok) throw new Error( gettext('HTTP Error Status')+`: ${response.status}`);
         const stats = await response.json();
 
         let operationsText = gettext('Operation(s)');
@@ -188,7 +189,7 @@ window.showModelStats = async function(modelName) {
 
         $('#statsModal').modal('show');
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -218,7 +219,7 @@ window.deleteModel = async function(modelName) {
         showMessage(gettext('Success'), gettext('Model')+` ${modelName} `+gettext('successfully deleted'));
         refreshAll();
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -299,14 +300,14 @@ window.searchModels = function(input) {
                 <div class="item" style="cursor: pointer;" onclick="selectModel('${model.id}')">
                     <div class="content">
                         <div class="header">${model.id}</div>
-                        <div class="description">Créé le: ${model.createdAt}</div>
+                        <div class="description">`+gettext('Created on')+`: ${model.createdAt}</div>
                     </div>
                 </div>
             `).join('');
 
             searchResults.style.display = 'block';
         } catch (error) {
-            showMessage('Erreur', error.message, true);
+            showMessage(gettext('Error'), error.message, true);
         }
     }, 300);
 };
@@ -320,7 +321,7 @@ window.selectModel = function(modelId) {
 window.pullModel = async function() {
     const modelName = document.getElementById('modelNameInput').value.trim();
     if (!modelName) {
-        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
+        showMessage(gettext('Error'), gettext('Please enter a model name'), true);
         return;
     }
 
@@ -331,9 +332,9 @@ window.pullModel = async function() {
     $(progress).progress({
         percent: 0,
         text: {
-            active: 'Démarrage du téléchargement...',
-            success: 'Téléchargement terminé',
-            error: 'Erreur de téléchargement'
+            active: gettext('Starting the download...'),
+            success: gettext('Download complete'),
+            error: gettext('Error downloading')
         }
     });
 
@@ -349,7 +350,8 @@ window.pullModel = async function() {
 
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Échec du téléchargement du modèle');
+            let failureText = gettext('Failed to download the model');
+            throw new Error(data.error || failureText);
         }
 
         const contentLength = response.headers.get('Content-Length');
@@ -376,7 +378,7 @@ window.pullModel = async function() {
 
                             // Update progress bar
                             $(progress).progress('set percent', Math.round(percent));
-                            $(progress).progress('set label', `Téléchargement en cours: ${Math.round(percent)}%`);
+                            $(progress).progress('set label', gettext('Download progress')+`: ${Math.round(percent)}%`);
 
                             controller.enqueue(value);
                         }
@@ -394,22 +396,21 @@ window.pullModel = async function() {
 
         // Téléchargement terminé avec succès
         $(progress).progress('set percent', 100);
-        $(progress).progress('set label', 'Téléchargement terminé');
+        $(progress).progress('set label', gettext('Download complete'));
 
-        showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
+        showMessage(gettext('Success'), gettext('Model')+` ${modelName} `+gettext('downloaded successfully'));
         document.getElementById('modelNameInput').value = '';
         refreshAll();
     } catch (error) {
         $(progress).progress('set percent', 0);
-        $(progress).progress('set label', 'Erreur de téléchargement');
-        showMessage('Erreur', error.message, true);
+        $(progress).progress('set label', gettext('Error downloading'));
+        showMessage(gettext('Error'), error.message, true);
     } finally {
         setTimeout(() => {
             progress.style.display = 'none';
         }, 2000);
     }
 };
-
 
 // Refresh functions
 window.refreshLocalModels = async function() {
@@ -421,7 +422,7 @@ window.refreshLocalModels = async function() {
 
         if (serverStatus.status !== 'running') {
             const tbody = document.querySelector('#localModels tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Serveur Ollama non connecté</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">'+gettext('Ollama server not connected')+'</td></tr>';
             return;
         }
 
@@ -430,7 +431,7 @@ window.refreshLocalModels = async function() {
         });
         if (!response.ok) {
             const tbody = document.querySelector('#localModels tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Impossible de récupérer les modèles</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">'+gettext('Unable to retrieve models')+'</td></tr>';
             return;
         }
 
@@ -479,10 +480,10 @@ window.refreshLocalModels = async function() {
                     </div>
                 </td>
             </tr>
-        `).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
+        `).join('') || '<tr><td colspan="8" class="center aligned">'+gettext('No Models Installed')+'</td></tr>';
     } catch (error) {
         console.error('Error refreshing local models:', error);
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -495,7 +496,7 @@ window.refreshRunningModels = async function() {
 
         if (serverStatus.status !== 'running') {
             const tbody = document.querySelector('#runningModels tbody');
-            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Serveur Ollama non connecté</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">'+gettext('Ollama server not connected')+'</td></tr>';
             return;
         }
 
@@ -504,7 +505,7 @@ window.refreshRunningModels = async function() {
         });
         if (!response.ok) {
             const tbody = document.querySelector('#runningModels tbody');
-            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Impossible de récupérer les modèles en cours d\'exécution</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">'+gettext('Unable to retrieve running models')+'</td></tr>';
             return;
         }
 
@@ -542,7 +543,7 @@ window.refreshRunningModels = async function() {
         `).join('') || '<tr><td colspan="7" class="center aligned">'+gettext('No Models Running')+'</td></tr>';
     } catch (error) {
         console.error('Error refreshing running models:', error);
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -557,7 +558,7 @@ async function refreshStats() {
         const response = await fetch('/api/models/stats', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error('Failed to fetch stats');
+        if (!response.ok) throw new Error(gettext('Failed to fetch stats'));
 
         const stats = await response.json();
         statsElement.innerHTML = `
@@ -622,7 +623,7 @@ window.compareSelectedModels = function() {
 
     if (selectedModels.length < 2) {
         let errorMessage = gettext('Please select at least two models to compare')
-        showMessage('Erreur', errorMessage, true);
+        showMessage(gettext('Error'), errorMessage, true);
         return;
     }
 
@@ -633,7 +634,7 @@ window.compareSelectedModels = function() {
             <div class="ui segment">
                 <h3 class="ui header">${model}</h3>
                 <div class="ui list model-details" id="details-${model}">
-                    <div class="item">Chargement des détails...</div>
+                    <div class="item">`+gettext('Loading details...')+`</div>
                 </div>
             </div>
         </div>
@@ -667,7 +668,7 @@ window.compareSelectedModels = function() {
         } catch (error) {
             document.getElementById(`details-${model}`).innerHTML = `
                 <div class="item error-message">
-                    Erreur lors du chargement des détails : ${error.message}
+                    `+gettext('Error loading details')+`: ${error.message}
                 </div>
             `;
         }
@@ -729,6 +730,7 @@ window.toggleModelSelection = function(checkbox, modelName) {
             selectedModels.add(modelName);
         } else {
             selectedModels.delete(modelName);
+            // Uncheck the “Select All” box if a template is unchecked
             // Décocher la case "Tous Sélectionner" si un modèle est décoché
             document.querySelector('#selectAllCheckbox').checked = false;
         }
@@ -744,7 +746,8 @@ window.toggleModelSelection = function(checkbox, modelName) {
 
     window.compareSelectedModels = async function() {
         if (selectedModels.size < 2) {
-            showMessage('Erreur', 'Veuillez sélectionner au moins 2 modèles à comparer', true);
+            let errorMessage = gettext('Please select at least two models to compare')
+            showMessage(gettext('Error'), errorMessage, true);
             return;
         }
 
@@ -790,7 +793,7 @@ window.toggleModelSelection = function(checkbox, modelName) {
 
             $('#compareModal').modal('show');
         } catch (error) {
-            showMessage('Erreur', error.message, true);
+            showMessage(gettext('Error'), error.message, true);
         }
     };
     console.log(`Model ${modelName} ${checkbox.checked ? 'selected' : 'deselected'}`);
@@ -809,7 +812,7 @@ window.toggleAllModels = function() {
 window.batchConfigureModels = function() {
     const selectedModels = document.querySelectorAll('input[type="checkbox"]:checked');
     if (selectedModels.length === 0) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins un modèle', true);
+        showMessage(gettext('Error'), gettext('Please select at least one model'), true);
         return;
     }
 
@@ -830,11 +833,13 @@ window.batchConfigureModels = function() {
 window.batchDeleteModels = async function() {
     const selectedModels = document.querySelectorAll('input[type="checkbox"]:checked');
     if (selectedModels.length === 0) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins un modèle', true);
+        showMessage(gettext('Error'), gettext('Please select at least one model'), true);
         return;
     }
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedModels.length} modèle(s) ?`)) {
+    let confirmText = gettext('Are you sure you want to delete');
+    let confirmText2 = gettext('model(s)');
+    if (!confirm(confirmText+` ${selectedModels.length} `+confirmText2+`?`)) {
         return;
     }
 
@@ -853,7 +858,8 @@ window.batchDeleteModels = async function() {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Échec de la suppression');
+                let failureText = gettext('Failed to delete the model');
+                throw new Error(data.error || failureText);
             }
 
             results.push({
@@ -971,12 +977,13 @@ window.saveModelConfig = async function() {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Échec de la sauvegarde de la configuration');
+                let failureText = gettext('Failed to save the configuration');
+                throw new Error(data.error || failureText);
             }
 
-            showMessage('Succès', `Configuration du modèle ${modelName} sauvegardée avec succès`);
+            showMessage(gettext('Success'), gettext('Model configuration')+` ${modelName} `+gettext('saved successfully'));
         } catch (error) {
-            showMessage('Erreur', `Erreur lors de la sauvegarde de la configuration pour ${modelName}: ${error.message}`, true);
+            showMessage(gettext('Error'), gettext('Error saving configuration for')+` ${modelName}: ${error.message}`, true);
             return;
         }
     }
@@ -984,6 +991,7 @@ window.saveModelConfig = async function() {
     $('#configModal').modal('hide');
     refreshAll();
 };
+
 window.addParameter = function() {
     const parametersList = document.getElementById('parametersList');
     if (!parametersList) {
@@ -995,7 +1003,7 @@ window.addParameter = function() {
     newItem.className = 'fields parameter-item';
     newItem.innerHTML = `
         <div class="field">
-            <input type="text" class="parameter-key" placeholder="Nom du paramètre">
+            <input type="text" class="parameter-key" placeholder="`+gettext('Parameter name')+`">
         </div>
         <div class="field">
             <input type="text" class="parameter-value" placeholder="Valeur">

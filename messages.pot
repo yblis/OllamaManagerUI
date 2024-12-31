@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-12-30 02:24-0600\n"
+"POT-Creation-Date: 2024-12-31 04:18-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,72 +17,189 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: static/js/main.js:152
-msgid "Operation(s)"
+#: static/js/main.js:76
+msgid "Are you sure you want to stop the model"
 msgstr ""
 
-#: static/js/main.js:157 static/js/main.js:566 static/js/main.js:773
-msgid "Total Operations"
+#: static/js/main.js:92
+msgid "Failed to stop the model"
 msgstr ""
 
-#: static/js/main.js:161 static/js/main.js:570 static/js/main.js:777
-msgid "Total Prompt Tokens"
-msgstr ""
-
-#: static/js/main.js:165
-msgid "Total Complete Tokens"
-msgstr ""
-
-#: static/js/main.js:169 static/js/main.js:578 static/js/main.js:785
-msgid "Total Duration"
-msgstr ""
-
-#: static/js/main.js:174
-msgid "Operations by Type"
-msgstr ""
-
-#: static/js/main.js:196
-msgid "Are you sure you want to delete this model?"
-msgstr ""
-
-#: static/js/main.js:214
-msgid "Failed to delete the model"
-msgstr ""
-
-#: static/js/main.js:218
+#: static/js/main.js:96 static/js/main.js:219 static/js/main.js:401
+#: static/js/main.js:984
 msgid "Success"
 msgstr ""
 
-#: static/js/main.js:218
+#: static/js/main.js:96 static/js/main.js:219 static/js/main.js:401
 msgid "Model"
 msgstr ""
 
-#: static/js/main.js:218
+#: static/js/main.js:96
+msgid "stopped successfully"
+msgstr ""
+
+#: static/js/main.js:99 static/js/main.js:141 static/js/main.js:192
+#: static/js/main.js:222 static/js/main.js:310 static/js/main.js:324
+#: static/js/main.js:407 static/js/main.js:486 static/js/main.js:546
+#: static/js/main.js:626 static/js/main.js:750 static/js/main.js:796
+#: static/js/main.js:815 static/js/main.js:836 static/js/main.js:986
+msgid "Error"
+msgstr ""
+
+#: static/js/main.js:108 static/js/main.js:150
+msgid "HTTP Error Status"
+msgstr ""
+
+#: static/js/main.js:153
+msgid "Operation(s)"
+msgstr ""
+
+#: static/js/main.js:158 static/js/main.js:567 static/js/main.js:776
+msgid "Total Operations"
+msgstr ""
+
+#: static/js/main.js:162 static/js/main.js:571 static/js/main.js:780
+msgid "Total Prompt Tokens"
+msgstr ""
+
+#: static/js/main.js:166
+msgid "Total Complete Tokens"
+msgstr ""
+
+#: static/js/main.js:170 static/js/main.js:579 static/js/main.js:788
+msgid "Total Duration"
+msgstr ""
+
+#: static/js/main.js:175
+msgid "Operations by Type"
+msgstr ""
+
+#: static/js/main.js:197
+msgid "Are you sure you want to delete this model?"
+msgstr ""
+
+#: static/js/main.js:215 static/js/main.js:861
+msgid "Failed to delete the model"
+msgstr ""
+
+#: static/js/main.js:219
 msgid "successfully deleted"
 msgstr ""
 
-#: static/js/main.js:471
+#: static/js/main.js:303
+msgid "Created on"
+msgstr ""
+
+#: static/js/main.js:324
+msgid "Please enter a model name"
+msgstr ""
+
+#: static/js/main.js:335 templates/index.html:37
+msgid "Starting the download..."
+msgstr ""
+
+#: static/js/main.js:336 static/js/main.js:399
+msgid "Download complete"
+msgstr ""
+
+#: static/js/main.js:337 static/js/main.js:406
+msgid "Error downloading"
+msgstr ""
+
+#: static/js/main.js:353
+msgid "Failed to download the model"
+msgstr ""
+
+#: static/js/main.js:381
+msgid "Download progress"
+msgstr ""
+
+#: static/js/main.js:401
+msgid "downloaded successfully"
+msgstr ""
+
+#: static/js/main.js:425 static/js/main.js:499
+msgid "Ollama server not connected"
+msgstr ""
+
+#: static/js/main.js:434
+msgid "Unable to retrieve models"
+msgstr ""
+
+#: static/js/main.js:472
 msgid "Config"
 msgstr ""
 
-#: static/js/main.js:474
+#: static/js/main.js:475
 msgid "Stats"
 msgstr ""
 
-#: static/js/main.js:477
+#: static/js/main.js:478
 msgid "Delete"
 msgstr ""
 
-#: static/js/main.js:542
+#: static/js/main.js:483
+msgid "No Models Installed"
+msgstr ""
+
+#: static/js/main.js:508
+msgid "Unable to retrieve running models"
+msgstr ""
+
+#: static/js/main.js:543
 msgid "No Models Running"
 msgstr ""
 
-#: static/js/main.js:574 static/js/main.js:781
+#: static/js/main.js:561
+msgid "Failed to fetch stats"
+msgstr ""
+
+#: static/js/main.js:575 static/js/main.js:784
 msgid "Total Completion Tokens"
 msgstr ""
 
-#: static/js/main.js:624
+#: static/js/main.js:625 static/js/main.js:749
 msgid "Please select at least two models to compare"
+msgstr ""
+
+#: static/js/main.js:637
+msgid "Loading details..."
+msgstr ""
+
+#: static/js/main.js:671
+msgid "Error loading details"
+msgstr ""
+
+#: static/js/main.js:815 static/js/main.js:836
+msgid "Please select at least one model"
+msgstr ""
+
+#: static/js/main.js:840
+msgid "Are you sure you want to delete"
+msgstr ""
+
+#: static/js/main.js:841
+msgid "model(s)"
+msgstr ""
+
+#: static/js/main.js:980
+msgid "Failed to save the configuration"
+msgstr ""
+
+#: static/js/main.js:984
+msgid "Model configuration"
+msgstr ""
+
+#: static/js/main.js:984
+msgid "saved successfully"
+msgstr ""
+
+#: static/js/main.js:986
+msgid "Error saving configuration for"
+msgstr ""
+
+#: static/js/main.js:1006
+msgid "Parameter name"
 msgstr ""
 
 #: templates/base.html:6
@@ -94,7 +211,7 @@ msgid "Ollama Manager"
 msgstr ""
 
 #: templates/index.html:27
-msgid "Upload a New Model"
+msgid "Download a New Model"
 msgstr ""
 
 #: templates/index.html:29
@@ -102,11 +219,7 @@ msgid "Enter the model name (ex: llama2:7b)"
 msgstr ""
 
 #: templates/index.html:30
-msgid "Upload"
-msgstr ""
-
-#: templates/index.html:37
-msgid "Starting the download..."
+msgid "Download"
 msgstr ""
 
 #: templates/index.html:47
