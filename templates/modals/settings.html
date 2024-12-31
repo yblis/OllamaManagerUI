@@ -2,24 +2,31 @@
 <div class="ui modal" id="settingsModal">
     <div class="header">
         <i class="cog icon"></i>
-        Paramètres
+        {{ t('settings') }}
     </div>
     <div class="content">
         <form class="ui form">
             <div class="field">
-                <label>URL du Serveur Ollama</label>
+                <label>{{ t('server_url') }}</label>
                 <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
             </div>
             <div class="field">
-                <label>Thème de l'interface</label>
+                <label>{{ t('interface_theme') }}</label>
                 <button class="ui circular icon button" onclick="toggleTheme()">
                     <i class="sun icon"></i>
                 </button>
             </div>
+            <div class="field">
+                <label>Language / Langue</label>
+                <select id="languageSelect" class="ui dropdown" onchange="changeLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                </select>
+            </div>
         </form>
     </div>
     <div class="actions">
-        <div class="ui cancel button">Annuler</div>
-        <div class="ui positive button" onclick="saveSettings()">Enregistrer</div>
+        <div class="ui cancel button">{{ t('cancel') }}</div>
+        <div class="ui positive button" onclick="saveSettings()">{{ t('save') }}</div>
     </div>
 </div>

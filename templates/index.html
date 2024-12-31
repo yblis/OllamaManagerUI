@@ -3,7 +3,7 @@
 {% block content %}
 <div style="display: flex; align-items: center; justify-content: space-between;">
     <div style="display: flex; align-items: center;">
-        <h1 class="ui title">Gestionnaire Ollama</h1>
+        <h1 class="ui title">{{ t('app_title') }}</h1>
         <span class="status-indicator" id="statusDot"></span>
     </div>
     <button class="ui button" onclick="showSettings()">
@@ -13,17 +13,17 @@
 
     <!-- Pull Model Form -->
     <div class="ui segment">
-        <h3 class="ui header">Télécharger un Nouveau Modèle</h3>
+        <h3 class="ui header">{{ t('download_model') }}</h3>
         <div class="ui action input fluid">
-            <input type="text" id="modelNameInput" placeholder="Entrez le nom du modèle (ex: llama2:7b)">
-            <button class="ui primary button" onclick="pullModel()">Télécharger</button>
+            <input type="text" id="modelNameInput" placeholder="{{ t('enter_model_name') }}">
+            <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
         </div>
         <!-- Add progress bar -->
         <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
             <div class="bar">
                 <div class="progress"></div>
             </div>
-            <div class="label">Démarrage du téléchargement...</div>
+            <div class="label">{{ t('starting_download') }}</div>
         </div>
         <!-- Add search results section -->
         <div class="ui search-results" style="margin-top: 1rem; display: none;">
@@ -43,19 +43,19 @@
 
     <!-- Local Models -->
     <div class="ui segment">
-        <h3 class="ui header">Modèles Locaux</h3>
+        <h3 class="ui header">{{ t('local_models') }}</h3>
         <div class="ui buttons batch-actions">
             <button class="ui negative button" onclick="batchDeleteModels()">
-                <i class="trash icon"></i> Supprimer la Sélection
+                <i class="trash icon"></i> {{ t('delete_selected') }}
             </button>
             <button class="ui teal button" onclick="batchConfigureModels()">
-                <i class="cog icon"></i> Configurer la Sélection
+                <i class="cog icon"></i> {{ t('configure_selected') }}
             </button>
             <button class="ui olive button" onclick="compareSelectedModels()">
-                <i class="exchange icon"></i> Comparer la Sélection
+                <i class="exchange icon"></i> {{ t('compare_selected') }}
             </button>
             <button class="ui button" onclick="toggleAllModels()">
-                <i class="check square outline icon"></i> Tout Sélectionner
+                <i class="check square outline icon"></i> {{ t('select_all') }}
             </button>
         </div>
         <table class="ui celled table" id="localModels">
@@ -67,13 +67,13 @@
                             <label></label>
                         </div>
                     </th>
-                    <th>Nom du Modèle</th>
-                    <th>Date de Modification</th>
-                    <th>Taille</th>
-                    <th>Format</th>
-                    <th>Famille</th>
-                    <th>Paramètres</th>
-                    <th class="center aligned">Actions</th>
+                    <th>{{ t('model_name') }}</th>
+                    <th>{{ t('modified_date') }}</th>
+                    <th>{{ t('size') }}</th>
+                    <th>{{ t('format') }}</th>
+                    <th>{{ t('family') }}</th>
+                    <th>{{ t('parameters') }}</th>
+                    <th class="center aligned">{{ t('actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -85,21 +85,21 @@
     <!-- Running Models -->
     <div class="ui segment">
         <div class="ui clearing">
-            <h3 class="ui left floated header">Modèles en Cours d'Exécution</h3>
+            <h3 class="ui left floated header">{{ t('running_models') }}</h3>
             <button class="ui right floated button" onclick="refreshRunningModels()">
-                <i class="refresh icon"></i> Actualiser
+                <i class="refresh icon"></i> {{ t('refresh') }}
             </button>
         </div>
         <table class="ui celled table" id="runningModels">
             <thead>
                 <tr>
-                    <th>Nom du Modèle</th>
-                    <th>Date de Modification</th>
-                    <th>Taille</th>
-                    <th>Format</th>
-                    <th>Famille</th>
-                    <th>Paramètres</th>
-                    <th class="center aligned">Actions</th>
+                    <th>{{ t('model_name') }}</th>
+                    <th>{{ t('modified_date') }}</th>
+                    <th>{{ t('size') }}</th>
+                    <th>{{ t('format') }}</th>
+                    <th>{{ t('family') }}</th>
+                    <th>{{ t('parameters') }}</th>
+                    <th class="center aligned">{{ t('actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -119,7 +119,7 @@
 <div class="ui fullscreen modal" id="comparisonModal">
     <div class="header">
         <i class="exchange icon"></i>
-        Comparaison de Modèles
+        {{ t('compare_selected') }}
     </div>
     <div class="content">
         <div id="modelComparison" class="ui grid">
@@ -127,7 +127,7 @@
         </div>
     </div>
     <div class="actions">
-        <div class="ui positive button">Fermer</div>
+        <div class="ui positive button">{{ t('close') }}</div>
     </div>
 </div>
 

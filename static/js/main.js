@@ -49,6 +49,11 @@ document.addEventListener('DOMContentLoaded', checkServerStatus);
 // Settings management
 window.showSettings = function() {
     document.getElementById('ollamaUrl').value = ollamaUrl;
+    // Set current language in dropdown
+    const currentLang = document.cookie.split(';').find(row => row.trim().startsWith('language='));
+    if (currentLang) {
+        document.getElementById('languageSelect').value = currentLang.split('=')[1];
+    }
     $('#settingsModal').modal('show');
 };
 
@@ -62,6 +67,30 @@ window.saveSettings = function() {
         refreshAll();
     }
 };
+
+// Add language change function after the saveSettings function
+window.changeLanguage = async function(lang) {
+    try {
+        const response = await fetch('/api/language', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ language: lang })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to change language');
+        }
+
+        // Reload the page to apply new language
+        window.location.reload();
+    } catch (error) {
+        showMessage('Error', error.message, true);
+    }
+};
+
 
 // Message display
 window.showMessage = function(title, message, isError = false) {
@@ -882,7 +911,7 @@ window.batchDeleteModels = async function() {
     document.getElementById('batchResults').innerHTML = results.map(result => `
         <div class="item batch-results-item ${result.success ? 'success' : 'error'}">
             <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
-            <div class="content">
+                        <div class="content">
                 <div class="header">${result.model}</div>
                 <div class="description">${result.message}</div>
             </div>
@@ -912,7 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTheme(savedTheme);
 
     checkServerStatus();
-refreshAll();
+    refreshAll();
 
     // Set up search input events
     const searchInput = document.getElementById('modelSearch');
