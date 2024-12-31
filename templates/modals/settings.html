@@ -17,10 +17,10 @@
                 </button>
             </div>
             <div class="field">
-                <label>Language / Langue</label>
+                <label>{{ t('language_selection') }}</label>
                 <select id="languageSelect" class="ui dropdown" onchange="changeLanguage(this.value)">
-                    <option value="en">English</option>
-                    <option value="fr">Français</option>
+                    <option value="fr" {% if session.get('language', 'fr') == 'fr' %}selected{% endif %}>Français</option>
+                    <option value="en" {% if session.get('language', 'fr') == 'en' %}selected{% endif %}>English</option>
                 </select>
             </div>
         </form>
