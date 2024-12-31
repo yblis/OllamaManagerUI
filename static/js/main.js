@@ -472,7 +472,14 @@ async function refreshLocalModels() {
         const data = await response.json();
         const tbody = document.querySelector('#localModels tbody');
 
-        tbody.innerHTML = data.models.map(model => `
+        console.log('Received models data:', data.models); // Debug log
+
+        tbody.innerHTML = data.models.map(model => {
+            console.log('Processing model:', model.name, 'created_at:', model.created_at); // Debug log
+            const date = new Date(model.created_at);
+            const formattedDate = isNaN(date.getTime()) ? 'Date inconnue' : date.toLocaleDateString('fr-FR');
+
+            return `
             <tr>
                 <td class="collapsing">
                     <div class="ui fitted checkbox">
@@ -481,7 +488,7 @@ async function refreshLocalModels() {
                     </div>
                 </td>
                 <td>${model.name}</td>
-                <td>${new Date(model.created_at).toLocaleDateString('fr-FR')}</td>
+                <td>${formattedDate}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -500,7 +507,7 @@ async function refreshLocalModels() {
                     </div>
                 </td>
             </tr>
-        `).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
+        `}).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
     } catch (error) {
         console.error('Error refreshing local models:', error);
         showMessage('Erreur', error.message, true);
@@ -532,10 +539,17 @@ async function refreshRunningModels() {
         const data = await response.json();
         const tbody = document.querySelector('#runningModels tbody');
 
-        tbody.innerHTML = data.models.map(model => `
+        console.log('Received running models data:', data.models); // Debug log
+
+        tbody.innerHTML = data.models.map(model => {
+            console.log('Processing running model:', model.name, 'created_at:', model.created_at); // Debug log
+            const date = new Date(model.created_at);
+            const formattedDate = isNaN(date.getTime()) ? 'Date inconnue' : date.toLocaleDateString('fr-FR');
+
+            return `
             <tr>
                 <td>${model.name}</td>
-                <td>${new Date(model.created_at).toLocaleDateString('fr-FR')}</td>
+                <td>${formattedDate}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -546,7 +560,7 @@ async function refreshRunningModels() {
                     </button>
                 </td>
             </tr>
-        `).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
+        `}).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
     } catch (error) {
         console.error('Error refreshing running models:', error);
         showMessage('Erreur', error.message, true);

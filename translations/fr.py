@@ -29,6 +29,7 @@ translations = {
 
     # Model properties
     "model_name": "Nom du Modèle",
+    "created_date": "Date de création",
     "modified_date": "Date de Modification",
     "size": "Taille",
     "format": "Format",
