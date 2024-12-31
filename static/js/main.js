@@ -696,6 +696,18 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshAll();
     // Check status and refresh data every 30 seconds
     setInterval(refreshAll, 30000);
+
+    // Set up model name input events
+    const modelNameInput = document.getElementById('modelNameInput');
+    if (modelNameInput) {
+        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
+        modelNameInput.addEventListener('blur', () => {
+            // Delay hiding results to allow for clicks
+            setTimeout(() => {
+                document.querySelector('.ui.search-results').style.display = 'none';
+            }, 200);
+        });
+    }
 });
 
 // Batch operations
@@ -917,15 +929,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up model name input events
     const modelNameInput = document.getElementById('modelNameInput');
-        if (modelNameInput) {
-            modelNameInput.addEventListener('input', (e) => searchModels(e.target));
-            modelNameInput.addEventListener('blur', () => {
-                // Delay hiding results to allow for clicks
-                setTimeout(() => {
-                    document.querySelector('.ui.search-results').style.display = 'none';
-                }, 200);
-            });
-        }
+    if (modelNameInput) {
+        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
+        modelNameInput.addEventListener('blur', () => {
+            // Delay hiding results to allow for clicks
+            setTimeout(() => {
+                document.querySelector('.ui.search-results').style.display = 'none';
+            }, 200);
+        });
     }
 });
 
