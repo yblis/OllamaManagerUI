@@ -67,20 +67,22 @@ class OllamaClient:
         """Save model configuration by creating a new custom model"""
         try:
             # Build Modelfile content
-            modelfile = f"FROM {model_name}\n\n"
-
-            # Add system prompt if provided
-            if system:
-                modelfile += f'SYSTEM """\n{system}\n"""\n\n'
-
-            # Add template if provided    
-            if template:
-                modelfile += f'TEMPLATE """\n{template}\n"""\n\n'
+            modelfile = f"FROM {model_name}\n"
 
             # Add parameters if provided
             if parameters:
                 for key, value in parameters.items():
                     modelfile += f'PARAMETER {key} {value}\n'
+
+            # Add system prompt if provided
+            if system:
+                modelfile += f'SYSTEM """{system}"""\n'
+
+            # Add template if provided    
+            if template:
+                modelfile += f'TEMPLATE """{template}"""\n'
+
+            print(f"Creating model with Modelfile:\n{modelfile}")  # Debug log
 
             # Create new model using Ollama API with streaming response handling
             url = f'{self.base_url}/api/create'
@@ -98,6 +100,7 @@ class OllamaClient:
 
             # Process the streaming response
             error = None
+            status = None
             for line in response.iter_lines():
                 if line:
                     try:
@@ -105,6 +108,10 @@ class OllamaClient:
                         if 'error' in data:
                             error = data['error']
                             break
+                        if 'status' in data:
+                            status = data['status']
+                            if status == 'success':
+                                break
                     except json.JSONDecodeError:
                         continue
 

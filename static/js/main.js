@@ -908,7 +908,7 @@ function formatBytes(bytes, decimals = 2) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedTheme = localStorage.getItem('theme') || ''light';
     setTheme(savedTheme);
 
     checkServerStatus();
@@ -943,99 +943,78 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to add a parameter in the config modal
 window.addParameter = function() {
     const parametersContainer = document.getElementById('parameters');
-    const newParameterSegment = document.createElement('div');
-    newParameterSegment.className = 'ui segment';
-    newParameterSegment.innerHTML = `
+    const newSegment = document.createElement('div');
+    newSegment.className = 'ui segment';
+    newSegment.innerHTML = `
         <div class="two fields">
             <div class="field">
-                <input type="text" placeholder="Parameter Name" class="parameter-name">
+                <input type="text" class="parameter-key" placeholder="Parameter Name">
             </div>
             <div class="field">
                 <div class="ui right labeled input">
-                    <input type="text" placeholder="Value" class="parameter-value">
-                    <button class="ui icon button negative" onclick="this.closest('.segment').remove()">
+                    <input type="text" class="parameter-value" placeholder="Value">
+                    <button class="ui icon button negative" onclick="removeParameter(this)">
                         <i class="trash icon"></i>
                     </button>
                 </div>
             </div>
         </div>
     `;
-    parametersContainer.appendChild(newParameterSegment);
+    parametersContainer.appendChild(newSegment);
 };
 
-// Function to save the configuration of a model
-window.saveModelConfig = async function() {
-    const selectedModels = Array.from(document.querySelectorAll('#selectedModels .item'))
-        .map(item => item.textContent.trim());
+window.removeParameter = function(button) {
+    const segment = button.closest('.ui.segment');
+    if (segment) {
+        segment.remove();
+    }
+};
 
-    if (selectedModels.length === 0) {
+window.saveModelConfig = async function() {
+    const selectedModelsList = document.getElementById('selectedModels');
+    const modelItems = selectedModelsList.getElementsByClassName('item');
+    if (modelItems.length === 0) {
         showMessage('Error', 'No models selected', true);
         return;
     }
 
-    const systemPrompt = document.getElementById('systemPrompt').value;
-    const template = document.getElementById('template').value;
+    // Get the model name from the first selected model
+    const modelName = modelItems[0].textContent.trim();
 
-    // Gather and validate parameters
+    // Collect parameters
     const parameters = {};
-    let hasValidationError = false;
-
-    document.querySelectorAll('#parameters .segment').forEach(segment => {
-        const nameInput = segment.querySelector('.parameter-name');
+    document.querySelectorAll('#parameters .ui.segment').forEach(segment => {
+        const keyInput = segment.querySelector('.parameter-key');
         const valueInput = segment.querySelector('.parameter-value');
-
-        if (!nameInput || !valueInput) return;
-
-        // Reset previous error states
-        nameInput.classList.remove('error');
-        valueInput.classList.remove('error');
-
-        const name = nameInput.value.trim();
-        const value = valueInput.value.trim();
-
-        if (!name && value) {
-            hasValidationError = true;
-            nameInput.classList.add('error');
-        } else if (name) {
-            // Try to parse the value as a number if it looks like one
-            if (!isNaN(value) && value !== '') {
-                parameters[name] = parseFloat(value);
-            } else {
-                parameters[name] = value;
-            }
+        if (keyInput && valueInput && keyInput.value.trim()) {
+            parameters[keyInput.value.trim()] = valueInput.value.trim();
         }
     });
 
-    if (hasValidationError) {
-        showMessage('Error', 'Please provide names for all parameters with values', true);
-        return;
-    }
-
+    // Build the configuration object
     const config = {
-        system: systemPrompt,
-        template: template,
+        system: document.getElementById('systemPrompt').value.trim(),
+        template: document.getElementById('template').value.trim(),
         parameters: parameters
     };
 
     try {
-        for (const modelName of selectedModels) {
-            const response = await fetch(`/api/models/${modelName}/config`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Ollama-URL': ollamaUrl
-                },
-                body: JSON.stringify(config)
-            });
+        const response = await fetch(`/api/models/${modelName}/config`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Ollama-URL': ollamaUrl
+            },
+            body: JSON.stringify(config)
+        });
 
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || `Failed to update config for ${modelName}`);
-            }
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || `Failed to update config for ${modelName}`);
         }
 
         $('#configModal').modal('hide');
-        showMessage('Success', 'Model configuration(s) updated successfully');
+        showMessage('Success', 'Model configuration updated successfully');
         refreshAll();
     } catch (error) {
         showMessage('Error', error.message, true);

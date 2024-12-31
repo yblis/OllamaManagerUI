@@ -19,14 +19,17 @@
                 <div id="parameters" class="ui segments">
                     <!-- Parameters will be dynamically added here -->
                 </div>
-                <button type="button" class="ui small primary button" onclick="addParameter()">
-                    <i class="plus icon"></i> Add Parameter
-                </button>
+                <div class="ui basic segment">
+                    <button type="button" class="ui small primary labeled icon button" onclick="addParameter()">
+                        <i class="plus icon"></i>
+                        Add Parameter
+                    </button>
+                </div>
             </div>
         </form>
     </div>
     <div class="actions">
-        <div class="ui negative button">Cancel</div>
+        <div class="ui cancel button">Cancel</div>
         <div class="ui positive button" onclick="saveModelConfig()">Save</div>
     </div>
 </div>
