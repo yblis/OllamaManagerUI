@@ -82,21 +82,39 @@ class OllamaClient:
                 for key, value in parameters.items():
                     modelfile += f'PARAMETER {key} {value}\n'
 
-            # Create new model using Ollama API
-            response = self._handle_request(
-                requests.post,
-                'api/create',
+            # Create new model using Ollama API with streaming response handling
+            url = f'{self.base_url}/api/create'
+            response = requests.post(
+                url,
+                headers=self._get_headers(),
                 json={
                     'name': model_name,
                     'modelfile': modelfile
-                }
+                },
+                stream=True
             )
 
-            if 'error' in response:
-                return {'success': False, 'error': response['error']}
+            response.raise_for_status()
+
+            # Process the streaming response
+            error = None
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        if 'error' in data:
+                            error = data['error']
+                            break
+                    except json.JSONDecodeError:
+                        continue
+
+            if error:
+                return {'success': False, 'error': error}
 
             return {'success': True, 'message': f'Configuration du modèle {model_name} mise à jour avec succès'}
 
+        except requests.exceptions.RequestException as e:
+            return {'success': False, 'error': str(e)}
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
