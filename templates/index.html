@@ -29,13 +29,6 @@
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
         </div>
 
-        <!-- Search Results Container (Separate from search input) -->
-        <div id="searchResultsContainer" style="display: none; position: fixed; z-index: 99999; background: rgba(255, 255, 255, 0.98); box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 4px; max-height: 400px; overflow-y: auto;">
-            <div class="ui relaxed divided list" id="searchResults">
-                <!-- Search results will be populated here -->
-            </div>
-        </div>
-
         <!-- Ollama filters -->
         <div id="ollamaFilters" class="ui three fields" style="display: none; margin-top: 0.5rem;">
             <div class="field">
@@ -157,6 +150,13 @@
         </div>
         <div class="actions">
             <div class="ui positive button">{{ t('close') }}</div>
+        </div>
+    </div>
+
+    <!-- Search Results Container (Detached from document flow) -->
+    <div id="searchResultsContainer" style="display: none; position: fixed; z-index: 999999; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 4px; max-height: 400px; overflow-y: auto;">
+        <div class="ui relaxed divided list" id="searchResults">
+            <!-- Search results will be populated here -->
         </div>
     </div>
 
