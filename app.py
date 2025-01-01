@@ -222,25 +222,28 @@ def pull_model():
 def search_models():
     keyword = request.json.get('keyword', '')
     try:
-        # Use curl to get models directly
-        result = subprocess.run(['curl', '-s', 'https://ollama.com/library'], capture_output=True, text=True)
-        if result.returncode != 0:
+        # Get models from Ollama library
+        response = requests.get('https://ollama.com/api/tags')
+        if response.status_code != 200:
             return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
 
-        # Extract model names using regex
-        pattern = r'(?<=<span>).*?(?=</span>)'
-        models = re.findall(pattern, result.stdout)
+        data = response.json()
+        models = data.get('models', [])
 
         # Filter models based on keyword
-        filtered_models = [model for model in models if keyword.lower() in model.lower()]
+        filtered_models = []
+        for model in models:
+            model_name = model.get('name', '')
+            if keyword.lower() in model_name.lower():
+                filtered_models.append({
+                    'name': model_name,
+                    'tags': model.get('tags', []),
+                    'size': model.get('size', 0),
+                    'digest': model.get('digest', ''),
+                    'modified_at': model.get('modified_at', '')
+                })
 
-        # Common model size tags
-        size_tags = ['1b', '1.5b', '2b', '3b', '7b', '8b', '9b', '13b', '34b', '70b']
-
-        # Prepare response with models and their tags
-        models_with_tags = [{'name': model, 'tags': size_tags} for model in filtered_models]
-
-        return jsonify({'models': models_with_tags})
+        return jsonify({'models': filtered_models})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
