@@ -27,7 +27,7 @@
             <input type="text" id="modelNameInput" placeholder="{{ t('enter_model_name') }}">
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
             <!-- Search results unified display -->
-            <div class="ui segments search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 0;">
+            <div class="ui segments search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 0;">
                 <div class="ui relaxed divided list" id="searchResults">
                     <!-- Search results will be populated here -->
                 </div>
@@ -129,6 +129,8 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Include modals -->
     {% include "modals/settings.html" %}
     {% include "modals/message.html" %}
     {% include "modals/stats.html" %}
