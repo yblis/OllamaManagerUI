@@ -220,32 +220,91 @@ def pull_model():
 @with_error_handling
 def search_models():
     keyword = request.json.get('keyword', '')
+    source = request.json.get('source', 'huggingface')
+    selected_filters = request.json.get('filters', [])
+
     try:
-        # Get models from Ollama library using BeautifulSoup
-        response = requests.get('https://ollama.com/library')
-        if response.status_code != 200:
-            return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
+        if source == 'huggingface':
+            # Recherche HuggingFace existante
+            words = keyword.lower().split()
+            url = f"https://huggingface.co/api/models?search={keyword}"
+            response = requests.get(url)
 
-        soup = BeautifulSoup(response.content, 'html.parser')
-        model_items = soup.find_all('li', attrs={'x-test-model': True})
+            if response.status_code != 200:
+                return jsonify({'error': 'Erreur de connexion à HuggingFace'}), 500
 
-        filtered_models = []
-        for item in model_items:
-            name_span = item.select_one('span.group-hover\\:underline')
-            name = name_span.get_text(strip=True) if name_span else None
+            data = response.json()
+            filtered_models = []
 
-            if name and keyword.lower() in name.lower():
+            for model in data:
+                if not model.get('tags', []):
+                    continue
+
+                if 'gguf' not in model.get('tags', []):
+                    continue
+
+                model_id = model['id'].lower()
+                if all(word in model_id for word in words):
+                    filtered_models.append({
+                        'name': f"hf.co/{model['id']}",
+                        'created_at': model.get('createdAt'),
+                        'tags': model.get('tags', [])
+                    })
+
+            return jsonify({'models': filtered_models})
+
+        else:  # source == 'ollama'
+            # Get models from Ollama library using BeautifulSoup
+            response = requests.get('https://ollama.com/library')
+            if response.status_code != 200:
+                return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+            model_items = soup.find_all('li', attrs={'x-test-model': True})
+
+            filtered_models = []
+            for item in model_items:
+                name_span = item.select_one('span.group-hover\\:underline')
+                name = name_span.get_text(strip=True) if name_span else None
+
                 capability_spans = item.find_all('span', attrs={'x-test-capability': True})
                 size_spans = item.find_all('span', attrs={'x-test-size': True})
                 tags = [span.get_text(strip=True) for span in capability_spans + size_spans]
+                tags_lower = [tag.lower() for tag in tags]
 
-                filtered_models.append({
-                    'name': name,
-                    'tags': tags,
-                    'modified_at': None  # Ollama library doesn't provide dates
-                })
+                # Filtrage par mots-clés et tags
+                if name:
+                    include_model = True
 
-        return jsonify({'models': filtered_models})
+                    # Vérifier les filtres sélectionnés
+                    if selected_filters:
+                        has_matching_filter = False
+                        for filter_tag in selected_filters:
+                            if filter_tag.lower() in tags_lower:
+                                has_matching_filter = True
+                                break
+                        if not has_matching_filter:
+                            include_model = False
+
+                    # Vérifier le mot-clé de recherche
+                    if keyword:
+                        keyword_found = False
+                        # Rechercher dans le nom et les tags
+                        for tag in tags:
+                            if keyword.lower() in f"{name}:{tag}".lower():
+                                keyword_found = True
+                                break
+                        if not keyword_found:
+                            include_model = False
+
+                    if include_model:
+                        filtered_models.append({
+                            'name': name,
+                            'tags': tags
+                        })
+
+            return jsonify({'models': filtered_models})
+
     except Exception as e:
         print(f"Error searching models: {str(e)}")
         return jsonify({'error': str(e)}), 500

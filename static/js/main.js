@@ -281,6 +281,7 @@ window.searchModels = function(input) {
     const searchResults = document.querySelector('.ui.search-results');
     const searchResultsList = document.getElementById('searchResults');
     const searchSource = document.getElementById('modelSource').value;
+    const selectedFilters = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
 
     if (!input.value.trim()) {
         searchResults.style.display = 'none';
@@ -290,78 +291,42 @@ window.searchModels = function(input) {
     searchTimeout = setTimeout(async () => {
         try {
             const query = input.value.trim();
-            let results = [];
+            const response = await fetch('/api/models/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Ollama-URL': ollamaUrl
+                },
+                body: JSON.stringify({
+                    keyword: query,
+                    source: searchSource,
+                    filters: selectedFilters
+                })
+            });
 
-            if (searchSource === 'huggingface') {
-                // Recherche HuggingFace existante
-                const words = query.toLowerCase().split(/\s+/);
-                const url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}`;
-
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
+            if (!response.ok) {
                 const data = await response.json();
-                if (data.error) throw new Error(data.error);
-
-                results = data.filter(model => {
-                    if (!model.tags?.includes('gguf')) return false;
-                    const modelIdLower = model.id.toLowerCase();
-                    return words.every(word => modelIdLower.includes(word));
-                }).map(model => {
-                    const createdAt = new Date(model.createdAt);
-                    return {
-                        id: model.id,
-                        name: `hf.co/${model.id}`,
-                        createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
-                    };
-                });
-
-            } else if (searchSource === 'ollama') {
-                // Recherche Ollama
-                const response = await fetch('/api/models/search', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Ollama-URL': ollamaUrl
-                    },
-                    body: JSON.stringify({ keyword: query })
-                });
-
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
-
-                results = data.models.map(model => ({
-                    id: model,
-                    name: model,
-                    createdAt: 'N/A' // Ollama ne fournit pas de date
-                }));
+                throw new Error(data.error || 'Failed to search models');
             }
 
-            if (!results.length) {
+            const data = await response.json();
+            if (!data.models || !data.models.length) {
                 searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
                 searchResults.style.display = 'block';
                 return;
             }
 
-            // Tri par date (si disponible)
-            results.sort((a, b) => {
-                if (a.createdAt === 'N/A') return 1;
-                if (b.createdAt === 'N/A') return -1;
-                return new Date(b.createdAt.split('/').reverse().join('-')) - new Date(a.createdAt.split('/').reverse().join('-'));
-            });
-
-            searchResultsList.innerHTML = results.map(model => `
-                <div class="item" style="cursor: pointer;" onclick="selectModel('${model.name}')">
-                    <div class="content">
-                        <div class="header">${model.name}</div>
-                        <div class="description">Créé le: ${model.createdAt}</div>
+            searchResultsList.innerHTML = data.models.map(model => {
+                const tags = model.tags ? model.tags.join(', ') : '';
+                return `
+                    <div class="item" style="cursor: pointer;" onclick="selectModel('${model.name}')">
+                        <div class="content">
+                            <div class="header">${model.name}</div>
+                            <div class="description">${tags}</div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             searchResults.style.display = 'block';
         } catch (error) {
@@ -773,6 +738,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 200);
         });
     }
+
+    // Handle source change to show/hide Ollama filters
+    const modelSource = document.getElementById('modelSource');
+    const ollamaFilters = document.getElementById('ollamaFilters');
+
+    if (modelSource && ollamaFilters) {
+        modelSource.addEventListener('change', function() {
+            ollamaFilters.style.display = this.value === 'ollama' ? 'block' : 'none';
+        });
+
+        // Initial state
+        ollamaFilters.style.display = modelSource.value === 'ollama' ? 'block' : 'none';
+    }
+
+    // Initialize Semantic UI checkboxes
+    $('.ui.checkbox').checkbox();
 });
 
 // Batch operations
