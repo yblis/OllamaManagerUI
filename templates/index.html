@@ -22,35 +22,41 @@
             <input type="text" id="modelNameInput" placeholder="{{ t('enter_model_name') }}">
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
         </div>
-        <!-- Add filters section -->
-        <div id="ollamaFilters" class="ui segment" style="margin-top: 1rem;">
-            <div class="ui divider"></div>
-            <h4 class="ui header">Filtres Ollama</h4>
-            <div class="ui checkbox">
-                <input type="checkbox" class="filter-checkbox" value="embedding">
-                <label>Embedding</label>
-            </div>
-            <div class="ui checkbox">
-                <input type="checkbox" class="filter-checkbox" value="tools">
-                <label>Tools</label>
-            </div>
-            <div class="ui checkbox">
-                <input type="checkbox" class="filter-checkbox" value="vision">
-                <label>Vision</label>
+        <!-- Ollama filters simplified -->
+        <div id="ollamaFilters" class="ui basic segment" style="display: none;">
+            <div class="ui three fields">
+                <div class="field">
+                    <div class="ui checkbox">
+                        <input type="checkbox" class="filter-checkbox" value="embedding">
+                        <label>Embedding</label>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui checkbox">
+                        <input type="checkbox" class="filter-checkbox" value="tools">
+                        <label>Tools</label>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui checkbox">
+                        <input type="checkbox" class="filter-checkbox" value="vision">
+                        <label>Vision</label>
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- Add progress bar -->
+        <!-- Search results -->
+        <div class="ui search-results" style="margin-top: 1rem; display: none;">
+            <select class="ui dropdown fluid" id="searchResults">
+                <option value="">Sélectionnez un modèle</option>
+            </select>
+        </div>
+        <!-- Progress bar -->
         <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
             <div class="bar">
                 <div class="progress"></div>
             </div>
             <div class="label">{{ t('starting_download') }}</div>
-        </div>
-        <!-- Add search results section -->
-        <div class="ui search-results" style="margin-top: 1rem; display: none;">
-            <div class="ui relaxed divided list" id="searchResults">
-                <!-- Search results will be displayed here -->
-            </div>
         </div>
     </div>
 

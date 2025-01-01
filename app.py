@@ -2,7 +2,6 @@ import requests
 from flask import Flask, render_template, jsonify, request, session
 from ollama_client import OllamaClient
 import traceback
-import re
 import os
 import json
 from translations import t, get_translation, set_language, get_available_languages, DEFAULT_LANGUAGE

@@ -310,47 +310,30 @@ window.searchModels = function(input) {
             }
 
             const data = await response.json();
+
+            // Vider la liste déroulante sauf l'option par défaut
+            while (searchResultsList.options.length > 1) {
+                searchResultsList.remove(1);
+            }
+
             if (!data.models || !data.models.length) {
-                searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
+                searchResultsList.options[0].text = 'Aucun modèle trouvé';
                 searchResults.style.display = 'block';
                 return;
             }
 
-            // Créer une liste déroulante pour les résultats
-            const select = document.createElement('select');
-            select.className = 'ui dropdown';
-            select.style.width = '100%';
-
-            // Option par défaut
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = 'Sélectionnez un modèle';
-            select.appendChild(defaultOption);
-
-            // Ajouter les résultats comme options
+            // Ajouter les nouveaux résultats
             data.models.forEach(model => {
                 const option = document.createElement('option');
-                // Pour Ollama, le modèle est déjà formaté comme "nom:tag"
                 option.value = typeof model === 'string' ? model : model.name;
                 option.textContent = typeof model === 'string' ? model : `${model.name} (${model.tags.join(', ')})`;
-                select.appendChild(option);
+                searchResultsList.appendChild(option);
             });
 
-            // Gérer la sélection
-            select.addEventListener('change', function() {
-                if (this.value) {
-                    selectModel(this.value);
-                }
-            });
-
-            // Vider et ajouter la nouvelle liste déroulante
-            searchResultsList.innerHTML = '';
-            searchResultsList.appendChild(select);
-
-            // Initialiser la dropdown Semantic UI
-            $(select).dropdown();
-
+            // Afficher les résultats
             searchResults.style.display = 'block';
+            $(searchResultsList).dropdown('refresh');
+
         } catch (error) {
             showMessage('Erreur', error.message, true);
         }
@@ -768,6 +751,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (modelSource && ollamaFilters) {
         modelSource.addEventListener('change', function() {
             ollamaFilters.style.display = this.value === 'ollama' ? 'block' : 'none';
+            // Clear and hide results when switching sources
+            const searchResults = document.querySelector('.ui.search-results');
+            const searchResultsList = document.getElementById('searchResults');
+            searchResults.style.display = 'none';
+            document.getElementById('modelNameInput').value = '';
+            while (searchResultsList.options.length > 1) {
+                searchResultsList.remove(1);
+            }
         });
 
         // Initial state
@@ -776,6 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize Semantic UI checkboxes
     $('.ui.checkbox').checkbox();
+    $('.ui.dropdown').dropdown(); //added to initialize dropdown
 });
 
 // Batch operations
@@ -955,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to debounce events
 function debounce(func, wait) {
     let timeout;
-    return function executedFunction(...args) {
+    return function executedFunction(......args) {
         const later = () => {
             clearTimeout(timeout);
             func(...args);
