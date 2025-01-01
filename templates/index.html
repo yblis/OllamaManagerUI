@@ -6,17 +6,7 @@
         <h1 class="ui title">{{ gettext('Ollama Manager') }}</h1>
         <span class="status-indicator" id="statusDot"></span>
     </div>
-    <div class="ui language-selector ">
-        <div class="ui clearing">
-        {% for language in AVAILABLE_LANGUAGES.items() %}
-            {% if CURRENT_LANGUAGE == language[0] %}
-                {{ language[1] }}
-            {% else %}
-                <button class="right floated" onclick="window.location.href='{{ url_for('set_language', language=language[0]) }}'" >{{ language[1] }}</button>
-            {%  endif %}
-        {% endfor %}
-        </div>
-    </div>
+
     <button class="ui button" onclick="showSettings()">
         <i class="cog icon"></i>
     </button>

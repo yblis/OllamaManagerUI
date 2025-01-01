@@ -327,9 +327,13 @@ window.toggleModelSource = function(button) {
     // Clear and hide results when switching sources
     const searchResults = document.querySelector('.search-results');
     const searchResultsList = document.getElementById('searchResults');
-    searchResults.style.display = 'none';
+
+    if ( searchResults!==undefined && searchResults!==null ) {
+        searchResults.style.display = 'none';
+        searchResultsList.innerHTML = '';
+    }
+
     document.getElementById('modelNameInput').value = '';
-    searchResultsList.innerHTML = '';
 };
 
 // Function to search models with proper syntax
@@ -858,7 +862,7 @@ window.selectAllModels = function(checkbox) {
             // Décocher la case "Tous Sélectionner" si un modèle est décoché
             document.querySelector('#selectAllCheckbox').checked = false;
         }
-    };
+    });
 
     updateCompareButton();
 };
