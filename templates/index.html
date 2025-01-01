@@ -15,6 +15,10 @@
     <div class="ui segment">
         <h3 class="ui header">{{ t('download_model') }}</h3>
         <div class="ui action input fluid">
+            <select class="ui dropdown" id="modelSource">
+                <option value="huggingface">HuggingFace</option>
+                <option value="ollama">Ollama</option>
+            </select>
             <input type="text" id="modelNameInput" placeholder="{{ t('enter_model_name') }}">
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
         </div>

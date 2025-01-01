@@ -280,6 +280,7 @@ window.searchModels = function(input) {
     clearTimeout(searchTimeout);
     const searchResults = document.querySelector('.ui.search-results');
     const searchResultsList = document.getElementById('searchResults');
+    const searchSource = document.getElementById('modelSource').value;
 
     if (!input.value.trim()) {
         searchResults.style.display = 'none';
@@ -289,51 +290,74 @@ window.searchModels = function(input) {
     searchTimeout = setTimeout(async () => {
         try {
             const query = input.value.trim();
-            const words = query.toLowerCase().split(/\s+/); // Sépare par espaces
+            let results = [];
 
-            const url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}`;
+            if (searchSource === 'huggingface') {
+                // Recherche HuggingFace existante
+                const words = query.toLowerCase().split(/\s+/);
+                const url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}`;
 
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
 
-            // Filtre uniquement si 'gguf' est dans les tags ET que tous les mots de la recherche se trouvent dans l'ID
-            const ggufModels = data.filter(model => {
-                if (!model.tags?.includes('gguf')) return false;
-                const modelIdLower = model.id.toLowerCase();
-                return words.every(word => modelIdLower.includes(word));
-            });
+                results = data.filter(model => {
+                    if (!model.tags?.includes('gguf')) return false;
+                    const modelIdLower = model.id.toLowerCase();
+                    return words.every(word => modelIdLower.includes(word));
+                }).map(model => {
+                    const createdAt = new Date(model.createdAt);
+                    return {
+                        id: model.id,
+                        name: `hf.co/${model.id}`,
+                        createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
+                    };
+                });
 
-            if (!ggufModels.length) {
+            } else if (searchSource === 'ollama') {
+                // Recherche Ollama
+                const response = await fetch('/api/models/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Ollama-URL': ollamaUrl
+                    },
+                    body: JSON.stringify({ keyword: query })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                results = data.models.map(model => ({
+                    id: model,
+                    name: model,
+                    createdAt: 'N/A' // Ollama ne fournit pas de date
+                }));
+            }
+
+            if (!results.length) {
                 searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
                 searchResults.style.display = 'block';
                 return;
             }
 
-            // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
-            const modelsWithDate = ggufModels.map(model => {
-                const createdAt = new Date(model.createdAt);
-                const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
-                return {
-                    ...model,
-                    formattedDate,
-                    createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
-                };
+            // Tri par date (si disponible)
+            results.sort((a, b) => {
+                if (a.createdAt === 'N/A') return 1;
+                if (b.createdAt === 'N/A') return -1;
+                return new Date(b.createdAt.split('/').reverse().join('-')) - new Date(a.createdAt.split('/').reverse().join('-'));
             });
 
-            // Trier les modèles par date de création
-            modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
-
-            searchResultsList.innerHTML = modelsWithDate.map(model => `
-                <div class="item" style="cursor: pointer;" onclick="selectModel('${model.id}')">
+            searchResultsList.innerHTML = results.map(model => `
+                <div class="item" style="cursor: pointer;" onclick="selectModel('${model.name}')">
                     <div class="content">
-                        <div class="header">${model.id}</div>
+                        <div class="header">${model.name}</div>
                         <div class="description">Créé le: ${model.createdAt}</div>
                     </div>
                 </div>
@@ -348,7 +372,7 @@ window.searchModels = function(input) {
 
 window.selectModel = function(modelId) {
     const modelInput = document.getElementById('modelNameInput');
-    modelInput.value = `hf.co/${modelId}`;
+    modelInput.value = modelId;
     document.querySelector('.ui.search-results').style.display = 'none';
 };
 
@@ -900,7 +924,7 @@ window.batchDeleteModels = async function() {
                 body: JSON.stringify({ name: modelName })
             });
 
-            if (!response.ok) {
+            if(!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Échec de la suppression');
             }
