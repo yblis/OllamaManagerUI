@@ -276,6 +276,7 @@ function toggleTheme() {
 // Model search and pull
 let searchTimeout = null;
 
+// Function to search models with proper syntax
 window.searchModels = function(input) {
     clearTimeout(searchTimeout);
     const searchResults = document.querySelector('.search-results');
@@ -329,8 +330,7 @@ window.searchModels = function(input) {
                             <div class="header">${modelName}</div>
                             ${tags.length ? `<div class="description">${tags.join(', ')}</div>` : ''}
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
 
             searchResultsList.innerHTML = resultItems;
@@ -940,12 +940,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up search input events
     const searchInput = document.getElementById('modelSearch');
     if (searchInput) {
-        searchInput.addEventListener('input, debounce(handleSearch, 300));
+        searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
 });
 
-// Function to debounce events
-function debounce(func, wait) {
+// Function to debounce eventsfunction debounce(func, wait) {
     let timeout;
     return function executedFunction() {
         const context = this;
