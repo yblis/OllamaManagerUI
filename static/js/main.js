@@ -745,6 +745,10 @@ function refreshAll() {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+
+    checkServerStatus();
     refreshAll();
     // Check status and refresh data every 30 seconds
     setInterval(refreshAll, 30000);
@@ -782,7 +786,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize Semantic UI checkboxes
     $('.ui.checkbox').checkbox();
-    $('.ui.dropdown').dropdown(); //added to initialize dropdown
+    $('.ui.dropdown').dropdown();
 });
 
 // Batch operations
@@ -946,7 +950,7 @@ function formatBytes(bytes, decimals = 2) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme') || ''light';
+    const savedTheme = localStorage.getItem('theme') || 'light';
     setTheme(savedTheme);
 
     checkServerStatus();
