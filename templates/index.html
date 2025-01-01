@@ -12,7 +12,7 @@
 </div>
 
     <!-- Pull Model Form -->
-    <div class="ui segment" style="position: relative; z-index: 9999;">
+    <div class="ui segment">
         <h3 class="ui header">{{ t('download_model') }}</h3>
 
         <!-- Source Toggle Switch -->
@@ -26,8 +26,8 @@
         <div class="ui action input fluid search-container" style="position: relative;">
             <input type="text" id="modelNameInput" placeholder="{{ t('enter_model_name') }}">
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
-            <!-- Search results unified display -->
-            <div class="ui segments search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 9999; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 0;">
+            <!-- Search results unified display with higher z-index -->
+            <div class="ui segments search-results" style="display: none; position: fixed; top: auto; left: auto; right: auto; width: inherit; z-index: 9999; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 0;">
                 <div class="ui relaxed divided list" id="searchResults">
                     <!-- Search results will be populated here -->
                 </div>
