@@ -288,6 +288,20 @@ function debounce(func, wait) {
     };
 }
 
+// Function to update search results position
+function updateSearchResultsPosition() {
+    const searchInput = document.getElementById('modelNameInput');
+    const searchContainer = document.getElementById('searchContainer');
+    const resultsContainer = document.getElementById('searchResultsContainer');
+
+    if (searchInput && searchContainer && resultsContainer) {
+        const rect = searchContainer.getBoundingClientRect();
+        resultsContainer.style.top = `${rect.bottom + window.scrollY}px`;
+        resultsContainer.style.left = `${rect.left}px`;
+        resultsContainer.style.width = `${rect.width}px`;
+    }
+}
+
 // Model search and pull
 let searchTimeout = null;
 
@@ -318,15 +332,18 @@ window.toggleModelSource = function(button) {
 // Function to search models with proper syntax
 window.searchModels = function(input) {
     clearTimeout(searchTimeout);
-    const searchResults = document.querySelector('.search-results');
+    const searchResultsContainer = document.getElementById('searchResultsContainer');
     const searchResultsList = document.getElementById('searchResults');
     const selectedSource = document.querySelector('.toggle-container .button.active').getAttribute('data-source');
     const selectedFilters = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
 
     if (!input.value.trim()) {
-        searchResults.style.display = 'none';
+        searchResultsContainer.style.display = 'none';
         return;
     }
+
+    // Update position before showing results
+    updateSearchResultsPosition();
 
     searchTimeout = setTimeout(async () => {
         try {
@@ -353,11 +370,10 @@ window.searchModels = function(input) {
 
             if (!data.models || !data.models.length) {
                 searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
-                searchResults.style.display = 'block';
+                searchResultsContainer.style.display = 'block';
                 return;
             }
 
-            // Unified display for both HuggingFace and Ollama results
             const resultItems = data.models.map(model => {
                 const modelName = typeof model === 'string' ? model : model.name;
                 const tags = typeof model === 'string' ? [] : model.tags || [];
@@ -373,7 +389,7 @@ window.searchModels = function(input) {
             }).join('');
 
             searchResultsList.innerHTML = resultItems;
-            searchResults.style.display = 'block';
+            searchResultsContainer.style.display = 'block';
 
         } catch (error) {
             showMessage('Erreur', error.message, true);
@@ -384,7 +400,7 @@ window.searchModels = function(input) {
 window.selectModel = function(modelId) {
     const modelInput = document.getElementById('modelNameInput');
     modelInput.value = modelId;
-    document.querySelector('.search-results').style.display = 'none';
+    document.getElementById('searchResultsContainer').style.display = 'none';
 };
 
 window.pullModel = async function() {
@@ -924,8 +940,7 @@ window.batchDeleteModels = async function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Ollama-URL': ollamaUrl
-                },
+                    'X-Ollama-URL': ollamaUrl                },
                 body: JSON.stringify({ name: modelName })
             });
 
@@ -1121,3 +1136,7 @@ window.saveModelConfig = async function() {
 
 // Server status check interval
 setInterval(checkServerStatus, 30000);
+
+// Update search results position on window resize and scroll
+window.addEventListener('resize', updateSearchResultsPosition);
+window.addEventListener('scroll', updateSearchResultsPosition);

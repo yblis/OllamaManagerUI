@@ -23,14 +23,16 @@
             </div>
         </div>
 
-        <div class="ui action input fluid search-container" style="position: relative;">
+        <!-- Search Container -->
+        <div class="ui action input fluid" id="searchContainer" style="position: relative;">
             <input type="text" id="modelNameInput" placeholder="{{ t('enter_model_name') }}">
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
-            <!-- Search results unified display with higher z-index -->
-            <div class="ui segments search-results" style="display: none; position: fixed; top: auto; left: auto; right: auto; width: inherit; z-index: 9999; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 0;">
-                <div class="ui relaxed divided list" id="searchResults">
-                    <!-- Search results will be populated here -->
-                </div>
+        </div>
+
+        <!-- Search Results Container (Separate from search input) -->
+        <div id="searchResultsContainer" style="display: none; position: fixed; z-index: 99999; background: rgba(255, 255, 255, 0.98); box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 4px; max-height: 400px; overflow-y: auto;">
+            <div class="ui relaxed divided list" id="searchResults">
+                <!-- Search results will be populated here -->
             </div>
         </div>
 
