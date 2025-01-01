@@ -316,17 +316,39 @@ window.searchModels = function(input) {
                 return;
             }
 
-            searchResultsList.innerHTML = data.models.map(model => {
-                const tags = model.tags ? model.tags.join(', ') : '';
-                return `
-                    <div class="item" style="cursor: pointer;" onclick="selectModel('${model.name}')">
-                        <div class="content">
-                            <div class="header">${model.name}</div>
-                            <div class="description">${tags}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            // Créer une liste déroulante pour les résultats
+            const select = document.createElement('select');
+            select.className = 'ui dropdown';
+            select.style.width = '100%';
+
+            // Option par défaut
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Sélectionnez un modèle';
+            select.appendChild(defaultOption);
+
+            // Ajouter les résultats comme options
+            data.models.forEach(model => {
+                const option = document.createElement('option');
+                // Pour Ollama, le modèle est déjà formaté comme "nom:tag"
+                option.value = typeof model === 'string' ? model : model.name;
+                option.textContent = typeof model === 'string' ? model : `${model.name} (${model.tags.join(', ')})`;
+                select.appendChild(option);
+            });
+
+            // Gérer la sélection
+            select.addEventListener('change', function() {
+                if (this.value) {
+                    selectModel(this.value);
+                }
+            });
+
+            // Vider et ajouter la nouvelle liste déroulante
+            searchResultsList.innerHTML = '';
+            searchResultsList.appendChild(select);
+
+            // Initialiser la dropdown Semantic UI
+            $(select).dropdown();
 
             searchResults.style.display = 'block';
         } catch (error) {
@@ -922,6 +944,7 @@ window.batchDeleteModels = async function() {
                 message: error.message
             });
         }
+    }
     }
 
     // Show results in batch results modal

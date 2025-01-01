@@ -262,48 +262,31 @@ def search_models():
             soup = BeautifulSoup(response.content, 'html.parser')
             model_items = soup.find_all('li', attrs={'x-test-model': True})
 
-            filtered_models = []
+            result = []
+            filter_tags = ['embedding', 'tools', 'vision']
+
             for item in model_items:
                 name_span = item.select_one('span.group-hover\\:underline')
                 name = name_span.get_text(strip=True) if name_span else None
+
+                if not name:
+                    continue
 
                 capability_spans = item.find_all('span', attrs={'x-test-capability': True})
                 size_spans = item.find_all('span', attrs={'x-test-size': True})
                 tags = [span.get_text(strip=True) for span in capability_spans + size_spans]
                 tags_lower = [tag.lower() for tag in tags]
 
-                # Filtrage par mots-clés et tags
-                if name:
-                    include_model = True
+                # Filtrer selon les filtres sélectionnés
+                if not selected_filters or any(f.lower() in tags_lower for f in selected_filters):
+                    # Pour chaque tag qui n'est pas un filtre prédéfini
+                    for tag in tags:
+                        if tag.lower() not in [ft.lower() for ft in filter_tags]:
+                            # Si le mot-clé est présent dans la combinaison model:tag
+                            if not keyword or keyword.lower() in f"{name}:{tag}".lower():
+                                result.append(f"{name}:{tag}")
 
-                    # Vérifier les filtres sélectionnés
-                    if selected_filters:
-                        has_matching_filter = False
-                        for filter_tag in selected_filters:
-                            if filter_tag.lower() in tags_lower:
-                                has_matching_filter = True
-                                break
-                        if not has_matching_filter:
-                            include_model = False
-
-                    # Vérifier le mot-clé de recherche
-                    if keyword:
-                        keyword_found = False
-                        # Rechercher dans le nom et les tags
-                        for tag in tags:
-                            if keyword.lower() in f"{name}:{tag}".lower():
-                                keyword_found = True
-                                break
-                        if not keyword_found:
-                            include_model = False
-
-                    if include_model:
-                        filtered_models.append({
-                            'name': name,
-                            'tags': tags
-                        })
-
-            return jsonify({'models': filtered_models})
+            return jsonify({'models': result})
 
     except Exception as e:
         print(f"Error searching models: {str(e)}")
