@@ -14,13 +14,19 @@
     <!-- Pull Model Form -->
     <div class="ui segment">
         <h3 class="ui header">{{ t('download_model') }}</h3>
-        <div class="ui action input fluid">
+        <div class="ui action input fluid search-container" style="position: relative;">
             <select class="ui dropdown" id="modelSource">
                 <option value="huggingface">HuggingFace</option>
                 <option value="ollama">Ollama</option>
             </select>
             <input type="text" id="modelNameInput" placeholder="{{ t('enter_model_name') }}">
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
+            <!-- Search results unified display -->
+            <div class="ui segments search-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 0;">
+                <div class="ui relaxed divided list" id="searchResults">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
         </div>
         <!-- Ollama filters simplified -->
         <div id="ollamaFilters" class="ui three fields" style="display: none; margin-top: 0.5rem;">
@@ -41,12 +47,6 @@
                     <input type="checkbox" class="filter-checkbox" value="vision">
                     <label>Vision</label>
                 </div>
-            </div>
-        </div>
-        <!-- Search results unified display -->
-        <div class="ui segments search-results" style="margin-top: 1rem; display: none;">
-            <div class="ui relaxed divided list" id="searchResults">
-                <!-- Search results will be populated here -->
             </div>
         </div>
         <!-- Progress bar -->
@@ -124,8 +124,6 @@
             </tbody>
         </table>
     </div>
-</div>
-
 {% include "modals/settings.html" %}
 {% include "modals/message.html" %}
 {% include "modals/stats.html" %}
