@@ -783,6 +783,47 @@ function refreshAll() {
     checkServerStatus();
 }
 
+// Set up model name input events
+const modelNameInput = document.getElementById('modelNameInput');
+if (modelNameInput) {
+    modelNameInput.addEventListener('input', (e) => searchModels(e.target));
+    modelNameInput.addEventListener('blur', () => {
+        // Delay hiding results to allow for clicks
+        setTimeout(() => {
+            const searchResultsContainer = document.getElementById('searchResultsContainer');
+            if (searchResultsContainer) {
+                searchResultsContainer.style.display = 'none';
+            }
+        }, 200);
+    });
+}
+
+// Handle source change to show/hide Ollama filters
+const modelSource = document.getElementById('modelSource');
+const ollamaFilters = document.getElementById('ollamaFilters');
+
+if (modelSource && ollamaFilters) {
+    modelSource.addEventListener('change', function() {
+        ollamaFilters.style.display = this.value === 'ollama' ? 'block' : 'none';
+        // Clear and hide results when switching sources
+        const searchResultsContainer = document.getElementById('searchResultsContainer');
+        const searchResultsList = document.getElementById('searchResults');
+        if (searchResultsContainer) {
+            searchResultsContainer.style.display = 'none';
+        }
+        const modelNameInput = document.getElementById('modelNameInput');
+        if (modelNameInput) {
+            modelNameInput.value = '';
+        }
+        if (searchResultsList) {
+            searchResultsList.innerHTML = '';
+        }
+    });
+
+    // Initial state
+    ollamaFilters.style.display = modelSource.value === 'ollama' ? 'block' : 'none';
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -793,41 +834,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check status and refresh data every 30 seconds
     setInterval(refreshAll, 30000);
 
-    // Set up model name input events
-    const modelNameInput = document.getElementById('modelNameInput');
-    if (modelNameInput) {
-        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
-        modelNameInput.addEventListener('blur', () => {
-            // Delay hiding results to allow for clicks
-            setTimeout(() => {
-                document.querySelector('.search-results').style.display = 'none';
-            }, 200);
-        });
-    }
 
-    // Handle source change to show/hide Ollama filters
-    const modelSource = document.getElementById('modelSource');
-    const ollamaFilters = document.getElementById('ollamaFilters');
-
-
-    if (modelSource && ollamaFilters) {
-        modelSource.addEventListener('change', function() {
-            ollamaFilters.style.display = this.value === 'ollama' ? 'block' : 'none';
-            // Clear and hide results when switching sources
-            const searchResults = document.querySelector('.search-results');
-            const searchResultsList = document.getElementById('searchResults');
-            searchResults.style.display = 'none';
-            document.getElementById('modelNameInput').value = '';
-            searchResultsList.innerHTML = '';
-        });
-
-        // Initial state
-        ollamaFilters.style.display = modelSource.value === 'ollama' ? 'block' : 'none';
-    }
-
-    // Initialize Semantic UI checkboxes
-    $('.ui.checkbox').checkbox();
-    $('.ui.dropdown').dropdown();
 });
 
 // Batch operations
@@ -1140,3 +1147,7 @@ setInterval(checkServerStatus, 30000);
 // Update search results position on window resize and scroll
 window.addEventListener('resize', updateSearchResultsPosition);
 window.addEventListener('scroll', updateSearchResultsPosition);
+
+// Initialize Semantic UI checkboxes and dropdowns
+$('.ui.checkbox').checkbox();
+$('.ui.dropdown').dropdown();
