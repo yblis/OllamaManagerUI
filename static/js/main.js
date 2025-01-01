@@ -278,7 +278,7 @@ let searchTimeout = null;
 
 window.searchModels = function(input) {
     clearTimeout(searchTimeout);
-    const searchResults = document.querySelector('.ui.search-results');
+    const searchResults = document.querySelector('.search-results');
     const searchResultsList = document.getElementById('searchResults');
     const searchSource = document.getElementById('modelSource').value;
     const selectedFilters = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
@@ -311,28 +311,30 @@ window.searchModels = function(input) {
 
             const data = await response.json();
 
-            // Vider la liste déroulante sauf l'option par défaut
-            while (searchResultsList.options.length > 1) {
-                searchResultsList.remove(1);
-            }
-
             if (!data.models || !data.models.length) {
-                searchResultsList.options[0].text = 'Aucun modèle trouvé';
+                searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
                 searchResults.style.display = 'block';
                 return;
             }
 
-            // Ajouter les nouveaux résultats
-            data.models.forEach(model => {
-                const option = document.createElement('option');
-                option.value = typeof model === 'string' ? model : model.name;
-                option.textContent = typeof model === 'string' ? model : `${model.name} (${model.tags.join(', ')})`;
-                searchResultsList.appendChild(option);
-            });
+            // Unified display for both HuggingFace and Ollama results
+            const resultItems = data.models.map(model => {
+                const modelName = typeof model === 'string' ? model : model.name;
+                const tags = typeof model === 'string' ? [] : model.tags || [];
 
-            // Afficher les résultats
+                return `
+                    <div class="item" style="cursor: pointer; padding: 0.5em;" onclick="selectModel('${modelName}')">
+                        <i class="cube icon"></i>
+                        <div class="content">
+                            <div class="header">${modelName}</div>
+                            ${tags.length ? `<div class="description">${tags.join(', ')}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            searchResultsList.innerHTML = resultItems;
             searchResults.style.display = 'block';
-            $(searchResultsList).dropdown('refresh');
 
         } catch (error) {
             showMessage('Erreur', error.message, true);
@@ -343,7 +345,7 @@ window.searchModels = function(input) {
 window.selectModel = function(modelId) {
     const modelInput = document.getElementById('modelNameInput');
     modelInput.value = modelId;
-    document.querySelector('.ui.search-results').style.display = 'none';
+    document.querySelector('.search-results').style.display = 'none';
 };
 
 window.pullModel = async function() {
@@ -739,7 +741,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modelNameInput.addEventListener('blur', () => {
             // Delay hiding results to allow for clicks
             setTimeout(() => {
-                document.querySelector('.ui.search-results').style.display = 'none';
+                document.querySelector('.search-results').style.display = 'none';
             }, 200);
         });
     }
@@ -752,13 +754,11 @@ document.addEventListener('DOMContentLoaded', function() {
         modelSource.addEventListener('change', function() {
             ollamaFilters.style.display = this.value === 'ollama' ? 'block' : 'none';
             // Clear and hide results when switching sources
-            const searchResults = document.querySelector('.ui.search-results');
+            const searchResults = document.querySelector('.search-results');
             const searchResultsList = document.getElementById('searchResults');
             searchResults.style.display = 'none';
             document.getElementById('modelNameInput').value = '';
-            while (searchResultsList.options.length > 1) {
-                searchResultsList.remove(1);
-            }
+            searchResultsList.innerHTML = '';
         });
 
         // Initial state
@@ -940,7 +940,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up search input events
     const searchInput = document.getElementById('modelSearch');
     if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleSearch, 300));
+        searchInput.addEventListener('input, debounce(handleSearch, 300));
     }
 });
 

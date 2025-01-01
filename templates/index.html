@@ -23,33 +23,31 @@
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
         </div>
         <!-- Ollama filters simplified -->
-        <div id="ollamaFilters" class="ui basic segment" style="display: none;">
-            <div class="ui three fields">
-                <div class="field">
-                    <div class="ui checkbox">
-                        <input type="checkbox" class="filter-checkbox" value="embedding">
-                        <label>Embedding</label>
-                    </div>
+        <div id="ollamaFilters" class="ui three fields" style="display: none; margin-top: 0.5rem;">
+            <div class="field">
+                <div class="ui checkbox">
+                    <input type="checkbox" class="filter-checkbox" value="embedding">
+                    <label>Embedding</label>
                 </div>
-                <div class="field">
-                    <div class="ui checkbox">
-                        <input type="checkbox" class="filter-checkbox" value="tools">
-                        <label>Tools</label>
-                    </div>
+            </div>
+            <div class="field">
+                <div class="ui checkbox">
+                    <input type="checkbox" class="filter-checkbox" value="tools">
+                    <label>Tools</label>
                 </div>
-                <div class="field">
-                    <div class="ui checkbox">
-                        <input type="checkbox" class="filter-checkbox" value="vision">
-                        <label>Vision</label>
-                    </div>
+            </div>
+            <div class="field">
+                <div class="ui checkbox">
+                    <input type="checkbox" class="filter-checkbox" value="vision">
+                    <label>Vision</label>
                 </div>
             </div>
         </div>
-        <!-- Search results -->
-        <div class="ui search-results" style="margin-top: 1rem; display: none;">
-            <select class="ui dropdown fluid" id="searchResults">
-                <option value="">Sélectionnez un modèle</option>
-            </select>
+        <!-- Search results unified display -->
+        <div class="ui segments search-results" style="margin-top: 1rem; display: none;">
+            <div class="ui relaxed divided list" id="searchResults">
+                <!-- Search results will be populated here -->
+            </div>
         </div>
         <!-- Progress bar -->
         <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
@@ -59,14 +57,6 @@
             <div class="label">{{ t('starting_download') }}</div>
         </div>
     </div>
-
-    <!-- Overall Usage Statistics
-    <div class="ui segment">
-        <h3 class="ui header">Statistiques Globales d'Utilisation</h3>
-        <div id="overallStats" class="ui statistics">
-            Statistics will be populated here 
-        </div>
-    </div> -->
 
     <!-- Local Models -->
     <div class="ui segment">
