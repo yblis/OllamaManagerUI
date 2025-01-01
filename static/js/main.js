@@ -779,129 +779,95 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Batch operations
-window.toggleModelSelection = function(checkbox, modelName) {
-    // This function can be used to handle individual model selection
-    let selectedModels = new Set();
+let selectedModels = new Set();
 
-    window.selectAllModels = function(checkbox) {
-        const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
-        const isChecked = checkbox.checked;
+window.selectAllModels = function(checkbox) {
+    const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
+    const isChecked = checkbox.checked;
 
-        selectedModels.clear(); // Réinitialiser la sélection
+    selectedModels.clear(); // Réinitialiser la sélection
 
-        checkboxes.forEach(cb => {
-            cb.checked = isChecked;
-            const modelName = cb.getAttribute('data-model-name');
-            if (isChecked) {
-                selectedModels.add(modelName);
-            }
-        });
-
-        updateCompareButton();
-    };
-
-    window.toggleModelSelection = function(checkbox, modelName) {
-        if (checkbox.checked) {
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+        const modelName = cb.getAttribute('data-model-name');
+        if (isChecked) {
             selectedModels.add(modelName);
-        } else {
-            selectedModels.delete(modelName);
-            // Décocher la case "Tous Sélectionner" si un modèle est décoché
-            document.querySelector('#selectAllCheckbox').checked = false;
         }
-        updateCompareButton();
-    };
-
-    function updateCompareButton() {
-        const compareButton = document.querySelector('#compareButton');
-        if (compareButton) {
-            compareButton.disabled = selectedModels.size < 2;
-        }
-    }
-
-    window.compareSelectedModels = async function() {
-        if (selectedModels.size < 2) {
-            showMessage('Erreur', 'Veuillez sélectionner au moins 2 modèles à comparer', true);
-            return;
-        }
-
-        try {
-            const modelsArray = Array.from(selectedModels);
-            const comparisons = [];
-
-            for (let i = 0; i < modelsArray.length; i++) {
-                const modelStats = await fetch(`/api/models/${modelsArray[i]}/stats`, {
-                    headers: { 'X-Ollama-URL': ollamaUrl }
-                }).then(res => res.json());
-
-                comparisons.push({
-                    name: modelsArray[i],
-                    stats: modelStats
-                });
-            }
-
-            const comparisonContent = document.getElementById('modelComparison');
-            comparisonContent.innerHTML = comparisons.map(model => `
-                <div class="ui segment">
-                    <h3 class="ui header">${model.name}</h3>
-                    <div class="ui statistics tiny">
-                        <div class="statistic">
-                            <div class="value">${model.stats.total_operations || 0}</div>
-                            <div class="label">Opérations</div>
-                        </div>
-                        <div class="statistic">
-                            <div class="value">${model.stats.total_prompt_tokens || 0}</div>
-                            <div class="label">Tokens Prompt</div>
-                        </div>
-                        <div class="statistic">
-                            <div class="value">${model.stats.total_completion_tokens || 0}</div>
-                            <div class="label">Tokens Complétion</div>
-                        </div>
-                        <div class="statistic">
-                            <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
-                            <div class="label">Durée</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            $('#compareModal').modal('show');
-        } catch (error) {
-            showMessage('Erreur', error.message, true);
-        }
-    };
-    console.log(`Model ${modelName} ${checkbox.checked ? 'selected' : 'deselected'}`);
-};
-
-window.toggleAllModels = function() {
-    const checkboxes = document.querySelectorAll('#localModels input[type="checkbox"]');
-    const headerCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
-    const isChecked = headerCheckbox.checked;
-
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = isChecked;
     });
+
+    updateCompareButton();
 };
 
-window.batchConfigureModels = function() {
-    const selectedModels = document.querySelectorAll('input[type="checkbox"]:checked');
-    if (selectedModels.length === 0) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins un modèle', true);
+window.toggleModelSelection = function(checkbox, modelName) {
+    if (checkbox.checked) {
+        selectedModels.add(modelName);
+    } else {
+        selectedModels.delete(modelName);
+        // Décocher la case "Tous Sélectionner" si un modèle est décoché
+        document.querySelector('#selectAllCheckbox').checked = false;
+    }
+    updateCompareButton();
+};
+
+function updateCompareButton() {
+    const compareButton = document.querySelector('#compareButton');
+    if (compareButton) {
+        compareButton.disabled = selectedModels.size < 2;
+    }
+}
+
+window.compareSelectedModels = async function() {
+    if (selectedModels.size < 2) {
+        showMessage('Erreur', 'Veuillez sélectionner au moins 2 modèles à comparer', true);
         return;
     }
 
-    const selectedModelNames = Array.from(selectedModels).map(checkbox => checkbox.getAttribute('data-model-name'));
+    try {
+        const modelsArray = Array.from(selectedModels);
+        const comparisons = [];
 
-    // Update selected models list in the modal
-    document.getElementById('selectedModels').innerHTML = selectedModelNames.map(name => `
-        <div class="item">
-            <i class="cube icon"></i>
-            ${name}
-        </div>
-    `).join('');
+        for (let i = 0; i < modelsArray.length; i++) {
+            const modelStats = await fetch(`/api/models/${modelsArray[i]}/stats`, {
+                headers: { 'X-Ollama-URL': ollamaUrl }
+            }).then(res => res.json());
 
-    // Show the config modal
-    $('#configModal').modal('show');
+            comparisons.push({
+                name: modelsArray[i],
+                stats: modelStats
+            });
+        }
+
+        const comparisonContent = document.getElementById('modelComparison');
+        comparisonContent.innerHTML = comparisons.map(model => `
+            <div class="ui segment">
+                <h3 class="ui header">${model.name}</h3>
+                <div class="ui statistics tiny">
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_operations || 0}</div>
+                        <div class="label">Opérations</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_prompt_tokens || 0}</div>
+                        <div class="label">Tokens Prompt</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_completion_tokens || 0}</div>
+                        <div class="label">Tokens Complétion</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
+                        <div class="label">Durée</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        $('#compareModal').modal('show');
+    } catch (error) {
+        showMessage('Erreur', error.message, true);
+    }
 };
+
 
 window.batchDeleteModels = async function() {
     const selectedModels = document.querySelectorAll('input[type="checkbox"]:checked');
@@ -945,16 +911,12 @@ window.batchDeleteModels = async function() {
             });
         }
     }
-    }
 
     // Show results in batch results modal
     document.getElementById('batchResults').innerHTML = results.map(result => `
-        <div class="item batch-results-item ${result.success ? 'success' : 'error'}">
-            <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
-                        <div class="content">
-                <div class="header">${result.model}</div>
-                <div class="description">${result.message}</div>
-            </div>
+        <div class="ui message ${result.success ? 'positive' : 'negative'}">
+            <div class="header">${result.model}</div>
+            <p>${result.message}</p>
         </div>
     `).join('');
 
