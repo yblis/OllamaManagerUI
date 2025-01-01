@@ -516,7 +516,7 @@ async function refreshLocalModels() {
                     </div>
                 </td>
             </tr>
-        `;
+            `;
         }).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
     } catch (error) {
         console.error('Error refreshing local models:', error);
@@ -569,7 +569,7 @@ async function refreshRunningModels() {
                     </button>
                 </td>
             </tr>
-        `;
+            `;
         }).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
     } catch (error) {
         console.error('Error refreshing running models:', error);
@@ -947,10 +947,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to debounce events
 function debounce(func, wait) {
     let timeout;
-    return function executedFunction(......args) {
+    return function executedFunction() {
+        const context = this;
+        const args = arguments;
         const later = () => {
             clearTimeout(timeout);
-            func(...args);
+            func.apply(context, args);
         };
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
