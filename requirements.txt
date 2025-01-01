@@ -5,3 +5,4 @@ SQLAlchemy==2.0.23
 flask
 requests
 sqlalchemy
+beautifulsoup4

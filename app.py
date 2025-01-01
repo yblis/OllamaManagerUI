@@ -1,14 +1,13 @@
+import requests
 from flask import Flask, render_template, jsonify, request, session
 from ollama_client import OllamaClient
 import traceback
-import requests
-from functools import wraps
-import time
-import subprocess
 import re
 import os
 import json
 from translations import t, get_translation, set_language, get_available_languages, DEFAULT_LANGUAGE
+from bs4 import BeautifulSoup
+from functools import wraps
 
 app = Flask(__name__)
 # Use a more secure configuration for session cookies
@@ -222,29 +221,33 @@ def pull_model():
 def search_models():
     keyword = request.json.get('keyword', '')
     try:
-        # Get models from Ollama library
-        response = requests.get('https://ollama.com/api/tags')
+        # Get models from Ollama library using BeautifulSoup
+        response = requests.get('https://ollama.com/library')
         if response.status_code != 200:
             return jsonify({'error': 'Erreur de connexion à la bibliothèque Ollama'}), 500
 
-        data = response.json()
-        models = data.get('models', [])
+        soup = BeautifulSoup(response.content, 'html.parser')
+        model_items = soup.find_all('li', attrs={'x-test-model': True})
 
-        # Filter models based on keyword
         filtered_models = []
-        for model in models:
-            model_name = model.get('name', '')
-            if keyword.lower() in model_name.lower():
+        for item in model_items:
+            name_span = item.select_one('span.group-hover\\:underline')
+            name = name_span.get_text(strip=True) if name_span else None
+
+            if name and keyword.lower() in name.lower():
+                capability_spans = item.find_all('span', attrs={'x-test-capability': True})
+                size_spans = item.find_all('span', attrs={'x-test-size': True})
+                tags = [span.get_text(strip=True) for span in capability_spans + size_spans]
+
                 filtered_models.append({
-                    'name': model_name,
-                    'tags': model.get('tags', []),
-                    'size': model.get('size', 0),
-                    'digest': model.get('digest', ''),
-                    'modified_at': model.get('modified_at', '')
+                    'name': name,
+                    'tags': tags,
+                    'modified_at': None  # Ollama library doesn't provide dates
                 })
 
         return jsonify({'models': filtered_models})
     except Exception as e:
+        print(f"Error searching models: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/models/stats', methods=['GET'])
