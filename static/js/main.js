@@ -273,6 +273,21 @@ function toggleTheme() {
     setTheme(newTheme);
 }
 
+// Function to debounce events
+function debounce(func, wait) {
+    let timeout;
+    return function() {
+        const context = this;
+        const args = arguments;
+        const later = () => {
+            clearTimeout(timeout);
+            func.apply(context, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 // Model search and pull
 let searchTimeout = null;
 
@@ -931,7 +946,7 @@ function formatBytes(bytes, decimals = 2) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
+    const savedTheme = localStorage.getItem('theme') || ''light';
     setTheme(savedTheme);
 
     checkServerStatus();
@@ -943,20 +958,6 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
 });
-
-// Function to debounce eventsfunction debounce(func, wait) {
-    let timeout;
-    return function executedFunction() {
-        const context = this;
-        const args = arguments;
-        const later = () => {
-            clearTimeout(timeout);
-            func.apply(context, args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
 
 // Function to handle search input
 async function handleSearch(e) {
