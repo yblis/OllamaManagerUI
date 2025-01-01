@@ -12,7 +12,7 @@
 </div>
 
     <!-- Pull Model Form -->
-    <div class="ui segment">
+    <div class="ui segment" style="position: relative; z-index: 9999;">
         <h3 class="ui header">{{ t('download_model') }}</h3>
 
         <!-- Source Toggle Switch -->
@@ -33,7 +33,8 @@
                 </div>
             </div>
         </div>
-        <!-- Ollama filters simplified -->
+
+        <!-- Ollama filters -->
         <div id="ollamaFilters" class="ui three fields" style="display: none; margin-top: 0.5rem;">
             <div class="field">
                 <div class="ui checkbox">
@@ -54,6 +55,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Progress bar -->
         <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
             <div class="bar">
@@ -63,71 +65,74 @@
         </div>
     </div>
 
-    <!-- Local Models -->
-    <div class="ui segment">
-        <h3 class="ui header">{{ t('local_models') }}</h3>
-        <div class="ui buttons batch-actions">
-            <button class="ui negative button" onclick="batchDeleteModels()">
-                <i class="trash icon"></i> {{ t('delete_selected') }}
-            </button>
-            <button class="ui teal button" onclick="batchConfigureModels()">
-                <i class="cog icon"></i> {{ t('configure_selected') }}
-            </button>
-            <button class="ui olive button" onclick="compareSelectedModels()">
-                <i class="exchange icon"></i> {{ t('compare_selected') }}
-            </button>
-            <button class="ui button" onclick="toggleAllModels()">
-                <i class="check square outline icon"></i> {{ t('select_all') }}
-            </button>
+    <!-- Other sections with lower z-index -->
+    <div style="position: relative; z-index: 1;">
+        <!-- Local Models -->
+        <div class="ui segment">
+            <h3 class="ui header">{{ t('local_models') }}</h3>
+            <div class="ui buttons batch-actions">
+                <button class="ui negative button" onclick="batchDeleteModels()">
+                    <i class="trash icon"></i> {{ t('delete_selected') }}
+                </button>
+                <button class="ui teal button" onclick="batchConfigureModels()">
+                    <i class="cog icon"></i> {{ t('configure_selected') }}
+                </button>
+                <button class="ui olive button" onclick="compareSelectedModels()">
+                    <i class="exchange icon"></i> {{ t('compare_selected') }}
+                </button>
+                <button class="ui button" onclick="toggleAllModels()">
+                    <i class="check square outline icon"></i> {{ t('select_all') }}
+                </button>
+            </div>
+            <table class="ui celled table" id="localModels">
+                <thead>
+                    <tr>
+                        <th class="collapsing">
+                            <div class="ui fitted checkbox">
+                                <input type="checkbox" onclick="toggleAllModels()">
+                                <label></label>
+                            </div>
+                        </th>
+                        <th>{{ t('model_name') }}</th>
+                        <th>{{ t('modified_date') }}</th>
+                        <th>{{ t('size') }}</th>
+                        <th>{{ t('format') }}</th>
+                        <th>{{ t('family') }}</th>
+                        <th>{{ t('parameters') }}</th>
+                        <th class="center aligned">{{ t('actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Models will be populated here -->
+                </tbody>
+            </table>
         </div>
-        <table class="ui celled table" id="localModels">
-            <thead>
-                <tr>
-                    <th class="collapsing">
-                        <div class="ui fitted checkbox">
-                            <input type="checkbox" onclick="toggleAllModels()">
-                            <label></label>
-                        </div>
-                    </th>
-                    <th>{{ t('model_name') }}</th>
-                    <th>{{ t('modified_date') }}</th>
-                    <th>{{ t('size') }}</th>
-                    <th>{{ t('format') }}</th>
-                    <th>{{ t('family') }}</th>
-                    <th>{{ t('parameters') }}</th>
-                    <th class="center aligned">{{ t('actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Models will be populated here -->
-            </tbody>
-        </table>
-    </div>
 
-    <!-- Running Models -->
-    <div class="ui segment">
-        <div class="ui clearing">
-            <h3 class="ui left floated header">{{ t('running_models') }}</h3>
-            <button class="ui right floated button" onclick="refreshRunningModels()">
-                <i class="refresh icon"></i> {{ t('refresh') }}
-            </button>
+        <!-- Running Models -->
+        <div class="ui segment">
+            <div class="ui clearing">
+                <h3 class="ui left floated header">{{ t('running_models') }}</h3>
+                <button class="ui right floated button" onclick="refreshRunningModels()">
+                    <i class="refresh icon"></i> {{ t('refresh') }}
+                </button>
+            </div>
+            <table class="ui celled table" id="runningModels">
+                <thead>
+                    <tr>
+                        <th>{{ t('model_name') }}</th>
+                        <th>{{ t('created_date') }}</th>
+                        <th>{{ t('size') }}</th>
+                        <th>{{ t('format') }}</th>
+                        <th>{{ t('family') }}</th>
+                        <th>{{ t('parameters') }}</th>
+                        <th class="center aligned">{{ t('actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Running models will be populated here -->
+                </tbody>
+            </table>
         </div>
-        <table class="ui celled table" id="runningModels">
-            <thead>
-                <tr>
-                    <th>{{ t('model_name') }}</th>
-                    <th>{{ t('created_date') }}</th>
-                    <th>{{ t('size') }}</th>
-                    <th>{{ t('format') }}</th>
-                    <th>{{ t('family') }}</th>
-                    <th>{{ t('parameters') }}</th>
-                    <th class="center aligned">{{ t('actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Running models will be populated here -->
-            </tbody>
-        </table>
     </div>
 
     <!-- Include modals -->
