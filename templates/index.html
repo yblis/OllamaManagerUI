@@ -14,11 +14,16 @@
     <!-- Pull Model Form -->
     <div class="ui segment">
         <h3 class="ui header">{{ t('download_model') }}</h3>
+
+        <!-- Source Toggle Switch -->
+        <div class="ui toggle-container" style="margin-bottom: 1rem;">
+            <div class="ui buttons">
+                <button class="ui button active" data-source="huggingface" onclick="toggleModelSource(this)">HuggingFace</button>
+                <button class="ui button" data-source="ollama" onclick="toggleModelSource(this)">Ollama</button>
+            </div>
+        </div>
+
         <div class="ui action input fluid search-container" style="position: relative;">
-            <select class="ui dropdown" id="modelSource">
-                <option value="huggingface">HuggingFace</option>
-                <option value="ollama">Ollama</option>
-            </select>
             <input type="text" id="modelNameInput" placeholder="{{ t('enter_model_name') }}">
             <button class="ui primary button" onclick="pullModel()">{{ t('download') }}</button>
             <!-- Search results unified display -->
@@ -124,26 +129,26 @@
             </tbody>
         </table>
     </div>
-{% include "modals/settings.html" %}
-{% include "modals/message.html" %}
-{% include "modals/stats.html" %}
-{% include "modals/config.html" %}
-{% include "modals/batch_results.html" %}
+    {% include "modals/settings.html" %}
+    {% include "modals/message.html" %}
+    {% include "modals/stats.html" %}
+    {% include "modals/config.html" %}
+    {% include "modals/batch_results.html" %}
 
-<!-- Model Comparison Modal -->
-<div class="ui fullscreen modal" id="comparisonModal">
-    <div class="header">
-        <i class="exchange icon"></i>
-        {{ t('compare_selected') }}
-    </div>
-    <div class="content">
-        <div id="modelComparison" class="ui grid">
-            <!-- Comparison data will be populated here -->
+    <!-- Model Comparison Modal -->
+    <div class="ui fullscreen modal" id="comparisonModal">
+        <div class="header">
+            <i class="exchange icon"></i>
+            {{ t('compare_selected') }}
+        </div>
+        <div class="content">
+            <div id="modelComparison" class="ui grid">
+                <!-- Comparison data will be populated here -->
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui positive button">{{ t('close') }}</div>
         </div>
     </div>
-    <div class="actions">
-        <div class="ui positive button">{{ t('close') }}</div>
-    </div>
-</div>
 
 {% endblock %}

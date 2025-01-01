@@ -291,12 +291,36 @@ function debounce(func, wait) {
 // Model search and pull
 let searchTimeout = null;
 
+// Toggle model source
+window.toggleModelSource = function(button) {
+    // Remove active class from all buttons
+    document.querySelectorAll('.toggle-container .button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Add active class to clicked button
+    button.classList.add('active');
+
+    const source = button.getAttribute('data-source');
+
+    // Show/hide Ollama filters
+    const ollamaFilters = document.getElementById('ollamaFilters');
+    ollamaFilters.style.display = source === 'ollama' ? 'block' : 'none';
+
+    // Clear and hide results when switching sources
+    const searchResults = document.querySelector('.search-results');
+    const searchResultsList = document.getElementById('searchResults');
+    searchResults.style.display = 'none';
+    document.getElementById('modelNameInput').value = '';
+    searchResultsList.innerHTML = '';
+};
+
 // Function to search models with proper syntax
 window.searchModels = function(input) {
     clearTimeout(searchTimeout);
     const searchResults = document.querySelector('.search-results');
     const searchResultsList = document.getElementById('searchResults');
-    const searchSource = document.getElementById('modelSource').value;
+    const selectedSource = document.querySelector('.toggle-container .button.active').getAttribute('data-source');
     const selectedFilters = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
 
     if (!input.value.trim()) {
@@ -315,7 +339,7 @@ window.searchModels = function(input) {
                 },
                 body: JSON.stringify({
                     keyword: query,
-                    source: searchSource,
+                    source: selectedSource,
                     filters: selectedFilters
                 })
             });
@@ -769,6 +793,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const modelSource = document.getElementById('modelSource');
     const ollamaFilters = document.getElementById('ollamaFilters');
 
+
     if (modelSource && ollamaFilters) {
         modelSource.addEventListener('change', function() {
             ollamaFilters.style.display = this.value === 'ollama' ? 'block' : 'none';
@@ -916,7 +941,7 @@ window.batchDeleteModels = async function() {
             });
         } catch (error) {
             results.push({
-                model: modelName,
+                model:modelName,
                 success: false,
                 message: error.message
             });
