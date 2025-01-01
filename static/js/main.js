@@ -49,6 +49,11 @@ document.addEventListener('DOMContentLoaded', checkServerStatus);
 // Settings management
 window.showSettings = function() {
     document.getElementById('ollamaUrl').value = ollamaUrl;
+    // Set current language in dropdown
+    const currentLang = document.cookie.split(';').find(row => row.trim().startsWith('language='));
+    if (currentLang) {
+        document.getElementById('languageSelect').value = currentLang.split('=')[1];
+    }
     $('#settingsModal').modal('show');
 };
 
@@ -60,6 +65,38 @@ window.saveSettings = function() {
         $('#settingsModal').modal('hide');
         checkServerStatus();
         refreshAll();
+    }
+};
+
+// Update language change function
+window.changeLanguage = async function(lang) {
+    try {
+        console.log(`Attempting to change language to: ${lang}`);
+        const response = await fetch('/api/language', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ language: lang }),
+            credentials: 'same-origin'  // Important: Include credentials for cookies
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || gettext('Failed to change language'));
+        }
+
+        if (data.success) {
+            console.log('Language change successful, reloading page...');
+            // Force a hard reload to ensure new language is applied
+            window.location.href = window.location.href;
+        } else {
+            throw new Error(data.error || 'Unknown error occurred');
+        }
+    } catch (error) {
+        console.error('Language change error:', error);
+        showMessage('Error', error.message, true);
     }
 };
 
@@ -239,73 +276,123 @@ function toggleTheme() {
     setTheme(newTheme);
 }
 
+// Function to debounce events
+function debounce(func, wait) {
+    let timeout;
+    return function() {
+        const context = this;
+        const args = arguments;
+        const later = () => {
+            clearTimeout(timeout);
+            func.apply(context, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Function to update search results position
+function updateSearchResultsPosition() {
+    const searchInput = document.getElementById('modelNameInput');
+    const searchContainer = document.getElementById('searchContainer');
+    const resultsContainer = document.getElementById('searchResultsContainer');
+
+    if (searchInput && searchContainer && resultsContainer) {
+        const rect = searchContainer.getBoundingClientRect();
+        resultsContainer.style.top = `${rect.bottom + window.scrollY}px`;
+        resultsContainer.style.left = `${rect.left}px`;
+        resultsContainer.style.width = `${rect.width}px`;
+    }
+}
+
 // Model search and pull
 let searchTimeout = null;
 
+// Toggle model source
+window.toggleModelSource = function(button) {
+    // Remove active class from all buttons
+    document.querySelectorAll('.toggle-container .button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Add active class to clicked button
+    button.classList.add('active');
+
+    const source = button.getAttribute('data-source');
+
+    // Show/hide Ollama filters
+    const ollamaFilters = document.getElementById('ollamaFilters');
+    ollamaFilters.style.display = source === 'ollama' ? 'block' : 'none';
+
+    // Clear and hide results when switching sources
+    const searchResults = document.querySelector('.search-results');
+    const searchResultsList = document.getElementById('searchResults');
+    searchResults.style.display = 'none';
+    document.getElementById('modelNameInput').value = '';
+    searchResultsList.innerHTML = '';
+};
+
+// Function to search models with proper syntax
 window.searchModels = function(input) {
     clearTimeout(searchTimeout);
-    const searchResults = document.querySelector('.ui.search-results');
+    const searchResultsContainer = document.getElementById('searchResultsContainer');
     const searchResultsList = document.getElementById('searchResults');
+    const selectedSource = document.querySelector('.toggle-container .button.active').getAttribute('data-source');
+    const selectedFilters = Array.from(document.querySelectorAll('.filter-checkbox:checked')).map(cb => cb.value);
 
     if (!input.value.trim()) {
-        searchResults.style.display = 'none';
+        searchResultsContainer.style.display = 'none';
         return;
     }
+
+    // Update position before showing results
+    updateSearchResultsPosition();
 
     searchTimeout = setTimeout(async () => {
         try {
             const query = input.value.trim();
-            const words = query.toLowerCase().split(/\s+/); // Sépare par espaces
-
-            const url = `https://huggingface.co/api/models?search=${encodeURIComponent(query)}`;
-
-            const response = await fetch(url, {
-                method: 'GET',
+            const response = await fetch('/api/models/search', {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type': 'application/json',
+                    'X-Ollama-URL': ollamaUrl
+                },
+                body: JSON.stringify({
+                    keyword: query,
+                    source: selectedSource,
+                    filters: selectedFilters
+                })
             });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to search models');
+            }
 
             const data = await response.json();
-            if (data.error) throw new Error(data.error);
 
-            // Filtre uniquement si 'gguf' est dans les tags ET que tous les mots de la recherche se trouvent dans l'ID
-            const ggufModels = data.filter(model => {
-                if (!model.tags?.includes('gguf')) return false;
-                const modelIdLower = model.id.toLowerCase();
-                return words.every(word => modelIdLower.includes(word));
-            });
-
-            if (!ggufModels.length) {
+            if (!data.models || !data.models.length) {
                 searchResultsList.innerHTML = '<div class="item">'+gettext('No models found')+'</div>';
-                searchResults.style.display = 'block';
+                searchResultsContainer.style.display = 'block';
                 return;
             }
 
-            // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
-            const modelsWithDate = ggufModels.map(model => {
-                const createdAt = new Date(model.createdAt);
-                const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
-                return {
-                    ...model,
-                    formattedDate,
-                    createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
-                };
-            });
+            const resultItems = data.models.map(model => {
+                const modelName = typeof model === 'string' ? model : model.name;
+                const tags = typeof model === 'string' ? [] : model.tags || [];
 
-            // Trier les modèles par date de création
-            modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
+                return `
+                    <div class="item" style="cursor: pointer; padding: 0.5em;" onclick="selectModel('${modelName}')">
+                        <i class="cube icon"></i>
+                        <div class="content">
+                            <div class="header">${modelName}</div>
+                            ${tags.length ? `<div class="description">${tags.join(', ')}</div>` : ''}
+                        </div>
+                    </div>`;
+            }).join('');
 
-            searchResultsList.innerHTML = modelsWithDate.map(model => `
-                <div class="item" style="cursor: pointer;" onclick="selectModel('${model.id}')">
-                    <div class="content">
-                        <div class="header">${model.id}</div>
-                        <div class="description">`+gettext('Created on')+`: ${model.createdAt}</div>
-                    </div>
-                </div>
-            `).join('');
-
-            searchResults.style.display = 'block';
+            searchResultsList.innerHTML = resultItems;
+            searchResultsContainer.style.display = 'block';
         } catch (error) {
             showMessage(gettext('Error'), error.message, true);
         }
@@ -314,8 +401,8 @@ window.searchModels = function(input) {
 
 window.selectModel = function(modelId) {
     const modelInput = document.getElementById('modelNameInput');
-    modelInput.value = `hf.co/${modelId}`;
-    document.querySelector('.ui.search-results').style.display = 'none';
+    modelInput.value = modelId;
+    document.getElementById('searchResultsContainer').style.display = 'none';
 };
 
 window.pullModel = async function() {
@@ -413,7 +500,23 @@ window.pullModel = async function() {
 };
 
 // Refresh functions
-window.refreshLocalModels = async function() {
+function formatDate(dateStr) {
+    if (!dateStr) return 'Date inconnue';
+
+    try {
+        // Parse the ISO date string with timezone
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return 'Date inconnue';
+
+        // Format date as DD/MM/YYYY
+        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+    } catch (error) {
+        console.error('Error formatting date:', dateStr, error);
+        return 'Date inconnue';
+    }
+}
+
+async function refreshLocalModels() {
     try {
         const serverStatusResponse = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
@@ -438,21 +541,13 @@ window.refreshLocalModels = async function() {
         const data = await response.json();
         const tbody = document.querySelector('#localModels tbody');
 
-        // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
-        const modelsWithDate = data.models.map(model => {
-            const createdAt = new Date(model.created_at);
-            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
-            return {
-                ...model,
-                formattedDate,
-                createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
-            };
-        });
+        console.log('Received models data:', data.models); // Debug log
 
-        // Trier les modèles par date de création
-        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
+        tbody.innerHTML = data.models.map(model => {
+            console.log('Processing model:', model.name, 'modified_at:', model.modified_at); // Debug log
+            const formattedDate = formatDate(model.modified_at);
 
-        tbody.innerHTML = modelsWithDate.map(model => `
+            return `
             <tr>
                 <td class="collapsing">
                     <div class="ui fitted checkbox">
@@ -461,7 +556,7 @@ window.refreshLocalModels = async function() {
                     </div>
                 </td>
                 <td>${model.name}</td>
-                <td>${model.createdAt}</td>
+                <td>${formattedDate}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -480,14 +575,15 @@ window.refreshLocalModels = async function() {
                     </div>
                 </td>
             </tr>
-        `).join('') || '<tr><td colspan="8" class="center aligned">'+gettext('No Models Installed')+'</td></tr>';
+            `;
+        }).join('') || '<tr><td colspan="8" class="center aligned">'+gettext('No Models Installed')+'</td></tr>';
     } catch (error) {
         console.error('Error refreshing local models:', error);
         showMessage(gettext('Error'), error.message, true);
     }
-};
+}
 
-window.refreshRunningModels = async function() {
+async function refreshRunningModels() {
     try {
         const serverStatusResponse = await fetch('/api/server/status', {
             headers: { 'X-Ollama-URL': ollamaUrl }
@@ -512,24 +608,16 @@ window.refreshRunningModels = async function() {
         const data = await response.json();
         const tbody = document.querySelector('#runningModels tbody');
 
-        // Ajouter un champ caché pour la date de création au format YYYY-MM-DD
-        const modelsWithDate = data.models.map(model => {
-            const createdAt = new Date(model.created_at);
-            const formattedDate = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}-${String(createdAt.getDate()).padStart(2, '0')}`;
-            return {
-                ...model,
-                formattedDate,
-                createdAt: `${String(createdAt.getDate()).padStart(2, '0')}/${String(createdAt.getMonth() + 1).padStart(2, '0')}/${createdAt.getFullYear()}`
-            };
-        });
+        console.log('Received running models data:', data.models); // Debug log
 
-        // Trier les modèles par date de création
-        modelsWithDate.sort((a, b) => new Date(b.formattedDate) - new Date(a.formattedDate));
+        tbody.innerHTML = data.models.map(model => {
+            console.log('Processing running model:', model.name, 'modified_at:', model.modified_at); // Debug log
+            const formattedDate = formatDate(model.modified_at);
 
-        tbody.innerHTML = modelsWithDate.map(model => `
+            return `
             <tr>
                 <td>${model.name}</td>
-                <td>${model.createdAt}</td>
+                <td>${formattedDate}</td>
                 <td>${formatBytes(model.size)}</td>
                 <td>${model.details?.format || 'N/A'}</td>
                 <td>${model.details?.family || 'N/A'}</td>
@@ -540,12 +628,13 @@ window.refreshRunningModels = async function() {
                     </button>
                 </td>
             </tr>
-        `).join('') || '<tr><td colspan="7" class="center aligned">'+gettext('No Models Running')+'</td></tr>';
+            `;
+        }).join('') || '<tr><td colspan="7" class="center aligned">'+gettext('No Models Running')+'</td></tr>';
     } catch (error) {
         console.error('Error refreshing running models:', error);
         showMessage(gettext('Error'), error.message, true);
     }
-};
+}
 
 async function refreshStats() {
     try {
@@ -695,49 +784,73 @@ function refreshAll() {
     checkServerStatus();
 }
 
+// Set up model name input events
+const modelNameInput = document.getElementById('modelNameInput');
+if (modelNameInput) {
+    modelNameInput.addEventListener('input', (e) => searchModels(e.target));
+    modelNameInput.addEventListener('blur', () => {
+        // Delay hiding results to allow for clicks
+        setTimeout(() => {
+            const searchResultsContainer = document.getElementById('searchResultsContainer');
+            if (searchResultsContainer) {
+                searchResultsContainer.style.display = 'none';
+            }
+        }, 200);
+    });
+}
+
+// Handle source change to show/hide Ollama filters
+const modelSource = document.getElementById('modelSource');
+const ollamaFilters = document.getElementById('ollamaFilters');
+
+if (modelSource && ollamaFilters) {
+    modelSource.addEventListener('change', function() {
+        ollamaFilters.style.display = this.value === 'ollama' ? 'block' : 'none';
+        // Clear and hide results when switching sources
+        const searchResultsContainer = document.getElementById('searchResultsContainer');
+        const searchResultsList = document.getElementById('searchResults');
+        if (searchResultsContainer) {
+            searchResultsContainer.style.display = 'none';
+        }
+        const modelNameInput = document.getElementById('modelNameInput');
+        if (modelNameInput) {
+            modelNameInput.value = '';
+        }
+        if (searchResultsList) {
+            searchResultsList.innerHTML = '';
+        }
+    });
+
+    // Initial state
+    ollamaFilters.style.display = modelSource.value === 'ollama' ? 'block' : 'none';
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+
+    checkServerStatus();
     refreshAll();
     // Check status and refresh data every 30 seconds
     setInterval(refreshAll, 30000);
 
-    // Set up model name input events
-    const modelNameInput = document.getElementById('modelNameInput');
-    if (modelNameInput) {
-        modelNameInput.addEventListener('input', (e) => searchModels(e.target));
-        modelNameInput.addEventListener('blur', () => {
-            // Delay hiding results to allow for clicks
-            setTimeout(() => {
-                document.querySelector('.ui.search-results').style.display = 'none';
-            }, 200);
-        });
-    }
+
 });
 
 // Batch operations
-window.toggleModelSelection = function(checkbox, modelName) {
-    // This function can be used to handle individual model selection
-    let selectedModels = new Set();
+let selectedModels = new Set();
 
-    window.selectAllModels = function(checkbox) {
-        const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
-        const isChecked = checkbox.checked;
+window.selectAllModels = function(checkbox) {
+    const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
+    const isChecked = checkbox.checked;
 
-        selectedModels.clear(); // Réinitialiser la sélection
+    selectedModels.clear(); // Réinitialiser la sélection
 
-        checkboxes.forEach(cb => {
-            cb.checked = isChecked;
-            const modelName = cb.getAttribute('data-model-name');
-            if (isChecked) {
-                selectedModels.add(modelName);
-            }
-        });
-
-        updateCompareButton();
-    };
-
-    window.toggleModelSelection = function(checkbox, modelName) {
-        if (checkbox.checked) {
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+        const modelName = cb.getAttribute('data-model-name');
+        if (isChecked) {
             selectedModels.add(modelName);
         } else {
             selectedModels.delete(modelName);
@@ -745,100 +858,80 @@ window.toggleModelSelection = function(checkbox, modelName) {
             // Décocher la case "Tous Sélectionner" si un modèle est décoché
             document.querySelector('#selectAllCheckbox').checked = false;
         }
-        updateCompareButton();
     };
 
-    function updateCompareButton() {
-        const compareButton = document.querySelector('#compareButton');
-        if (compareButton) {
-            compareButton.disabled = selectedModels.size < 2;
-        }
+    updateCompareButton();
+};
+
+window.toggleModelSelection = function(checkbox, modelName) {
+    if (checkbox.checked) {
+        selectedModels.add(modelName);
+    } else {
+        selectedModels.delete(modelName);
+        // Décocher la case "Tous Sélectionner" si un modèle est décoché
+        document.querySelector('#selectAllCheckbox').checked = false;
     }
-
-    window.compareSelectedModels = async function() {
-        if (selectedModels.size < 2) {
-            let errorMessage = gettext('Please select at least two models to compare')
-            showMessage(gettext('Error'), errorMessage, true);
-            return;
-        }
-
-        try {
-            const modelsArray = Array.from(selectedModels);
-            const comparisons = [];
-
-            for (let i = 0; i < modelsArray.length; i++) {
-                const modelStats = await fetch(`/api/models/${modelsArray[i]}/stats`, {
-                    headers: { 'X-Ollama-URL': ollamaUrl }
-                }).then(res => res.json());
-
-                comparisons.push({
-                    name: modelsArray[i],
-                    stats: modelStats
-                });
-            }
-
-            const comparisonContent = document.getElementById('modelComparison');
-            comparisonContent.innerHTML = comparisons.map(model => `
-                <div class="ui segment">
-                    <h3 class="ui header">${model.name}</h3>
-                    <div class="ui statistics tiny">
-                        <div class="statistic">
-                            <div class="value">${model.stats.total_operations || 0}</div>
-                            <div class="label">`+gettext('Total Operations')+`</div>
-                        </div>
-                        <div class="statistic">
-                            <div class="value">${model.stats.total_prompt_tokens || 0}</div>
-                            <div class="label">`+gettext('Total Prompt Tokens')+`</div>
-                        </div>
-                        <div class="statistic">
-                            <div class="value">${model.stats.total_completion_tokens || 0}</div>
-                            <div class="label">`+gettext('Total Completion Tokens')+`</div>
-                        </div>
-                        <div class="statistic">
-                            <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
-                            <div class="label">`+gettext('Total Duration')+`</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            $('#compareModal').modal('show');
-        } catch (error) {
-            showMessage(gettext('Error'), error.message, true);
-        }
-    };
-    console.log(`Model ${modelName} ${checkbox.checked ? 'selected' : 'deselected'}`);
+    updateCompareButton();
 };
 
-window.toggleAllModels = function() {
-    const checkboxes = document.querySelectorAll('#localModels input[type="checkbox"]');
-    const headerCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
-    const isChecked = headerCheckbox.checked;
+function updateCompareButton() {
+    const compareButton = document.querySelector('#compareButton');
+    if (compareButton) {
+        compareButton.disabled = selectedModels.size < 2;
+    }
+}
 
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = isChecked;
-    });
-};
-
-window.batchConfigureModels = function() {
-    const selectedModels = document.querySelectorAll('input[type="checkbox"]:checked');
-    if (selectedModels.length === 0) {
-        showMessage(gettext('Error'), gettext('Please select at least one model'), true);
+window.compareSelectedModels = async function() {
+    if (selectedModels.size < 2) {
+        let errorMessage = gettext('Please select at least two models to compare')
+        showMessage(gettext('Error'), errorMessage, true);
         return;
     }
 
-    const selectedModelNames = Array.from(selectedModels).map(checkbox => checkbox.getAttribute('data-model-name'));
+    try {
+        const modelsArray = Array.from(selectedModels);
+        const comparisons = [];
 
-    // Update selected models list in the modal
-    document.getElementById('selectedModels').innerHTML = selectedModelNames.map(name => `
-        <div class="item">
-            <i class="cube icon"></i>
-            ${name}
-        </div>
-    `).join('');
+        for (let i = 0; i < modelsArray.length; i++) {
+            const modelStats = await fetch(`/api/models/${modelsArray[i]}/stats`, {
+                headers: { 'X-Ollama-URL': ollamaUrl }
+            }).then(res => res.json());
 
-    // Show the config modal
-    $('#configModal').modal('show');
+            comparisons.push({
+                name: modelsArray[i],
+                stats: modelStats
+            });
+        }
+
+        const comparisonContent = document.getElementById('modelComparison');
+        comparisonContent.innerHTML = comparisons.map(model => `
+            <div class="ui segment">
+                <h3 class="ui header">${model.name}</h3>
+                <div class="ui statistics tiny">
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_operations || 0}</div>
+                        <div class="label">`+gettext('Total Operations')+`</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_prompt_tokens || 0}</div>
+                        <div class="label">`+gettext('Total Prompt Tokens')+`</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${model.stats.total_completion_tokens || 0}</div>
+                        <div class="label">`+gettext('Total Completion Tokens')+`</div>
+                    </div>
+                    <div class="statistic">
+                        <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
+                        <div class="label">`+gettext('Total Duration')+`</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        $('#compareModal').modal('show');
+    } catch (error) {
+        showMessage(gettext('Error'), error.message, true);
+    }
 };
 
 window.batchDeleteModels = async function() {
@@ -862,12 +955,11 @@ window.batchDeleteModels = async function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Ollama-URL': ollamaUrl
-                },
+                    'X-Ollama-URL': ollamaUrl                },
                 body: JSON.stringify({ name: modelName })
             });
 
-            if (!response.ok) {
+            if(!response.ok) {
                 const data = await response.json();
                 let failureText = gettext('Failed to delete the model');
                 throw new Error(data.error || failureText);
@@ -880,7 +972,7 @@ window.batchDeleteModels = async function() {
             });
         } catch (error) {
             results.push({
-                model: modelName,
+                model:modelName,
                 success: false,
                 message: error.message
             });
@@ -889,12 +981,9 @@ window.batchDeleteModels = async function() {
 
     // Show results in batch results modal
     document.getElementById('batchResults').innerHTML = results.map(result => `
-        <div class="item batch-results-item ${result.success ? 'success' : 'error'}">
-            <i class="${result.success ? 'check circle' : 'times circle'} icon"></i>
-            <div class="content">
-                <div class="header">${result.model}</div>
-                <div class="description">${result.message}</div>
-            </div>
+        <div class="ui message ${result.success ? 'positive' : 'negative'}">
+            <div class="header">${result.model}</div>
+            <p>${result.message}</p>
         </div>
     `).join('');
 
@@ -908,7 +997,7 @@ function formatBytes(bytes, decimals = 2) {
 
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB','TB'];
 
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
@@ -929,19 +1018,6 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
 });
-
-// Function to debounce events
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
 
 // Function to handle search input
 async function handleSearch(e) {
@@ -1077,3 +1153,11 @@ window.saveModelConfig = async function() {
 
 // Server status check interval
 setInterval(checkServerStatus, 30000);
+
+// Update search results position on window resize and scroll
+window.addEventListener('resize', updateSearchResultsPosition);
+window.addEventListener('scroll', updateSearchResultsPosition);
+
+// Initialize Semantic UI checkboxes and dropdowns
+$('.ui.checkbox').checkbox();
+$('.ui.dropdown').dropdown();

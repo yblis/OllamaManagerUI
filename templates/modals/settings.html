@@ -2,24 +2,31 @@
 <div class="ui modal" id="settingsModal">
     <div class="header">
         <i class="cog icon"></i>
-        {{ gettext('Parameters') }}
+        {{ gettext('Settings') }}
     </div>
     <div class="content">
         <form class="ui form">
             <div class="field">
-                <label>{{  gettext('Ollama Server URL') }}</label>
+                <label>{{ gettext('Ollama Server URL') }}</label>
                 <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
             </div>
             <div class="field">
-                <label>{{  gettext('Interface Theme') }}</label>
+                <label>{{ gettext('Interface Theme') }}</label>
                 <button class="ui circular icon button" onclick="toggleTheme()">
                     <i class="sun icon"></i>
                 </button>
+            </div>
+            <div class="field">
+                <label>{{ t('language_selection') }}</label>
+                <select id="languageSelect" class="ui dropdown" onchange="changeLanguage(this.value)">
+                    <option value="fr" {% if session.get('language', 'fr') == 'fr' %}selected{% endif %}>Français</option>
+                    <option value="en" {% if session.get('language', 'fr') == 'en' %}selected{% endif %}>English</option>
+                </select>
             </div>
         </form>
     </div>
     <div class="actions">
         <div class="ui cancel button">{{ gettext('Cancel') }}</div>
-        <div class="ui positive button" onclick="saveSettings()">{{  gettext('Save') }}</div>
+        <div class="ui positive button" onclick="saveSettings()">{{ gettext('Save') }}</div>
     </div>
 </div>

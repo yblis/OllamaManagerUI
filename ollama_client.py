@@ -150,11 +150,19 @@ class OllamaClient:
         return self._server_status
 
     def list_models(self):
-        """List all available models"""
+        """List all available models with full details"""
         response = self._handle_request(requests.get, 'api/tags')
         if 'error' in response:
             return {'models': [], 'error': response['error']}
-        return response
+
+        # Fetch additional details for each model
+        models = response.get('models', [])
+        for model in models:
+            details = self.get_model_details(model['name'])
+            if 'error' not in details:
+                model['modified_at'] = details.get('modified_at', model.get('modified_at', ''))
+
+        return {'models': models}
 
     def list_running(self):
         """List all running models"""
@@ -261,3 +269,21 @@ class OllamaClient:
         system_line = modelfile[start:].split('\n')[0]
         system = system_line.split('SYSTEM', 1)[1].strip()
         return system
+
+    def get_model_details(self, model_name):
+        """Get full model details including creation date"""
+        try:
+            response = self._handle_request(
+                requests.post,
+                'api/show',
+                json={'name': model_name}
+            )
+            if 'error' in response:
+                return {'error': response['error']}
+
+            return {
+                'details': response.get('details', {}),
+                'modified_at': response.get('modified_at', '')
+            }
+        except Exception as e:
+            return {'error': str(e)}

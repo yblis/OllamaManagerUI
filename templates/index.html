@@ -25,22 +25,49 @@
 <!-- Pull Model Form -->
 <div class="ui segment">
     <h3 class="ui header">{{ gettext('Search for a new model to download') }}</h3>
-    <div class="ui action input fluid">
+
+    <!-- Source Toggle Switch -->
+    <div class="ui toggle-container" style="margin-bottom: 1rem;">
+        <div class="ui buttons">
+            <button class="ui button active" data-source="huggingface" onclick="toggleModelSource(this)">HuggingFace</button>
+            <button class="ui button" data-source="ollama" onclick="toggleModelSource(this)">Ollama</button>
+        </div>
+    </div>
+
+    <!-- Search Container -->
+    <div class="ui action input fluid" id="searchContainer" style="position: relative;">
         <input type="text" id="modelNameInput" placeholder="{{ gettext('Enter the model name (ex: llama2:7b)') }}">
         <button class="ui primary button" onclick="pullModel()">{{ gettext('Pull Down') }}</button>
     </div>
-    <!-- Add progress bar -->
+
+    <!-- Ollama filters -->
+    <div id="ollamaFilters" class="ui horizontal list" style="display: none; margin-top: 0.5rem;">
+        <div class="item">
+            <div class="ui checkbox">
+                <input type="checkbox" class="filter-checkbox" value="embedding">
+                <label>{{ gettext('Embedding') }}</label>
+            </div>
+        </div>
+        <div class="item">
+            <div class="ui checkbox">
+                <input type="checkbox" class="filter-checkbox" value="tools">
+                <label>{{ gettext('Tools') }}</label>
+            </div>
+        </div>
+        <div class="item">
+            <div class="ui checkbox">
+                <input type="checkbox" class="filter-checkbox" value="vision">
+                <label>{{ gettext('Vision') }}</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress bar -->
     <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
         <div class="bar">
             <div class="progress"></div>
         </div>
         <div class="label">{{ gettext('Starting the download...') }}</div>
-    </div>
-    <!-- Add search results section -->
-    <div class="ui search-results" style="margin-top: 1rem; display: none;">
-        <div class="ui relaxed divided list" id="searchResults">
-            <!-- Search results will be displayed here -->
-        </div>
     </div>
 </div>
 
@@ -52,93 +79,104 @@
     </div>
 </div> -->
 
-<!-- Local Models -->
-<div class="ui segment">
-    <h3 class="ui header">{{ gettext('Local Models') }}</h3>
-    <div class="ui buttons batch-actions">
-        <button class="ui negative button" onclick="batchDeleteModels()">
-            <i class="trash icon"></i> {{ gettext('Delete Selected') }}
-        </button>
-        <button class="ui teal button" onclick="batchConfigureModels()">
-            <i class="cog icon"></i> {{ gettext('Configure Selected') }}
-        </button>
-        <button class="ui olive button" onclick="compareSelectedModels()">
-            <i class="exchange icon"></i> {{ gettext('Compare Selected') }}
-        </button>
-        <button class="ui button" onclick="selectAllModels()">
-            <i class="check square outline icon"></i> {{ gettext('Select All') }}
-        </button>
-    </div>
-    <table class="ui celled table" id="localModels">
-        <thead>
-            <tr>
-                <th class="collapsing">
-                    <div class="ui fitted checkbox">
-                        <input aria-label="{{ gettext('Toggle All Models') }}" type="checkbox" onclick="toggleAllModels()">
-                        <label></label>
-                    </div>
-                </th>
-                <th>{{ gettext('Model Name') }}</th>
-                <th>{{ gettext('Date Modified') }}</th>
-                <th>{{ gettext('Size') }}</th>
-                <th>{{ gettext('Format') }}</th>
-                <th>{{ gettext('Family') }}</th>
-                <th>{{ gettext('Parameters') }}</th>
-                <th class="center aligned">{{ gettext('Actions') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Models will be populated here -->
-        </tbody>
-    </table>
-</div>
-
-<!-- Running Models -->
-<div class="ui segment">
-    <div class="ui clearing">
-        <h3 class="ui left floated header">{{ gettext('Running Models') }}</h3>
-        <button class="ui right floated button" onclick="refreshRunningModels()">
-            <i class="refresh icon"></i> {{ gettext('Refresh') }}
-        </button>
-    </div>
-    <table class="ui celled table" id="runningModels">
-        <thead>
-            <tr>
-                <th>{{ gettext('Model Name') }}</th>
-                <th>{{ gettext('Date Modified') }}</th>
-                <th>{{ gettext('Size') }}</th>
-                <th>{{ gettext('Format') }}</th>
-                <th>{{ gettext('Family') }}</th>
-                <th>{{ gettext('Parameters') }}</th>
-                <th class="center aligned">{{ gettext('Actions') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Running models will be populated here -->
-        </tbody>
-    </table>
-</div>
-
-{% include "modals/settings.html" %}
-{% include "modals/message.html" %}
-{% include "modals/stats.html" %}
-{% include "modals/config.html" %}
-{% include "modals/batch_results.html" %}
-
-<!-- Model Comparison Modal -->
-<div class="ui fullscreen modal" id="comparisonModal">
-    <div class="header">
-        <i class="exchange icon"></i>
-        {{  gettext('Model Comparison') }}
-    </div>
-    <div class="content">
-        <div id="modelComparison" class="ui grid">
-            <!-- Comparison data will be populated here -->
+<!-- Other sections with lower z-index -->
+<div style="position: relative; z-index: 1;">
+    <!-- Local Models -->
+    <div class="ui segment">
+        <h3 class="ui header">{{ gettext('Local Models') }}</h3>
+        <div class="ui buttons batch-actions">
+            <button class="ui negative button" onclick="batchDeleteModels()">
+                <i class="trash icon"></i> {{ gettext('Delete Selected') }}
+            </button>
+            <button class="ui teal button" onclick="batchConfigureModels()">
+                <i class="cog icon"></i> {{ gettext('Configure Selected') }}
+            </button>
+            <button class="ui olive button" onclick="compareSelectedModels()">
+                <i class="exchange icon"></i> {{ gettext('Compare Selected') }}
+            </button>
+            <button class="ui button" onclick="toggleAllModels()">
+                <i class="check square outline icon"></i> {{ gettext('Select All') }}
+            </button>
         </div>
+        <table class="ui celled table" id="localModels">
+            <thead>
+                <tr>
+                    <th class="collapsing">
+                        <div class="ui fitted checkbox">
+                            <input aria-label="{{ gettext('Toggle All Models') }}" type="checkbox" onclick="toggleAllModels()">
+                            <label></label>
+                        </div>
+                    </th>
+                    <th>{{ gettext('Model Name') }}</th>
+                    <th>{{ gettext('Date Modified') }}</th>
+                    <th>{{ gettext('Size') }}</th>
+                    <th>{{ gettext('Format') }}</th>
+                    <th>{{ gettext('Family') }}</th>
+                    <th>{{ gettext('Parameters') }}</th>
+                    <th class="center aligned">{{ gettext('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Models will be populated here -->
+            </tbody>
+        </table>
     </div>
-    <div class="actions">
-        <div class="ui positive button">{{  gettext('Close') }}</div>
+
+    <!-- Running Models -->
+    <div class="ui segment">
+        <div class="ui clearing">
+            <h3 class="ui left floated header">{{ gettext('Running Models') }}</h3>
+            <button class="ui right floated button" onclick="refreshRunningModels()">
+                <i class="refresh icon"></i> {{ gettext('Refresh') }}
+            </button>
+        </div>
+        <table class="ui celled table" id="runningModels">
+            <thead>
+                <tr>
+                    <th>{{ gettext('Model Name') }}</th>
+                    <th>{{ gettext('Date Modified') }}</th>
+                    <th>{{ gettext('Size') }}</th>
+                    <th>{{ gettext('Format') }}</th>
+                    <th>{{ gettext('Family') }}</th>
+                    <th>{{ gettext('Parameters') }}</th>
+                    <th class="center aligned">{{ gettext('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Running models will be populated here -->
+            </tbody>
+        </table>
     </div>
 </div>
+
+  <!-- Include modals -->
+  {% include "modals/settings.html" %}
+  {% include "modals/message.html" %}
+  {% include "modals/stats.html" %}
+  {% include "modals/config.html" %}
+  {% include "modals/batch_results.html" %}
+
+  <!-- Model Comparison Modal -->
+  <div class="ui fullscreen modal" id="comparisonModal">
+      <div class="header">
+          <i class="exchange icon"></i>
+          {{  gettext('Model Comparison') }}
+      </div>
+      <div class="content">
+          <div id="modelComparison" class="ui grid">
+              <!-- Comparison data will be populated here -->
+          </div>
+      </div>
+      <div class="actions">
+          <div class="ui positive button">{{ gettext('Close') }}</div>
+      </div>
+  </div>
+
+  <!-- Search Results Container (Detached from document flow) -->
+  <div id="searchResultsContainer" style="display: none; position: fixed; z-index: 999999; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 4px; max-height: 400px; overflow-y: auto;">
+      <div class="ui relaxed divided list" id="searchResults">
+          <!-- Search results will be populated here -->
+      </div>
+  </div>
 
 {% endblock %}
