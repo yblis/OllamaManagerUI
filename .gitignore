@@ -1,3 +1,5 @@
 attached_assets/
 uv.lock
 .replit
+replit.nix
+pyproject.toml
