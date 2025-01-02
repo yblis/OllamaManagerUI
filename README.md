@@ -14,6 +14,7 @@ A web interface to manage your Ollama models, built with Flask and Semantic UI.
 - Batch operations
 - Model comparison
 - Model downloads from Hugging Face and ollama.com
+- English and French languages
 
 ## Requirements
 - Python 3.8+
