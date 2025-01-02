@@ -9,9 +9,9 @@ translations = {
     "language_selection": "Language / Langue",
 
     # Model management
-    "download_model": "Download a New Model",
+    "download_model": "Pull a new Model",
     "enter_model_name": "Enter model name (e.g. llama2:7b)",
-    "download": "Download",
+    "download": "Pull",
     "starting_download": "Starting download...",
     "local_models": "Local Models",
     "running_models": "Running Models",
@@ -44,8 +44,10 @@ translations = {
 
     # Confirmations
     "confirm_stop": "Are you sure you want to stop the model {model_name}?",
-    "confirm_delete": "Are you sure you want to delete the model {model_name}?",
-    "confirm_batch_delete": "Are you sure you want to delete {count} model(s)?",
+    "confirm_delete":
+    "Are you sure you want to delete the model {model_name}?",
+    "confirm_batch_delete":
+    "Are you sure you want to delete {count} model(s)?",
 
     # Success messages
     "model_stopped": "Model {model_name} stopped successfully",

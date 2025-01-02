@@ -1,55 +1,56 @@
-# Gestionnaire de Modèles Ollama
+# Ollama Model Manager
 
-![Interface du Gestionnaire de Modèles Ollama](attached_assets/image_1735502375301.png)
+![Ollama Model Manager Interface](ollama_manager.png)
 
 ## Description
-Une interface web pour gérer vos modèles Ollama, construite avec Flask et Semantic UI.
+A web interface to manage your Ollama models, built with Flask and Semantic UI.
 
-## Fonctionnalités
-- Gestion des modèles (téléchargement, suppression, configuration)
-- Mode sombre/clair
-- Interface responsive
-- Statistiques d'utilisation des modèles
-- Configuration des modèles
-- Opérations par lots
-- Comparaison de modèles
+## Features
+- Model management (download, delete, configure)
+- Dark/Light mode
+- Responsive interface
+- Model usage statistics
+- Model configuration
+- Batch operations
+- Model comparison
+- Model downloads from Hugging Face and ollama.com
 
-## Prérequis
+## Requirements
 - Python 3.8+
-- Ollama installé et en cours d'exécution
-- pip ou un autre gestionnaire de paquets Python
+- Ollama installed and running
+- pip or another Python package manager
 
 ## Installation
-1. Cloner le dépôt
+1. Clone the repository:
 ```bash
 git clone https://github.com/yblis/OllamaManagerUI.git
 cd OllamaManagerUI
 ```
 
-2. Installer les dépendances
+2. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Configuration
-- Créer un fichier .env et configurer l'URL du serveur Ollama :
+3. Configuration:
+- Create a .env file and configure the Ollama server URL:
 ```bash
 OLLAMA_SERVER_URL=http://localhost:11434
 ```
 
-4. Lancer l'application
+4. Start the application:
 ```bash
 python main.py
 ```
 
-L'application sera accessible à l'adresse http://localhost:5000
+The application will be accessible at http://localhost:5000
 
-## Utilisation
-- Accédez à l'interface web via votre navigateur
-- Utilisez le bouton de thème en haut à gauche pour basculer entre les modes clair et sombre
-- Gérez vos modèles via l'interface intuitive
-- Consultez les statistiques d'utilisation
-- Configurez vos modèles individuellement ou en lot
+## Usage
+- Access the web interface through your browser
+- Use the theme button at the top left to switch between light and dark modes
+- Manage your models through the intuitive interface
+- View usage statistics
+- Configure models individually or in batches
 
 ## Python Virtual Environment
 ```
@@ -78,7 +79,8 @@ pybabel compile -d translations
 ```
 
 ## Contribution
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
+Contributions are welcome! Feel free to open an issue or a pull request.
 
-## Licence
+## License
 MIT
+

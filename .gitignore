@@ -2,3 +2,5 @@ attached_assets/
 .env
 .idea
 __pycache__
+uv.lock
+.replit
