@@ -4,3 +4,5 @@ attached_assets/
 __pycache__
 uv.lock
 .replit
+replit.nix
+pyproject.toml
