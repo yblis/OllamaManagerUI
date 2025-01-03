@@ -89,10 +89,9 @@ window.changeLanguage = async function(lang) {
         });
 
         const data = await response.json();
-        console.log('Language change response:', data);
 
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to change language');
+            throw new Error(data.error || gettext('Failed to change language'));
         }
 
         if (data.success) {
@@ -108,7 +107,6 @@ window.changeLanguage = async function(lang) {
     }
 };
 
-
 // Message display
 window.showMessage = function(title, message, isError = false) {
     document.getElementById('modalTitle').textContent = title;
@@ -119,7 +117,7 @@ window.showMessage = function(title, message, isError = false) {
 
 // Model management functions
 window.stopModel = async function(modelName) {
-    if (!confirm(`Êtes-vous sûr de vouloir arrêter le modèle ${modelName} ?`)) {
+    if (!confirm(gettext('Are you sure you want to stop the model')+` ${modelName} ?`)) {
         return;
     }
 
@@ -135,13 +133,14 @@ window.stopModel = async function(modelName) {
 
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Échec de l\'arrêt du modèle');
+            let failureText = gettext('Failed to stop the model');
+            throw new Error(data.error || failureText);
         }
 
-        showMessage('Succès', `Modèle ${modelName} arrêté avec succès`);
+        showMessage(gettext('Success'), gettext('Model')+` ${modelName} `+gettext('stopped successfully'));
         await refreshRunningModels();  // Refresh only running models table
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -150,7 +149,7 @@ window.showModelConfig = async function(modelName) {
         const response = await fetch(`/api/models/${modelName}/config`, {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        if (!response.ok) throw new Error( gettext('HTTP Error Status')+`: ${response.status}`);
         const config = await response.json();
 
         document.getElementById('selectedModels').innerHTML = `
@@ -183,7 +182,7 @@ window.showModelConfig = async function(modelName) {
 
         $('#configModal').modal('show');
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -192,38 +191,39 @@ window.showModelStats = async function(modelName) {
         const response = await fetch(`/api/models/${modelName}/stats`, {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error(`Erreur HTTP ! statut : ${response.status}`);
+        if (!response.ok) throw new Error( gettext('HTTP Error Status')+`: ${response.status}`);
         const stats = await response.json();
 
+        let operationsText = gettext('Operation(s)');
         document.getElementById('modelStats').innerHTML = `
             <div class="ui statistics">
                 <div class="statistic">
                     <div class="value">${stats.total_operations || 0}</div>
-                    <div class="label">Opérations Totales</div>
+                    <div class="label">`+gettext('Total Operations')+`</div>
                 </div>
                 <div class="statistic">
                     <div class="value">${stats.total_prompt_tokens || 0}</div>
-                    <div class="label">Tokens de Prompt</div>
+                    <div class="label">`+gettext('Total Prompt Tokens')+`</div>
                 </div>
                 <div class="statistic">
                     <div class="value">${stats.total_completion_tokens || 0}</div>
-                    <div class="label">Tokens de Complétion</div>
+                    <div class="label">`+gettext('Total Complete Tokens')+`</div>
                 </div>
                 <div class="statistic">
                     <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
-                    <div class="label">Durée Totale</div>
+                    <div class="label">`+gettext('Total Duration')+`</div>
                 </div>
             </div>
 
             <div class="ui segment">
-                <h4 class="ui header">Opérations par Type</h4>
+                <h4 class="ui header">`+gettext('Operations by Type')+`</h4>
                 <div class="ui list">
                     ${Object.entries(stats.operations_by_type || {}).map(([type, count]) => `
                         <div class="item">
                             <i class="right triangle icon"></i>
                             <div class="content">
                                 <div class="header">${type}</div>
-                                <div class="description">${count} opération(s)</div>
+                                <div class="description">${count} `+operationsText+`</div>
                             </div>
                         </div>
                     `).join('')}
@@ -233,12 +233,14 @@ window.showModelStats = async function(modelName) {
 
         $('#statsModal').modal('show');
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
 window.deleteModel = async function(modelName) {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le modèle ${modelName} ?`)) {
+    let deleteConfirmText = gettext('Are you sure you want to delete this model?');
+    if (!confirm(deleteConfirmText
+        + `\n${modelName}`)) {
         return;
     }
 
@@ -254,13 +256,14 @@ window.deleteModel = async function(modelName) {
 
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Échec de la suppression du modèle');
+            let failureText = gettext('Failed to delete the model');
+            throw new Error(data.error || failureText);
         }
 
-        showMessage('Succès', `Modèle ${modelName} supprimé avec succès`);
+        showMessage(gettext('Success'), gettext('Model')+` ${modelName} `+gettext('successfully deleted'));
         refreshAll();
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 
@@ -331,9 +334,13 @@ window.toggleModelSource = function(button) {
     // Clear and hide results when switching sources
     const searchResults = document.querySelector('.search-results');
     const searchResultsList = document.getElementById('searchResults');
-    searchResults.style.display = 'none';
+
+    if ( searchResults!==undefined && searchResults!==null ) {
+        searchResults.style.display = 'none';
+        searchResultsList.innerHTML = '';
+    }
+
     document.getElementById('modelNameInput').value = '';
-    searchResultsList.innerHTML = '';
 };
 
 // Function to search models with proper syntax
@@ -376,7 +383,7 @@ window.searchModels = function(input) {
             const data = await response.json();
 
             if (!data.models || !data.models.length) {
-                searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
+                searchResultsList.innerHTML = '<div class="item">'+gettext('No models found')+'</div>';
                 searchResultsContainer.style.display = 'block';
                 return;
             }
@@ -397,9 +404,8 @@ window.searchModels = function(input) {
 
             searchResultsList.innerHTML = resultItems;
             searchResultsContainer.style.display = 'block';
-
         } catch (error) {
-            showMessage('Erreur', error.message, true);
+            showMessage(gettext('Error'), error.message, true);
         }
     }, 300);
 };
@@ -413,7 +419,7 @@ window.selectModel = function(modelId) {
 window.pullModel = async function() {
     const modelName = document.getElementById('modelNameInput').value.trim();
     if (!modelName) {
-        showMessage('Erreur', 'Veuillez entrer un nom de modèle', true);
+        showMessage(gettext('Error'), gettext('Please enter a model name'), true);
         return;
     }
 
@@ -424,9 +430,9 @@ window.pullModel = async function() {
     $(progress).progress({
         percent: 0,
         text: {
-            active: 'Démarrage du téléchargement...',
-            success: 'Téléchargement terminé',
-            error: 'Erreur de téléchargement'
+            active: gettext('Starting the download...'),
+            success: gettext('Download complete'),
+            error: gettext('Error downloading')
         }
     });
 
@@ -442,7 +448,8 @@ window.pullModel = async function() {
 
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Échec du téléchargement du modèle');
+            let failureText = gettext('Failed to download the model');
+            throw new Error(data.error || failureText);
         }
 
         const contentLength = response.headers.get('Content-Length');
@@ -469,7 +476,7 @@ window.pullModel = async function() {
 
                             // Update progress bar
                             $(progress).progress('set percent', Math.round(percent));
-                            $(progress).progress('set label', `Téléchargement en cours: ${Math.round(percent)}%`);
+                            $(progress).progress('set label', gettext('Download progress')+`: ${Math.round(percent)}%`);
 
                             controller.enqueue(value);
                         }
@@ -487,22 +494,21 @@ window.pullModel = async function() {
 
         // Téléchargement terminé avec succès
         $(progress).progress('set percent', 100);
-        $(progress).progress('set label', 'Téléchargement terminé');
+        $(progress).progress('set label', gettext('Download complete'));
 
-        showMessage('Succès', `Modèle ${modelName} téléchargé avec succès`);
+        showMessage(gettext('Success'), gettext('Model')+` ${modelName} `+gettext('downloaded successfully'));
         document.getElementById('modelNameInput').value = '';
         refreshAll();
     } catch (error) {
         $(progress).progress('set percent', 0);
-        $(progress).progress('set label', 'Erreur de téléchargement');
-        showMessage('Erreur', error.message, true);
+        $(progress).progress('set label', gettext('Error downloading'));
+        showMessage(gettext('Error'), error.message, true);
     } finally {
         setTimeout(() => {
             progress.style.display = 'none';
         }, 2000);
     }
 };
-
 
 // Refresh functions
 function formatDate(dateStr) {
@@ -530,7 +536,7 @@ async function refreshLocalModels() {
 
         if (serverStatus.status !== 'running') {
             const tbody = document.querySelector('#localModels tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Serveur Ollama non connecté</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">'+gettext('Ollama server not connected')+'</td></tr>';
             return;
         }
 
@@ -539,7 +545,7 @@ async function refreshLocalModels() {
         });
         if (!response.ok) {
             const tbody = document.querySelector('#localModels tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">Impossible de récupérer les modèles</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="center aligned">'+gettext('Unable to retrieve models')+'</td></tr>';
             return;
         }
 
@@ -569,22 +575,22 @@ async function refreshLocalModels() {
                 <td class="center aligned">
                     <div class="ui tiny buttons">
                         <button class="ui button" onclick="showModelConfig('${model.name}')">
-                            <i class="cog icon"></i> Config
+                            <i class="cog icon"></i> `+gettext('Config')+`
                         </button>
                         <button class="ui teal button" onclick="showModelStats('${model.name}')">
-                            <i class="chart bar icon"></i> Stats
+                            <i class="chart bar icon"></i> `+gettext('Stats')+`
                         </button>
                         <button class="ui negative button" onclick="deleteModel('${model.name}')">
-                            <i class="trash icon"></i> Supprimer
+                            <i class="trash icon"></i> `+gettext('Delete')+`
                         </button>
                     </div>
                 </td>
             </tr>
             `;
-        }).join('') || '<tr><td colspan="8" class="center aligned">Aucun modèle installé</td></tr>';
+        }).join('') || '<tr><td colspan="8" class="center aligned">'+gettext('No Models Installed')+'</td></tr>';
     } catch (error) {
         console.error('Error refreshing local models:', error);
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 }
 
@@ -597,7 +603,7 @@ async function refreshRunningModels() {
 
         if (serverStatus.status !== 'running') {
             const tbody = document.querySelector('#runningModels tbody');
-            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Serveur Ollama non connecté</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">'+gettext('Ollama server not connected')+'</td></tr>';
             return;
         }
 
@@ -606,7 +612,7 @@ async function refreshRunningModels() {
         });
         if (!response.ok) {
             const tbody = document.querySelector('#runningModels tbody');
-            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">Impossible de récupérer les modèles en cours d\'exécution</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="center aligned">'+gettext('Unable to retrieve running models')+'</td></tr>';
             return;
         }
 
@@ -634,10 +640,10 @@ async function refreshRunningModels() {
                 </td>
             </tr>
             `;
-        }).join('') || '<tr><td colspan="7" class="center aligned">Aucun modèle en cours d\'exécution</td></tr>';
+        }).join('') || '<tr><td colspan="7" class="center aligned">'+gettext('No Models Running')+'</td></tr>';
     } catch (error) {
         console.error('Error refreshing running models:', error);
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 }
 
@@ -652,25 +658,25 @@ async function refreshStats() {
         const response = await fetch('/api/models/stats', {
             headers: { 'X-Ollama-URL': ollamaUrl }
         });
-        if (!response.ok) throw new Error('Failed to fetch stats');
+        if (!response.ok) throw new Error(gettext('Failed to fetch stats'));
 
         const stats = await response.json();
         statsElement.innerHTML = `
             <div class="statistic">
                 <div class="value">${stats.total_operations || 0}</div>
-                <div class="label">Opérations Totales</div>
+                <div class="label">`+gettext('Total Operations')+`</div>
             </div>
             <div class="statistic">
                 <div class="value">${stats.total_prompt_tokens || 0}</div>
-                <div class="label">Tokens de Prompt</div>
+                <div class="label">`+gettext('Total Prompt Tokens')+`</div>
             </div>
             <div class="statistic">
                 <div class="value">${stats.total_completion_tokens || 0}</div>
-                <div class="label">Tokens de Complétion</div>
+                <div class="label">`+gettext('Total Completion Tokens')+`</div>
             </div>
             <div class="statistic">
                 <div class="value">${(stats.total_duration || 0).toFixed(2)}s</div>
-                <div class="label">Durée Totale</div>
+                <div class="label">`+gettext('Total Duration')+`</div>
             </div>
         `;
     } catch (error) {
@@ -698,16 +704,14 @@ window.toggleTheme = function() {
 };
 
 // Toggle all model checkboxes
-window.toggleAllModels = function() {
+window.selectAllModels = function() {
     const checkboxes = document.querySelectorAll('#localModels tbody input[type="checkbox"]');
     const masterCheckbox = document.querySelector('#localModels thead input[type="checkbox"]');
-    const isChecked = masterCheckbox.checked;
+    // const isChecked = masterCheckbox.checked;
 
+    masterCheckbox.checked = true; // !isChecked;
     checkboxes.forEach(checkbox => {
-        checkbox.checked = isChecked;
-        if (checkbox.dataset.modelName) {
-            toggleModelSelection(checkbox, checkbox.dataset.modelName);
-        }
+        checkbox.checked = true; // !isChecked;
     });
 };
 
@@ -717,7 +721,8 @@ window.compareSelectedModels = function() {
     const selectedModels = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.modelName);
 
     if (selectedModels.length < 2) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins deux modèles à comparer', true);
+        let errorMessage = gettext('Please select at least two models to compare')
+        showMessage(gettext('Error'), errorMessage, true);
         return;
     }
 
@@ -728,7 +733,7 @@ window.compareSelectedModels = function() {
             <div class="ui segment">
                 <h3 class="ui header">${model}</h3>
                 <div class="ui list model-details" id="details-${model}">
-                    <div class="item">Chargement des détails...</div>
+                    <div class="item">`+gettext('Loading details...')+`</div>
                 </div>
             </div>
         </div>
@@ -762,7 +767,7 @@ window.compareSelectedModels = function() {
         } catch (error) {
             document.getElementById(`details-${model}`).innerHTML = `
                 <div class="item error-message">
-                    Erreur lors du chargement des détails : ${error.message}
+                    `+gettext('Error loading details')+`: ${error.message}
                 </div>
             `;
         }
@@ -858,6 +863,11 @@ window.selectAllModels = function(checkbox) {
         const modelName = cb.getAttribute('data-model-name');
         if (isChecked) {
             selectedModels.add(modelName);
+        } else {
+            selectedModels.delete(modelName);
+            // Uncheck the “Select All” box if a template is unchecked
+            // Décocher la case "Tous Sélectionner" si un modèle est décoché
+            document.querySelector('#selectAllCheckbox').checked = false;
         }
     });
 
@@ -884,7 +894,8 @@ function updateCompareButton() {
 
 window.compareSelectedModels = async function() {
     if (selectedModels.size < 2) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins 2 modèles à comparer', true);
+        let errorMessage = gettext('Please select at least two models to compare')
+        showMessage(gettext('Error'), errorMessage, true);
         return;
     }
 
@@ -910,19 +921,19 @@ window.compareSelectedModels = async function() {
                 <div class="ui statistics tiny">
                     <div class="statistic">
                         <div class="value">${model.stats.total_operations || 0}</div>
-                        <div class="label">Opérations</div>
+                        <div class="label">`+gettext('Total Operations')+`</div>
                     </div>
                     <div class="statistic">
                         <div class="value">${model.stats.total_prompt_tokens || 0}</div>
-                        <div class="label">Tokens Prompt</div>
+                        <div class="label">`+gettext('Total Prompt Tokens')+`</div>
                     </div>
                     <div class="statistic">
                         <div class="value">${model.stats.total_completion_tokens || 0}</div>
-                        <div class="label">Tokens Complétion</div>
+                        <div class="label">`+gettext('Total Completion Tokens')+`</div>
                     </div>
                     <div class="statistic">
                         <div class="value">${(model.stats.total_duration || 0).toFixed(2)}s</div>
-                        <div class="label">Durée</div>
+                        <div class="label">`+gettext('Total Duration')+`</div>
                     </div>
                 </div>
             </div>
@@ -930,19 +941,20 @@ window.compareSelectedModels = async function() {
 
         $('#compareModal').modal('show');
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
-
 
 window.batchDeleteModels = async function() {
     const selectedModels = document.querySelectorAll('input[type="checkbox"]:checked');
     if (selectedModels.length === 0) {
-        showMessage('Erreur', 'Veuillez sélectionner au moins un modèle', true);
+        showMessage(gettext('Error'), gettext('Please select at least one model'), true);
         return;
     }
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedModels.length} modèle(s) ?`)) {
+    let confirmText = gettext('Are you sure you want to delete');
+    let confirmText2 = gettext('model(s)');
+    if (!confirm(confirmText+` ${selectedModels.length} `+confirmText2+`?`)) {
         return;
     }
 
@@ -960,7 +972,8 @@ window.batchDeleteModels = async function() {
 
             if(!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Échec de la suppression');
+                let failureText = gettext('Failed to delete the model');
+                throw new Error(data.error || failureText);
             }
 
             results.push({
@@ -1039,7 +1052,7 @@ async function handleSearch(e) {
         const ggufModels = data.filter(model => model.tags?.includes('gguf') && words.every(word => model.id.toLowerCase().includes(word)));
 
         if (!ggufModels.length) {
-            searchResultsList.innerHTML = '<div class="item">Aucun modèle trouvé</div>';
+            searchResultsList.innerHTML = '<div class="item">'+gettext('No models found')+'</div>';
             searchResults.style.display = 'block';
             return;
         }
@@ -1056,14 +1069,14 @@ async function handleSearch(e) {
             <div class="item" style="cursor: pointer;" onclick="selectModel('${model.id}')">
                 <div class="content">
                     <div class="header">${model.id}</div>
-                    <div class="description">Créé le: ${model.createdAt}</div>
+                    <div class="description">`+gettext('Created on')+`: ${model.createdAt}</div>
                 </div>
             </div>
         `).join('');
 
         searchResults.style.display = 'block';
     } catch (error) {
-        showMessage('Erreur', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 }
 
@@ -1075,11 +1088,11 @@ window.addParameter = function() {
     newSegment.innerHTML = `
         <div class="two fields">
             <div class="field">
-                <input type="text" class="parameter-key" placeholder="Parameter Name">
+                <input type="text" class="parameter-key" placeholder="`+gettext('Parameter Name')+`">
             </div>
             <div class="field">
                 <div class="ui right labeled input">
-                    <input type="text" class="parameter-value" placeholder="Value">
+                    <input type="text" class="parameter-value" placeholder="`+gettext('Value')+`">
                     <button class="ui icon button negative" onclick="removeParameter(this)">
                         <i class="trash icon"></i>
                     </button>
@@ -1101,7 +1114,7 @@ window.saveModelConfig = async function() {
     const selectedModelsList = document.getElementById('selectedModels');
     const modelItems = selectedModelsList.getElementsByClassName('item');
     if (modelItems.length === 0) {
-        showMessage('Error', 'No models selected', true);
+        showMessage(gettext('Error'), gettext('No models selected'), true);
         return;
     }
 
@@ -1137,14 +1150,15 @@ window.saveModelConfig = async function() {
 
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.error || `Failed to update config for ${modelName}`);
+            let failureText = gettext('Failed to save the configuration');
+            throw new Error(data.error || failureText+`: ${modelName}`);
         }
 
         $('#configModal').modal('hide');
-        showMessage('Success', 'Model configuration updated successfully');
+        showMessage(gettext('Success'), gettext('Model configuration') +` ${modelName} `+ gettext('saved successfully'));
         refreshAll();
     } catch (error) {
-        showMessage('Error', error.message, true);
+        showMessage(gettext('Error'), error.message, true);
     }
 };
 

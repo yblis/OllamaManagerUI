@@ -52,6 +52,32 @@ The application will be accessible at http://localhost:5000
 - View usage statistics
 - Configure models individually or in batches
 
+## Python Virtual Environment
+```
+source venv/bin/activate
+```
+
+## Translations
+1. To generate the translation file for all the strings in the project
+```
+pybabel extract -F babel.cfg -k lazy_gettext -o messages.pot .
+```
+
+2. To create a brand new translation for a new language
+```
+pybabel init -i messages.pot -d translations -l fr
+```
+
+3. To update the translation file with new translations
+```
+pybabel update -i messages.pot -d translations
+```
+
+4. Re-compile the translations
+```
+pybabel compile -d translations
+```
+
 ## Contribution
 Contributions are welcome! Feel free to open an issue or a pull request.
 

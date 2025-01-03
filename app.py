@@ -1,5 +1,7 @@
 import requests
-from flask import Flask, render_template, jsonify, request, session
+from flask import g, Flask, render_template, jsonify, request, session, redirect, url_for
+from flask_babel import Babel, refresh, gettext, ngettext, lazy_gettext
+from flask_babel_js import BabelJS
 from ollama_client import OllamaClient
 import traceback
 import os
@@ -8,7 +10,27 @@ from translations import t, get_translation, set_language, get_available_languag
 from bs4 import BeautifulSoup
 from functools import wraps
 
+def get_locale():
+    # try to guess the language from the user accept header the browser transmits
+    default_lang = request.accept_languages.best_match(['fr', 'en'])
+    if request.args.get('language'):
+        session['language'] = request.args.get('language')
+    return session.get('language', default_lang)
+
+def get_timezone():
+    user = getattr(g, 'user', None)
+    if user is not None:
+        return user.timezone
+    return 'UT'
+
 app = Flask(__name__)
+
+app.config['BABEL_DEFAULT_LOCALE'] = os.environ.get('BABEL_DEFAULT_LOCALE', 'en')
+babel = Babel(app, locale_selector=get_locale, timezone_selector=get_timezone)
+babel_js = BabelJS(app)
+ollama_client = OllamaClient()
+
+
 # Use a more secure configuration for session cookies
 app.config.update(
     SESSION_COOKIE_SECURE=True,
@@ -16,11 +38,24 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=86400  # 24 hours
 )
+
+app.config['LANGUAGES'] =  {
+    'en': 'English',
+    'fr': 'French',
+}
+
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev_key_123')  # Required for session
-ollama_client = OllamaClient()
 
 # Register translation function for templates
 app.jinja_env.globals.update(t=t)
+
+@app.context_processor
+def inject_conf_var():
+    return dict(AVAILABLE_LANGUAGES=app.config['LANGUAGES'], CURRENT_LANGUAGE=session.get('language', request.accept_languages.best_match(app.config['LANGUAGES'].keys())))
+
+def change_locale(lang):
+    g.user['locale'] = lang
+    refresh()
 
 def with_error_handling(f):
     @wraps(f)
@@ -113,6 +148,11 @@ def change_language():
         print(f"Error changing language: {str(e)}")
         print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
+@app.route('/language=<language>')
+def set_language(language=None):
+    session['language'] = language
+    return redirect(url_for('index'))
 
 @app.route('/api/server/url')
 def get_server_url():

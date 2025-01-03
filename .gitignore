@@ -1,4 +1,7 @@
 attached_assets/
+.env
+.idea
+__pycache__
 uv.lock
 .replit
 replit.nix

@@ -1,35 +1,35 @@
 <!-- Model Config Modal -->
 <div class="ui modal" id="configModal">
-    <div class="header">Model Configuration</div>
+    <div class="header">{{  gettext('Model Configuration') }}</div>
     <div class="content">
         <div id="selectedModels" class="ui list">
             <!-- Selected models will be listed here -->
         </div>
         <form class="ui form">
             <div class="field">
-                <label>System Prompt</label>
+                <label>{{ gettext('System Prompt') }}</label>
                 <textarea id="systemPrompt" rows="3"></textarea>
             </div>
             <div class="field">
-                <label>Template</label>
+                <label>{{ gettext('Template') }}</label>
                 <textarea id="template" rows="3"></textarea>
             </div>
             <div class="field">
-                <label>Parameters</label>
+                <label>{{ gettext('Parameters') }}</label>
                 <div id="parameters" class="ui segments">
                     <!-- Parameters will be dynamically added here -->
                 </div>
                 <div class="ui basic segment">
                     <button type="button" class="ui small primary labeled icon button" onclick="addParameter()">
                         <i class="plus icon"></i>
-                        Add Parameter
+                        {{ gettext('Add Parameter') }}
                     </button>
                 </div>
             </div>
         </form>
     </div>
     <div class="actions">
-        <div class="ui cancel button">Cancel</div>
-        <div class="ui positive button" onclick="saveModelConfig()">Save</div>
+        <div class="ui cancel button">{{ gettext('Cancel') }}</div>
+        <div class="ui positive button" onclick="saveModelConfig()">{{ gettext('Save') }}</div>
     </div>
 </div>
