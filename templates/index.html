@@ -52,13 +52,32 @@
         </div>
     </div>
 
-    <!-- Progress bar -->
-    <div id="pullProgress" class="ui progress" style="display: none; margin-top: 1rem;">
-        <div class="bar">
-            <div class="progress"></div>
+    <!-- Running Models -->
+    <div class="ui segment">
+        <div class="ui clearing">
+            <h3 class="ui left floated header">{{ t('running_models') }}</h3>
+            <button class="ui right floated button" onclick="refreshRunningModels()">
+                <i class="refresh icon"></i> {{ t('refresh') }}
+            </button>
         </div>
-        <div class="label">{{ gettext('Starting the download...') }}</div>
+        <table class="ui celled table" id="runningModels">
+            <thead>
+                <tr>
+                    <th>{{ t('model_name') }}</th>
+                    <th>{{ t('modified_date') }}</th>
+                    <th>{{ t('size') }}</th>
+                    <th>{{ t('format') }}</th>
+                    <th>{{ t('family') }}</th>
+                    <th>{{ t('parameters') }}</th>
+                    <th class="center aligned">{{ t('actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Running models will be populated here -->
+            </tbody>
+        </table>
     </div>
+    <div class="label">{{ gettext('Starting the download...') }}</div>
 </div>
 
 <!-- {{ gettext('Overall Usage Statistics') }}

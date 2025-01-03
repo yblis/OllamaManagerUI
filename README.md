@@ -6,14 +6,14 @@
 A web interface to manage your Ollama models, built with Flask and Semantic UI.
 
 ## Features
-- Model management (download, delete, configure)
-- Dark/Light mode
-- Responsive interface
-- Model usage statistics
-- Model configuration
-- Batch operations
-- Model comparison
-- Model downloads from Hugging Face and ollama.com
+- Model management (search, download, delete, configure)
+- Dark/Light mode (To improve)
+- Responsive interface 
+- Model usage statistics (Not yet)
+- Model configuration  (In progress, not working yet for Huggingface's models)
+- Model comparison (In progress)
+- Search and pull models directly from HuggingFace or Ollama.com
+- English and French languages
 
 ## Requirements
 - Python 3.8+

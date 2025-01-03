@@ -6,3 +6,4 @@ uv.lock
 .replit
 replit.nix
 pyproject.toml
+ollama_stats.db

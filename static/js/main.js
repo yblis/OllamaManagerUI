@@ -48,7 +48,14 @@ document.addEventListener('DOMContentLoaded', checkServerStatus);
 
 // Settings management
 window.showSettings = function() {
-    document.getElementById('ollamaUrl').value = ollamaUrl;
+    // Get the stored URL from localStorage
+    const storedUrl = localStorage.getItem('ollamaUrl');
+    if (storedUrl) {
+        document.getElementById('ollamaUrl').value = storedUrl;
+    } else {
+        document.getElementById('ollamaUrl').value = ollamaUrl;
+    }
+
     // Set current language in dropdown
     const currentLang = document.cookie.split(';').find(row => row.trim().startsWith('language='));
     if (currentLang) {
